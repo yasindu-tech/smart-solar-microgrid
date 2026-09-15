@@ -1059,6 +1059,19 @@ a:hover {
   animation: sg-pulse 1.4s var(--sg-ease) infinite;
 }
 
+/* Branded ring used by <SolarLoader> (web/src/components/SolarLoader) - the
+   shared, larger loading indicator for a whole page/panel. .sg-spinner above
+   stays the small inline one (e.g. inside a loading button). */
+.sg-solar-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--sg-radius-full);
+  border: 4px solid var(--sg-border);
+  border-top-color: var(--sg-secondary);
+  border-right-color: var(--sg-primary);
+  animation: sg-spin 0.9s linear infinite;
+}
+
 @keyframes sg-spin {
   to {
     transform: rotate(360deg);
