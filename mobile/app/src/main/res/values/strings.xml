@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Smart Solar</string>
+    <string name="login_title">Sign in</string>
+    <string name="login_nic_hint">NIC or email</string>
+    <string name="login_password_hint">Password</string>
+</resources>

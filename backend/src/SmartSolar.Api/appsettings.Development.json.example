@@ -1,0 +1,12 @@
+{
+  "Mongo": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "smartsolar"
+  },
+  "Jwt": {
+    "SigningKey": "replace-with-a-long-random-value-do-not-commit"
+  },
+  "Qr": {
+    "SigningSecret": "replace-with-a-long-random-value-do-not-commit"
+  }
+}
