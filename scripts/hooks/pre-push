@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Local safety net. GitHub rejects direct pushes to main and develop anyway,
+# but failing here saves a round trip and a confusing server-side error.
+set -euo pipefail
+
+PROTECTED="main develop"
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+for p in $PROTECTED; do
+  if [ "$BRANCH" = "$p" ]; then
+    echo ""
+    echo "  Refusing to push directly to '$p'."
+    echo ""
+    echo "  Work goes through a pull request:"
+    echo "      git switch -c feature/<component>/<description>"
+    echo "      git push -u origin feature/<component>/<description>"
+    echo "      gh pr create --base develop"
+    echo ""
+    exit 1
+  fi
+done
+
+exit 0

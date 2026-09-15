@@ -18,6 +18,7 @@ Module: SE4040 Enterprise Application Development · Group of 4 · Deadline **30
 3. **"What does this endpoint return?"** → `architecture/api-contract.md`.
 4. **"What fields does this collection have?"** → `architecture/data-model.md`.
 5. **"What status can this move to?"** → `architecture/state-machines.md`.
+5a. **"How do we get this actually running / redeploy it?"** → `architecture/deployment-guide.md`.
 6. **"Why did we do it this way?"** → `decisions/`.
 7. **"Who owns this, and what's the goal of their piece?"** → `domains/` (one doc per member) then `plan/work-breakdown.md` for the day-by-day plan.
 
@@ -27,8 +28,9 @@ that changes shared behaviour becomes an ADR.
 
 ### If you are the technical PO
 
-Use the `technical-po` skill. It defines the document formats used here, the developer Q&A protocol,
-and the rule that every answer must cite a document ID or become one.
+Use the `requirements-analyst` skill (`.claude/skills/requirements-analyst/SKILL.md`). It defines the
+document formats used here, the developer Q&A protocol, and the rule that every answer must cite a
+document ID or become one.
 
 ---
 
@@ -45,7 +47,8 @@ docs/
 │   ├── system-overview.md        ← 3-tier shape, what is allowed to live where
 │   ├── data-model.md             ← MongoDB collections, SQLite tables, field-level spec
 │   ├── api-contract.md           ← every endpoint, request, response, error code
-│   └── state-machines.md         ← reservation / account / node lifecycles
+│   ├── state-machines.md         ← reservation / account / node lifecycles
+│   └── deployment-guide.md       ← Azure VM + IIS, step by step — who does what to get it live
 │
 ├── requirements/                 ← REQ-* : the behavioural spec, one file per feature area
 │   ├── REQ-AUTH-authentication-and-rbac.md

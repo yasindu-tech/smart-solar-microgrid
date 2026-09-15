@@ -63,6 +63,14 @@ Android developers are still guessing endpoint shapes on Day 8, integration will
 
 **Exit criteria for Day 2:** repo exists, API runs locally, Mongo has seed data, Android app builds.
 
+**Stretch, if there's an hour spare:** whoever is going to own the Azure VM (see
+`architecture/deployment-guide.md` §1) creates it now — `az vm create` is a few minutes of waiting, not
+work, and it can run alongside everything else above. Getting the VM's public IP recorded in
+`project-config.md` §9 on Day 2 instead of Day 13 means both clients can optionally build against a real
+hosted URL instead of `localhost` for the rest of the project. Not required this early — Day 13 is still
+the hard deadline for having the API actually deployed to it (§3 below) — but the VM itself costs nothing
+to create ahead of time and removes a Day-13 dependency.
+
 ### Day 3 · Tue 15 Sep — **Contract freeze** (hard gate)
 
 - Every stub returns realistic sample JSON.
@@ -98,7 +106,7 @@ from a client, not from Postman. Anything not demoable here is a red flag with 1
 
 | Day | Work |
 |---|---|
-| 13 | **Deploy the API to IIS.** Both clients repointed to the hosted base URL and retested end to end. Do not leave this to the last weekend — IIS hosting is 4 group marks and always takes longer than expected |
+| 13 | **Deploy the API to IIS.** Follow `architecture/deployment-guide.md` steps 2–9 (VM + IIS + Mongo Atlas, if not already done on Day 2), then repoint both clients per step 10 and retest end to end. Do the first real redeploy with `scripts/deploy-to-iis.ps1` so the loop is proven, not just documented. Do not leave this to the last weekend — IIS hosting is 4 group marks and always takes longer than expected |
 | 14 | Walk every acceptance criterion in every REQ doc. Record pass/fail in `traceability-matrix.md`. Fix failures |
 | 14 | Walk every **edge case**. This is where the Excellent bands live, and where viva questions come from |
 | 15 | **Code freeze, Sun 28 Sep.** Comment header block on every `.cs` file; inline comment at the start of every method; unique screenshots captured for every UI |
@@ -145,7 +153,7 @@ liability at the viva, not just a style issue.
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | API contract not frozen by Day 3 | Medium | **Critical** | Hard gate, group sign-off, stubs before logic |
-| IIS deployment left to the final weekend | High | High | Scheduled on Day 13, not Day 16 |
+| IIS deployment left to the final weekend | High | High | Scheduled on Day 13, not Day 16; VM creation itself can happen as early as Day 2 (see `architecture/deployment-guide.md`), so Day 13 is only the API deploy + client repoint, not a standing start |
 | Business logic drifts into the Android app | Medium | High (12 group marks) | BR-14 + ADR-004 + the Day 14 code-review check |
 | One member falls behind, blocking another | Medium | High | Vertical slices (§1) — no member's mark depends on another's feature |
 | Dashboard counts hard-coded to save time | Medium | High (10 individual marks) | REQ-VIEW AC-13 is an explicit check |

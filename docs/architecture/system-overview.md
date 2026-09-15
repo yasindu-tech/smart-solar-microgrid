@@ -125,15 +125,18 @@ Every non-2xx response from the API uses one shape, so both clients can handle e
 
 ## 6. Deployment
 
+**Full step-by-step guide: `architecture/deployment-guide.md`.** This table is the summary.
+
 | Piece | Target | Notes |
 |---|---|---|
-| Web API | Windows IIS, application pool `SmartSolarApi` | Rubric explicitly rewards "hosted on IIS and reachable by both clients" |
-| MongoDB | MongoDB Atlas free tier (or local `mongod` for dev) | Connection string in `appsettings.json`, **not** committed with credentials |
-| Web app | IIS static site or `npm run build` served from the API's `wwwroot` | Must be reachable from a browser during the viva |
-| Android | Debug APK installed on a physical device or emulator with Google Play services (needed for Maps) | |
+| Web API | IIS on an **Azure VM** (Windows Server 2022), application pool `SmartSolarApi` | Rubric explicitly rewards "hosted on IIS and reachable by both clients". Confirmed host 14 Sep 2026 |
+| MongoDB | MongoDB Atlas free tier (M0), VM's public IP allow-listed | Connection string in `appsettings.Production.json` on the VM only — **never committed** |
+| Web app | Built with `npm run build`, `VITE_API_BASE_URL` pointed at the hosted API | Must be reachable from a browser during the viva |
+| Android | Debug APK, `API_BASE_URL` pointed at the hosted API | Physical device or emulator with Google Play services (needed for Maps) |
 
-Android emulator reaches a locally hosted API at `http://10.0.2.2:<port>`, not `localhost`.
-Record the real hosted base URL in `project-config.md` once IIS is up.
+Android emulator reaches a **locally** hosted API at `http://10.0.2.2:<port>`, not `localhost` — but
+once the API is on the Azure VM, both clients use the VM's real public IP instead, recorded in
+`project-config.md` §9. Redeploy with `scripts/deploy-to-iis.ps1`, run on the VM.
 
 ## 7. Cross-cutting non-functional expectations
 

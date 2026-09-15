@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------------
+#  CODEOWNERS - component separation by member
+#
+#  Every member owns a vertical slice (see docs/plan/work-breakdown.md section 1)
+#  so that no one's individual marks depend on another member finishing first.
+#  GitHub requests a review from the owner automatically when their files change.
+#
+#  REPLACE the placeholder handles below with real GitHub usernames before the
+#  first PR. A CODEOWNERS file naming a user who is not a collaborator is
+#  silently ignored, which looks like it works but does nothing.
+#
+#  M1 Identity     @member1-handle
+#  M2 Nodes/Slots  @member2-handle
+#  M3 Reservations @member3-handle
+#  M4 QR/Maps/Views @member4-handle
+# ---------------------------------------------------------------------------
+
+# Default owner for anything not matched below - the whole team.
+*                                          @member1-handle @member2-handle @member3-handle @member4-handle
+
+# --- Shared contracts: change these and everyone reviews -------------------
+/docs/architecture/                        @member1-handle @member2-handle @member3-handle @member4-handle
+/docs/business-rules/                      @member1-handle @member2-handle @member3-handle @member4-handle
+/docs/decisions/                           @member1-handle @member2-handle @member3-handle @member4-handle
+/.github/                                  @member1-handle @member2-handle @member3-handle @member4-handle
+/scripts/                                  @member1-handle @member2-handle @member3-handle @member4-handle
+
+# --- M1: authentication, users, prosumers ---------------------------------
+/backend/src/SmartSolar.Api/Controllers/AuthController.cs        @member1-handle
+/backend/src/SmartSolar.Api/Controllers/UsersController.cs       @member1-handle
+/backend/src/SmartSolar.Api/Controllers/ProsumersController.cs   @member1-handle
+/backend/src/SmartSolar.Api/Services/AuthService.cs              @member1-handle
+/backend/src/SmartSolar.Api/Services/UserService.cs              @member1-handle
+/backend/src/SmartSolar.Api/Services/ProsumerService.cs          @member1-handle
+/web/src/features/auth/                                          @member1-handle
+/web/src/features/users/                                         @member1-handle
+/web/src/features/prosumers/                                     @member1-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/ui/auth/           @member1-handle
+/docs/requirements/REQ-AUTH-authentication-and-rbac.md           @member1-handle
+/docs/requirements/REQ-USER-web-user-management.md               @member1-handle
+/docs/requirements/REQ-PROS-prosumer-management.md               @member1-handle
+
+# --- M2: microgrid nodes, energy slot admin, map + Google Maps -------------
+#     (map + Maps SDK moved here from M4 on 14 Sep 2026 - see docs/domains/)
+/backend/src/SmartSolar.Api/Controllers/NodesController.cs       @member2-handle
+/backend/src/SmartSolar.Api/Services/NodeService.cs              @member2-handle
+/web/src/features/nodes/                                         @member2-handle
+/web/src/features/slots/                                         @member2-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/ui/map/             @member2-handle
+/docs/requirements/REQ-NODE-microgrid-node-management.md         @member2-handle
+/docs/domains/DOM-02-microgrid-inventory-management.md            @member2-handle
+
+# --- shared: slot admin (M2) vs slot capacity accounting invoked by         --
+#     reservations (M3) - both review, see docs/domains/README.md ----------
+/backend/src/SmartSolar.Api/Controllers/SlotsController.cs       @member2-handle @member3-handle
+/backend/src/SmartSolar.Api/Services/SlotService.cs              @member2-handle @member3-handle
+/docs/requirements/REQ-SLOT-energy-slot-management.md            @member2-handle @member3-handle
+
+# --- M3: reservations, the two time-window rules, prosumer booking views ---
+#     (prosumer dashboard/history/search/filter moved here from M4, 14 Sep) -
+/backend/src/SmartSolar.Api/Controllers/ReservationsController.cs @member3-handle
+/backend/src/SmartSolar.Api/Services/ReservationService.cs        @member3-handle
+/backend/src/SmartSolar.Api/Services/ReservationRules.cs          @member3-handle
+/backend/src/SmartSolar.Api/Services/ReservationStateMachine.cs   @member3-handle
+/backend/tests/                                                   @member3-handle
+/web/src/features/reservations/                                   @member3-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/ui/prosumer/        @member3-handle
+/docs/requirements/REQ-RESV-reservation-management.md             @member3-handle
+/docs/domains/DOM-03-reservation-and-scheduling-engine.md          @member3-handle
+
+# --- M4: QR verification, operator mode, operator dashboard, local persist -
+/backend/src/SmartSolar.Api/Controllers/OperatorController.cs     @member4-handle
+/backend/src/SmartSolar.Api/Services/QrTokenService.cs            @member4-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/ui/operator/        @member4-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/data/local/         @member4-handle
+/mobile/app/src/main/java/lk/sliit/smartsolar/data/remote/        @member4-handle
+/docs/requirements/REQ-QRV-qr-dispatch-and-operator-verification.md @member4-handle
+/docs/domains/DOM-04-fulfillment-and-operational-verification.md  @member4-handle
+
+# --- shared: one file, three dashboard endpoints - prosumer (M3),          --
+#     operator (M4), backoffice (M1) - see docs/domains/README.md ----------
+/backend/src/SmartSolar.Api/Controllers/DashboardController.cs    @member1-handle @member3-handle @member4-handle
+/backend/src/SmartSolar.Api/Services/DashboardService.cs          @member1-handle @member3-handle @member4-handle
+/docs/requirements/REQ-VIEW-dashboards-views-and-maps.md          @member1-handle @member2-handle @member3-handle @member4-handle
+
+# --- domains overview: all four review changes to the ownership split -----
+/docs/domains/README.md                                           @member1-handle @member2-handle @member3-handle @member4-handle
+/docs/domains/DOM-01-identity-and-access-management.md             @member1-handle

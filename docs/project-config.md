@@ -1,7 +1,8 @@
 # Project Config
 
-This is the file the `technical-po` skill reads first. It is the set of project facts that make the
-skill's generic method concrete. Change this file when the project changes; do not change the skill.
+This is the file the `requirements-analyst` skill (`.claude/skills/requirements-analyst/SKILL.md`) reads
+first. It is the set of project facts that make the skill's generic method concrete. Change this file
+when the project changes; do not change the skill.
 
 ---
 
@@ -110,3 +111,19 @@ A requirement is **Built** only when all of the following are true:
 5. Screenshots captured for the report.
 6. Commits reference the requirement ID.
 7. The owner can explain the behaviour and the rule behind it without reading the code.
+
+## 9. Hosting — fill this in once the VM exists
+
+Full setup steps: `architecture/deployment-guide.md`. Record the real values here the moment they
+exist, so nobody builds against a guessed or stale URL.
+
+| Field | Value |
+|---|---|
+| Cloud provider | Azure |
+| Resource group | `smartsolar-rg` *(fill in if different)* |
+| VM name | `smartsolar-api` *(fill in if different)* |
+| VM public IP / DNS name | *(not yet created)* |
+| API base URL (what both clients point at) | `http://<public-ip-above>/api` |
+| MongoDB Atlas project / cluster | *(fill in)* |
+| Who holds the Azure account + admin password | *(fill in — one person, per the deployment guide §1)* |
+| Last successful redeploy | *(date, once `scripts/deploy-to-iis.ps1` has been run for real)* |

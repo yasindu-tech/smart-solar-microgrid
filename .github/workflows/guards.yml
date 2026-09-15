@@ -1,0 +1,89 @@
+# ---------------------------------------------------------------------------
+#  Smart Solar Microgrid Trading System - repository guards
+#
+#  Equivalent of the guard-no-data job in J26-SE-356, adapted for this project:
+#  what must never land here is credentials and build output, not clinical data.
+#  Also lints the PR title against Conventional Commits, because the marking
+#  scheme rewards meaningful descriptive commits and a squash merge takes its
+#  message from the PR title.
+# ---------------------------------------------------------------------------
+name: Guards
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  guard-no-secrets:
+    name: Guard - no secrets or build output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the diff for files that must never be committed
+        run: |
+          set -euo pipefail
+
+          BASE="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1 || true
+
+          CHANGED=$(git diff --name-only --diff-filter=ACMR "$BASE"...HEAD || git diff --name-only HEAD~1...HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          BLOCKED_PATTERN='(^|/)(appsettings\.Development\.json|appsettings\.Production\.json|\.env|local\.properties|google-services\.json|secrets\.json)$|\.(apk|aab|keystore|jks|pfx|p12|pem|key)$|(^|/)(bin|obj|node_modules|dist|build)/'
+
+          if echo "$CHANGED" | grep -nE "$BLOCKED_PATTERN"; then
+            echo ""
+            echo "::error::This PR adds files that must never be committed."
+            echo "Credentials, signing material and build output stay out of the repo."
+            echo "Remove them, add the path to .gitignore, and force-push the branch."
+            exit 1
+          fi
+
+          echo "No blocked paths in this diff."
+
+      - name: Check for obvious hard-coded secrets
+        run: |
+          set -euo pipefail
+
+          BASE="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1 || true
+
+          # Look only at added lines, so pre-existing text does not fail the PR.
+          ADDED=$(git diff "$BASE"...HEAD -U0 | grep '^+' | grep -v '^+++' || true)
+
+          if echo "$ADDED" | grep -inE 'mongodb\+srv://[^<"]*:[^<"@]+@|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
+            echo ""
+            echo "::error::A credential appears to be hard-coded in this PR."
+            echo "Move it to configuration and rotate the exposed value."
+            exit 1
+          fi
+
+          echo "No hard-coded credentials detected in added lines."
+
+  pr-title:
+    name: Guard - PR title is a Conventional Commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          PATTERN='^(feat|fix|docs|test|refactor|perf|chore|ci)\((api|web|mobile|auth|user|prosumer|node|slot|resv|qr|view|docs|ci|repo)\): .+'
+
+          if ! echo "$TITLE" | grep -qE "$PATTERN"; then
+            echo "::error::PR title must be a Conventional Commit."
+            echo "Got:      $TITLE"
+            echo "Expected: <type>(<scope>): <summary>"
+            echo "Types:    feat fix docs test refactor perf chore ci"
+            echo "Scopes:   api web mobile auth user prosumer node slot resv qr view docs ci repo"
+            echo "Example:  feat(resv): enforce 12-hour cancellation window (BR-07)"
+            exit 1
+          fi
+
+          echo "PR title is valid: $TITLE"
