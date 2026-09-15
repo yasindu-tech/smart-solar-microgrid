@@ -19,6 +19,8 @@ Module: SE4040 Enterprise Application Development · Group of 4 · Deadline **30
 4. **"What fields does this collection have?"** → `architecture/data-model.md`.
 5. **"What status can this move to?"** → `architecture/state-machines.md`.
 5a. **"How do we get this actually running / redeploy it?"** → `architecture/deployment-guide.md`.
+5b. **"What color/spacing/component do I use for this screen?"** → `architecture/ui-design-system.md`
+   (strict — see `CLAUDE.md` §4a). This is not optional styling advice.
 6. **"Why did we do it this way?"** → `decisions/`.
 7. **"Who owns this, and what's the goal of their piece?"** → `domains/` (one doc per member) then `plan/work-breakdown.md` for the day-by-day plan.
 
@@ -43,12 +45,16 @@ docs/
 ├── project-config.md             ← the facts the skill reads: stack, roles, components, constraints
 ├── glossary.md                   ← one agreed word per concept
 │
+├── assets/
+│   └── logo.png                  ← SunGrid master logo (also in web/public/ and mobile res/drawable/)
+│
 ├── architecture/
 │   ├── system-overview.md        ← 3-tier shape, what is allowed to live where
 │   ├── data-model.md             ← MongoDB collections, SQLite tables, field-level spec
 │   ├── api-contract.md           ← every endpoint, request, response, error code
 │   ├── state-machines.md         ← reservation / account / node lifecycles
-│   └── deployment-guide.md       ← Azure VM + IIS, step by step — who does what to get it live
+│   ├── deployment-guide.md       ← Azure VM + IIS, step by step — who does what to get it live
+│   └── ui-design-system.md       ← strict: colors, typography, spacing, shared components (web + Android)
 │
 ├── requirements/                 ← REQ-* : the behavioural spec, one file per feature area
 │   ├── REQ-AUTH-authentication-and-rbac.md

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SunGrid design-system spacing/radius tokens for Android.
+
+  Matches the --sg-space-* and --sg-radius-* tokens in web/src/styles/base.css
+  (1rem == 16dp at Android's default density-independent baseline) - see
+  docs/architecture/ui-design-system.md section 22.
+-->
+<resources>
+
+    <!-- Spacing (matches --sg-space-*) -->
+    <dimen name="sg_space_1">4dp</dimen>
+    <dimen name="sg_space_2">8dp</dimen>
+    <dimen name="sg_space_3">12dp</dimen>
+    <dimen name="sg_space_4">16dp</dimen>
+    <dimen name="sg_space_5">20dp</dimen>
+    <dimen name="sg_space_6">24dp</dimen>
+    <dimen name="sg_space_8">32dp</dimen>
+    <dimen name="sg_space_10">40dp</dimen>
+    <dimen name="sg_space_12">48dp</dimen>
+    <dimen name="sg_space_16">64dp</dimen>
+
+    <!-- Radius (matches --sg-radius-*) -->
+    <dimen name="sg_radius_sm">6dp</dimen>
+    <dimen name="sg_radius_md">8dp</dimen>
+    <dimen name="sg_radius_lg">12dp</dimen>
+    <dimen name="sg_radius_xl">16dp</dimen>
+    <!-- sg_radius_full (pill / circular) - use 9999dp as the same "effectively infinite" value,
+         or CircleCropTransformation / a fully-rounded shape appdrawable where that's more natural -->
+    <dimen name="sg_radius_full">9999dp</dimen>
+
+</resources>

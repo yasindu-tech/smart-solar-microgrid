@@ -11,6 +11,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+// SunGrid design-system tokens + shared component classes (sg-*). Loaded
+// after Tailwind's base/components/utilities so sg-* rules win on conflicts.
+// See docs/architecture/ui-design-system.md - this file is the only place
+// UI colors, spacing, radius and typography are allowed to be defined.
+import './styles/base.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
