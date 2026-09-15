@@ -23,7 +23,7 @@ skill directly.
 4. **Never tick a checklist box you have not verified.** Write `N/A — <reason>`
    instead, or leave it unticked with a note.
 5. **Never commit a credential.** Connection strings, JWT and QR signing
-   secrets, Google Maps keys, keystores. The `Guard - no secrets` CI job blocks
+   secrets, Google Maps keys, keystores. The `Quality Gate` CI job blocks
    the obvious cases; it is not a substitute for looking.
 
 ## Repo policy reference
@@ -76,7 +76,7 @@ descriptive commits, and IDs are the cheapest way to get there.
 ❌ update stuff   ❌ WIP   ❌ final fix
 ```
 
-The `commit-msg` hook enforces the format locally; the `Guard - PR title` CI
+The `commit-msg` hook enforces the format locally; the `Quality Gate` CI
 job enforces it on the PR title, which becomes the squash-merge message.
 
 ### PR rules
@@ -85,7 +85,7 @@ job enforces it on the PR title, which becomes the squash-merge message.
 |---|---|
 | Target branch | `develop` |
 | Approvals required | 0 — self-merge allowed |
-| CI | Must pass: Backend Build, Web Build, Mobile Build, both Guards |
+| CI | Must pass: Quality Gate, Backend Build, Web Build, Mobile Build |
 | Conversations | All resolved before merge |
 | Merge method | Squash and merge |
 | Direct pushes to `main`/`develop` | Rejected by GitHub, for everyone |
