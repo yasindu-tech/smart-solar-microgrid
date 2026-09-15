@@ -1,0 +1,46 @@
+# --- Credentials and configuration that must never be committed -------------
+appsettings.Development.json
+appsettings.Production.json
+.env
+.env.local
+web/.env
+mobile/local.properties
+**/google-services.json
+secrets.json
+*.keystore
+*.jks
+*.pfx
+*.p12
+*.pem
+*.key
+
+# --- .NET -------------------------------------------------------------------
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# --- Node / web -------------------------------------------------------------
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# --- Android ----------------------------------------------------------------
+.gradle/
+mobile/build/
+mobile/app/build/
+*.apk
+*.aab
+captures/
+.cxx/
+
+# --- Editors and OS ---------------------------------------------------------
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- Misc -------------------------------------------------------------------
+*.log
