@@ -1,0 +1,44 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Secrets / local config (never commit — see CLAUDE.md §6)
+**/appsettings.Development.json
+**/appsettings.*.local.json
+**/local.properties
+**/google-services.json
+.env
+.env.local
+!web/.env.example
+
+# --- backend (.NET) ---
+backend/**/bin/
+backend/**/obj/
+*.user
+*.suo
+
+# --- web (Node/React/Vite) ---
+web/node_modules/
+web/dist/
+web/build/
+web/coverage/
+web/.vite/
+
+# --- mobile (Android/Gradle) ---
+mobile/.gradle/
+mobile/**/build/
+mobile/.idea/
+mobile/*.iml
+mobile/local.properties
+mobile/captures/
+mobile/.cxx/
+*.keystore
+*.jks
+
+# --- seed (Node) ---
+seed/node_modules/
