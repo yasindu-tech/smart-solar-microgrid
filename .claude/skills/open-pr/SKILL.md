@@ -124,7 +124,9 @@ git push origin v1.0-submission
    `appsettings.Development.json`, `.env`, `local.properties`,
    `google-services.json`, `*.keystore`, `*.jks`, `*.pem`, `*.key`, or any
    `bin/`, `obj/`, `node_modules/`, `dist/`, `build/` path. Also grep added
-   lines for a `mongodb+srv://user:pass@` string or an `AIza…` Maps key.
+   lines for a MongoDB Atlas connection string with embedded credentials
+   (`mongodb` + `+srv://` + a `user:pass@` segment) or an `AIza`-prefixed
+   Maps key.
 
 4. **Commit** using Conventional Commits, citing the REQ/BR id.
 
