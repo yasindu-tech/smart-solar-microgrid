@@ -3,7 +3,7 @@
 #
 #  Three build jobs, one per component, each with a path filter so a backend
 #  change does not rebuild Android. These three are the required status checks
-#  on main and develop - see scripts/protect-branches.sh.
+#  on main and develop, configured once in GitHub branch protection settings.
 #
 #  Job names must stay stable: branch protection matches them by name.
 # ---------------------------------------------------------------------------
