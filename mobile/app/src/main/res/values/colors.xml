@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SunGrid design-system color tokens for Android.
+
+  These must stay numerically identical to the sg-prefixed custom properties in
+  web/src/styles/base.css - see docs/architecture/ui-design-system.md section 22.
+  There is no build step that generates one file from the other; if base.css
+  changes, update this file by hand in the same PR.
+-->
+<resources>
+
+    <!-- Brand -->
+    <color name="sg_primary">#0067B9</color>
+    <color name="sg_primary_hover">#004A86</color>
+    <color name="sg_primary_soft">#E8F4FC</color>
+
+    <color name="sg_secondary">#43B02A</color>
+    <color name="sg_secondary_hover">#2F861E</color>
+    <color name="sg_secondary_soft">#EAF7E7</color>
+
+    <color name="sg_accent">#FFB81C</color>
+    <color name="sg_accent_soft">#FFF7DB</color>
+
+    <color name="sg_cyan">#00A6C7</color>
+    <color name="sg_cyan_soft">#E0F7FA</color>
+
+    <!-- Semantic -->
+    <color name="sg_success">#16A34A</color>
+    <color name="sg_success_hover">#15803D</color>
+    <color name="sg_success_soft">#DCFCE7</color>
+    <color name="sg_success_text">#166534</color>
+
+    <color name="sg_warning">#D97706</color>
+    <color name="sg_warning_hover">#B45309</color>
+    <color name="sg_warning_soft">#FEF3C7</color>
+    <color name="sg_warning_text">#92400E</color>
+
+    <color name="sg_danger">#DC2626</color>
+    <color name="sg_danger_hover">#B91C1C</color>
+    <color name="sg_danger_soft">#FEE2E2</color>
+    <color name="sg_danger_text">#991B1B</color>
+
+    <color name="sg_info">#0284C7</color>
+    <color name="sg_info_hover">#0369A1</color>
+    <color name="sg_info_soft">#E0F2FE</color>
+    <color name="sg_info_text">#075985</color>
+
+    <!-- Neutrals -->
+    <color name="sg_white">#FFFFFF</color>
+    <color name="sg_black">#000000</color>
+
+    <color name="sg_bg">#F8FAFC</color>
+    <color name="sg_surface">#FFFFFF</color>
+    <color name="sg_surface_muted">#F1F5F9</color>
+    <color name="sg_surface_hover">#F8FAFC</color>
+
+    <color name="sg_border">#E2E8F0</color>
+    <color name="sg_border_strong">#CBD5E1</color>
+    <color name="sg_border_focus">#0067B9</color>
+
+    <color name="sg_text">#0F172A</color>
+    <color name="sg_text_secondary">#475569</color>
+    <color name="sg_text_muted">#64748B</color>
+    <color name="sg_text_disabled">#94A3B8</color>
+    <color name="sg_text_on_primary">#FFFFFF</color>
+
+</resources>

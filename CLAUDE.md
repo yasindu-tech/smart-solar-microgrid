@@ -46,6 +46,28 @@ without it is not marked. Copy the format from `ReservationRules.cs`.
 - Kotlin: pure native Android, no cross-platform framework. Local persistence
   limited to the four tables in `ADR-004`.
 
+## 4a. UI design system — strict, not a suggestion
+
+**`docs/architecture/ui-design-system.md` is mandatory for every piece of UI code, web and
+Android.** Read it before writing or reviewing any component, screen, or style file. The short
+version:
+
+- **Web:** `web/src/styles/base.css` is the only place UI colors, typography, spacing, radius and
+  shadows are defined. Use its `var(--sg-*)` tokens and `.sg-*` shared classes. Never hardcode a hex
+  value or a Tailwind color utility (`bg-blue-500` etc.) in a page or component — if the token you
+  need doesn't exist, that's a `base.css` change, not a one-off style.
+- **Android:** the equivalent tokens live in `mobile/app/src/main/res/values/colors.xml` and
+  `dimens.xml` (`@color/sg_primary`, `@dimen/sg_space_4`, etc.), kept numerically in sync with
+  `base.css` by hand. Never hardcode a hex or `dp` literal in a layout or Composable.
+- Reuse a shared component before writing new CSS/XML. If two or more screens need the same visual
+  pattern, it belongs in the shared layer, not duplicated per page.
+- A PR that introduces a new hardcoded color, a duplicated card/button/table style, or a missing
+  loading/empty/error state is a defect against this document, the same way an unenforced business
+  rule is a defect against `BR-register.md`.
+- Logo: `docs/assets/logo.png` is the master file (also at `web/public/logo.png` and
+  `mobile/app/src/main/res/drawable/logo.png`). Regenerate Android launcher icons from it via Android
+  Studio's Image Asset Studio — don't hand-copy it into `mipmap-*`.
+
 ## 5. Branching, commits and PRs
 
 Use the `open-pr` skill — it is the full policy. Short version:
