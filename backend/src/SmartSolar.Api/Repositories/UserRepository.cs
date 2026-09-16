@@ -26,6 +26,13 @@ public class UserRepository
         var client = new MongoClient(settings.Value.ConnectionString);
         var db = client.GetDatabase(settings.Value.DatabaseName);
         _collection = db.GetCollection<User>("Users");
+
+        // Create indexes
+        var indexOptions = new CreateIndexOptions { Unique = true };
+        _collection.Indexes.CreateOne(new CreateIndexModel<User>(
+            Builders<User>.IndexKeys.Ascending(u => u.Email), indexOptions));
+        _collection.Indexes.CreateOne(new CreateIndexModel<User>(
+            Builders<User>.IndexKeys.Ascending(u => u.UserId), indexOptions));
     }
 
     // Find a user by their email address (case-insensitive). Used at login.
@@ -103,20 +110,4 @@ public class UserRepository
         return await _collection.CountDocumentsAsync(emailFilter) > 0;
     }
 
-    // Generate the next sequential UserId in the form "USR-NNNN".
-    public async Task<string> GetNextUserIdAsync()
-    {
-        // Find the highest existing number by sorting descending on userId.
-        var latest = await _collection.Find(Builders<User>.Filter.Empty)
-            .SortByDescending(u => u.UserId)
-            .Limit(1)
-            .FirstOrDefaultAsync();
-
-        if (latest == null) return "USR-0001";
-
-        // Parse the numeric suffix and increment.
-        var parts = latest.UserId.Split('-');
-        var next = int.Parse(parts[1]) + 1;
-        return $"USR-{next:D4}";
-    }
 }

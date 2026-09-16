@@ -28,6 +28,9 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
+    /// <summary>
+    /// Gets a paginated list of all web users.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? role, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -36,6 +39,9 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Gets a specific web user by their ID.
+    /// </summary>
     [HttpGet("{userId}")]
     public async Task<IActionResult> GetById(string userId)
     {
@@ -43,6 +49,9 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Creates a new Backoffice or Operator user.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
     {
@@ -50,6 +59,9 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { userId = response.UserId }, response);
     }
 
+    /// <summary>
+    /// Updates an existing web user's profile and role.
+    /// </summary>
     [HttpPut("{userId}")]
     public async Task<IActionResult> Update(string userId, [FromBody] UpdateUserRequest request)
     {
@@ -57,6 +69,9 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Activates or deactivates a web user.
+    /// </summary>
     [HttpPatch("{userId}/status")]
     public async Task<IActionResult> SetStatus(string userId, [FromBody] UserStatusRequest request)
     {
@@ -67,6 +82,9 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Soft deletes a web user by deactivating them.
+    /// </summary>
     [HttpDelete("{userId}")]
     public async Task<IActionResult> Delete(string userId)
     {

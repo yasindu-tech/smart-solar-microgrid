@@ -29,7 +29,9 @@ public class DashboardController : ControllerBase
         _prosumerService = prosumerService;
     }
 
-    // REQ-VIEW §2.4: Backoffice dashboard (Owned by D1)
+    /// <summary>
+    /// Gets aggregated metrics for the Backoffice dashboard.
+    /// </summary>
     [HttpGet("backoffice")]
     [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> GetBackofficeDashboard()
@@ -38,7 +40,9 @@ public class DashboardController : ControllerBase
         return Ok(response);
     }
 
-    // REQ-VIEW §2.1: Prosumer dashboard (Owned by D3)
+    /// <summary>
+    /// Gets aggregated metrics for the Prosumer dashboard.
+    /// </summary>
     [HttpGet("prosumer")]
     [Authorize(Roles = "Prosumer")]
     public IActionResult GetProsumerDashboard()
@@ -46,7 +50,9 @@ public class DashboardController : ControllerBase
         return StatusCode(501, new { message = "Not implemented yet. Over to M3." });
     }
 
-    // REQ-VIEW §2.3: Operator dashboard (Owned by D4)
+    /// <summary>
+    /// Gets aggregated metrics for the Operator dashboard.
+    /// </summary>
     [HttpGet("operator")]
     [Authorize(Roles = "Operator")]
     public IActionResult GetOperatorDashboard()

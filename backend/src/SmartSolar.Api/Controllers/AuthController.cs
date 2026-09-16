@@ -28,8 +28,9 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    // POST /api/auth/login — open to unauthenticated callers.
-    // Returns a signed JWT on success; E4301 or E4302 on failure.
+    /// <summary>
+    /// Authenticates a user and returns a JWT token.
+    /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -38,8 +39,9 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-    // POST /api/auth/logout — token is stateless so the server just returns 204.
-    // The client must delete the stored token (web: sessionStorage, Android: SQLite).
+    /// <summary>
+    /// Logs out a user.
+    /// </summary>
     [HttpPost("logout")]
     [Authorize]
     public IActionResult Logout()
@@ -47,8 +49,9 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    // GET /api/auth/me — returns the identity embedded in the current token.
-    // Useful for clients to refresh their stored profile without re-login.
+    /// <summary>
+    /// Gets the current authenticated user's profile information.
+    /// </summary>
     [HttpGet("me")]
     [Authorize]
     public IActionResult Me()

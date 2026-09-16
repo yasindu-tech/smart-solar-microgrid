@@ -20,12 +20,19 @@ namespace SmartSolar.Api.Services;
 public class UserService
 {
     private readonly UserRepository _userRepo;
+    private readonly CounterRepository _counterRepo;
+    private readonly NodeRepository _nodeRepo;
 
-    public UserService(UserRepository userRepo)
+    public UserService(UserRepository userRepo, CounterRepository counterRepo, NodeRepository nodeRepo)
     {
         _userRepo = userRepo;
+        _counterRepo = counterRepo;
+        _nodeRepo = nodeRepo;
     }
 
+    /// <summary>
+    /// Gets a paginated list of users, optionally filtered by role.
+    /// </summary>
     public async Task<PagedResponse<UserResponse>> GetAllAsync(
         string? role, int page, int pageSize)
     {
@@ -35,6 +42,9 @@ public class UserService
         return new PagedResponse<UserResponse>(dtos, total, page, pageSize);
     }
 
+    /// <summary>
+    /// Gets a specific user by their User ID.
+    /// </summary>
     public async Task<UserResponse> GetByIdAsync(string userId)
     {
         var user = await _userRepo.GetByUserIdAsync(userId);
@@ -44,13 +54,16 @@ public class UserService
         return MapToResponse(user);
     }
 
+    /// <summary>
+    /// Creates a new Backoffice or Operator user.
+    /// </summary>
     public async Task<UserResponse> CreateAsync(CreateUserRequest request)
     {
         // BR-12 analogue: email must be unique
         if (await _userRepo.EmailExistsAsync(request.Email.Trim()))
             throw new DomainException("E4001", "Email is already in use.", 409, "email");
 
-        if (request.Password.Length < 8)
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
             throw new DomainException("E4000", "Password must be at least 8 characters.", 400, "password");
 
         if (request.Role != "Backoffice" && request.Role != "Operator")
@@ -63,12 +76,20 @@ public class UserService
         }
         else if (!assignedNodes.Any())
         {
-             // For Operators, at least one node is typically expected, but if business rules don't strictly enforce >0, we proceed.
-             // Usually, validation against SolarStationInfo would happen here to ensure node exists (E4404).
-             // Since D2 (Inventory) owns nodes, we'll assume a basic check would go here if we had the NodeRepo.
+             throw new DomainException("E4000", "Operator must have at least one assigned node.", 400, "assignedNodeIds");
         }
 
-        var nextUserId = await _userRepo.GetNextUserIdAsync();
+        if (request.Role == "Operator")
+        {
+            foreach (var nodeId in assignedNodes)
+            {
+                if (!await _nodeRepo.ExistsAsync(nodeId))
+                    throw new DomainException("E4404", $"Assigned node {nodeId} not found.", 404, "assignedNodeIds");
+            }
+        }
+
+        var nextIdNum = await _counterRepo.GetNextSequenceValueAsync("userid");
+        var nextUserId = $"USR-{nextIdNum:D4}";
 
         var user = new User
         {
@@ -83,11 +104,21 @@ public class UserService
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _userRepo.CreateAsync(user);
+        try
+        {
+            await _userRepo.CreateAsync(user);
+        }
+        catch (MongoDB.Driver.MongoWriteException ex) when (ex.WriteError.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
+        {
+            throw new DomainException("E4001", "Email is already in use.", 409, "email");
+        }
 
         return MapToResponse(user);
     }
 
+    /// <summary>
+    /// Updates an existing user's details and role.
+    /// </summary>
     public async Task<UserResponse> UpdateAsync(string userId, UpdateUserRequest request)
     {
         var user = await _userRepo.GetByUserIdAsync(userId);
@@ -100,12 +131,19 @@ public class UserService
         if (request.Role != "Backoffice" && request.Role != "Operator")
             throw new DomainException("E4000", "Role must be Backoffice or Operator.", 400, "role");
 
+        // Guard: Cannot change the last active Backoffice to Operator
+        if (user.Role == "Backoffice" && request.Role == "Operator" && user.IsActive)
+        {
+            if (await _userRepo.CountActiveBackofficeAsync() <= 1)
+                throw new DomainException("E4303", "Cannot change the role of the final active Backoffice account.", 403);
+        }
+
         user.FullName = request.FullName.Trim();
         user.Email = request.Email.Trim().ToLower();
         user.Role = request.Role;
         user.UpdatedAt = DateTime.UtcNow;
 
-        if (request.Password != null)
+        if (!string.IsNullOrWhiteSpace(request.Password))
         {
             if (request.Password.Length < 8)
                 throw new DomainException("E4000", "Password must be at least 8 characters.", 400, "password");
@@ -117,13 +155,36 @@ public class UserService
         {
             assignedNodes.Clear(); // REQ-USER AC-7
         }
+        else if (!assignedNodes.Any())
+        {
+            throw new DomainException("E4000", "Operator must have at least one assigned node.", 400, "assignedNodeIds");
+        }
+
+        if (request.Role == "Operator")
+        {
+            foreach (var nodeId in assignedNodes)
+            {
+                if (!await _nodeRepo.ExistsAsync(nodeId))
+                    throw new DomainException("E4404", $"Assigned node {nodeId} not found.", 404, "assignedNodeIds");
+            }
+        }
         user.AssignedNodeIds = assignedNodes;
 
-        await _userRepo.UpdateAsync(user);
+        try
+        {
+            await _userRepo.UpdateAsync(user);
+        }
+        catch (MongoDB.Driver.MongoWriteException ex) when (ex.WriteError.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
+        {
+            throw new DomainException("E4001", "Email is already in use.", 409, "email");
+        }
 
         return MapToResponse(user);
     }
 
+    /// <summary>
+    /// Activates or deactivates a user account.
+    /// </summary>
     public async Task SetStatusAsync(string userId, bool isActive, string callerUserId)
     {
         var user = await _userRepo.GetByUserIdAsync(userId);
@@ -144,12 +205,18 @@ public class UserService
         await _userRepo.UpdateAsync(user);
     }
 
+    /// <summary>
+    /// Soft deletes a user account by deactivating it.
+    /// </summary>
     public Task DeleteAsync(string userId, string callerUserId)
     {
         // Soft delete is exactly the same as deactivating.
         return SetStatusAsync(userId, false, callerUserId);
     }
 
+    /// <summary>
+    /// Maps a User document to a DTO.
+    /// </summary>
     private static UserResponse MapToResponse(User user)
     {
         return new UserResponse(

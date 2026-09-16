@@ -22,6 +22,7 @@ public record LoginResponse(
     string DisplayName,
 
     // UserId for web users; NIC for prosumers.
+    [property: System.Text.Json.Serialization.JsonPropertyName("nicOrUserId")]
     string SubjectId,
 
     // UTC expiry so clients can schedule pre-emptive logout.

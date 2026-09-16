@@ -34,13 +34,18 @@ public class AuthService
         _jwtService = jwtService;
     }
 
-    // Authenticate a login attempt. Returns a JWT on success.
-    // Error codes per api-contract.md §9:
-    //   E4301 — invalid credentials (used for both "not found" and "wrong password"
-    //           to avoid revealing whether the account exists — REQ-AUTH AC-5).
-    //   E4302 — account inactive (deactivated or pending approval — AC-6, AC-7).
+    /// <summary>
+    /// Authenticate a login attempt. Returns a JWT on success.
+    /// Error codes per api-contract.md §9:
+    ///   E4301 — invalid credentials (used for both "not found" and "wrong password"
+    ///           to avoid revealing whether the account exists — REQ-AUTH AC-5).
+    ///   E4302 — account inactive (deactivated or pending approval — AC-6, AC-7).
+    /// </summary>
     public async Task<LoginResponse> LoginAsync(string identifier, string password)
     {
+        if (string.IsNullOrWhiteSpace(password))
+            throw new DomainException("E4000", "Password cannot be empty.", 400, "password");
+
         // Step 1: try to find a web user by email (Backoffice or Operator).
         var webUser = await _userRepo.GetByEmailAsync(identifier.Trim());
         if (webUser != null)
@@ -68,14 +73,14 @@ public class AuthService
             if (!BCrypt.Net.BCrypt.Verify(password, prosumer.PasswordHash))
                 throw new DomainException("E4301", "Invalid credentials.", 401);
 
-            // Prosumer must be Active — PendingActivation and Deactivated both return E4302.
-            if (prosumer.Status == "PendingActivation")
-                throw new DomainException("E4302",
-                    "Your account is awaiting Backoffice approval.", 403);
-
-            if (prosumer.Status == "Deactivated")
-                throw new DomainException("E4302",
-                    "Your account has been deactivated. Contact Backoffice to reactivate.", 403);
+            // Prosumer must be exactly "Active".
+            if (prosumer.Status != "Active")
+            {
+                var message = prosumer.Status == "PendingActivation"
+                    ? "Your account is awaiting Backoffice approval."
+                    : "Your account has been deactivated. Contact Backoffice to reactivate.";
+                throw new DomainException("E4302", message, 403);
+            }
 
             var (token, expiresAt) = _jwtService.GenerateToken(
                 prosumer.Nic, "Prosumer", prosumer.FullName);
@@ -87,14 +92,18 @@ public class AuthService
         throw new DomainException("E4301", "Invalid credentials.", 401);
     }
 
-    // Extract the current principal's identity from the validated JWT claims.
+    /// <summary>
+    /// Extract the current principal's identity from the validated JWT claims.
+    /// </summary>
     public PrincipalResponse GetCurrentPrincipal(ClaimsPrincipal user)
     {
         var subjectId = user.FindFirstValue(ClaimTypes.NameIdentifier)
                      ?? user.FindFirstValue("sub")
                      ?? string.Empty;
         var role = user.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
-        var displayName = user.FindFirstValue("name") ?? string.Empty;
+        var displayName = user.FindFirstValue(ClaimTypes.Name)
+                       ?? user.FindFirstValue("name") 
+                       ?? string.Empty;
 
         return new PrincipalResponse(subjectId, role, displayName);
     }

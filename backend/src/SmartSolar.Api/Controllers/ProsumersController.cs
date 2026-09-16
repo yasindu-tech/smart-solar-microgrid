@@ -27,6 +27,9 @@ public class ProsumersController : ControllerBase
         _prosumerService = prosumerService;
     }
 
+    /// <summary>
+    /// Registers a new prosumer profile.
+    /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterProsumerRequest request)
@@ -35,6 +38,9 @@ public class ProsumersController : ControllerBase
         return CreatedAtAction(nameof(GetByNic), new { nic = response.Nic }, response);
     }
 
+    /// <summary>
+    /// Gets a paginated list of all prosumers.
+    /// </summary>
     [HttpGet]
     [Authorize(Roles = "Backoffice,Operator")]
     public async Task<IActionResult> GetAll(
@@ -45,6 +51,9 @@ public class ProsumersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Gets a paginated list of prosumers waiting for activation.
+    /// </summary>
     [HttpGet("pending")]
     [Authorize(Roles = "Backoffice")] // Only Backoffice can process the queue
     public async Task<IActionResult> GetPending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -53,6 +62,9 @@ public class ProsumersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Gets a specific prosumer by NIC.
+    /// </summary>
     [HttpGet("{nic}")]
     [Authorize] // Handled by service BR-02 check
     public async Task<IActionResult> GetByNic(string nic)
@@ -65,6 +77,9 @@ public class ProsumersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Updates a specific prosumer's profile details.
+    /// </summary>
     [HttpPut("{nic}")]
     [Authorize] // Handled by service BR-02 check
     public async Task<IActionResult> Update(string nic, [FromBody] UpdateProsumerRequest request)
@@ -77,6 +92,9 @@ public class ProsumersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Approves or reactivates a prosumer profile.
+    /// </summary>
     [HttpPatch("{nic}/activate")]
     [Authorize(Roles = "Backoffice")] // BR-03 enforcement at the router layer
     public async Task<IActionResult> Activate(string nic)
@@ -89,6 +107,9 @@ public class ProsumersController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Deactivates a prosumer profile.
+    /// </summary>
     [HttpPatch("{nic}/deactivate")]
     [Authorize]
     public async Task<IActionResult> Deactivate(string nic)

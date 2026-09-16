@@ -26,17 +26,23 @@ public class ProsumerRepository
         var client = new MongoClient(settings.Value.ConnectionString);
         var db = client.GetDatabase(settings.Value.DatabaseName);
         _collection = db.GetCollection<Prosumer>("Prosumers");
+
+        // Create indexes
+        var uniqueOptions = new CreateIndexOptions { Unique = true };
+        _collection.Indexes.CreateOne(new CreateIndexModel<Prosumer>(
+            Builders<Prosumer>.IndexKeys.Ascending(p => p.Email), uniqueOptions));
+
+        var collationOptions = new CreateIndexOptions { Collation = new Collation("en", strength: CollationStrength.Secondary) };
+        _collection.Indexes.CreateOne(new CreateIndexModel<Prosumer>(
+            Builders<Prosumer>.IndexKeys.Ascending(p => p.Nic), collationOptions));
     }
 
-    // Find a prosumer by NIC (case-insensitive trim). Used at login and for
-    // per-request status checks (BR-17, REQ-AUTH EC-6).
     public async Task<Prosumer?> GetByNicAsync(string nic)
     {
-        var normalised = nic.Trim();
-        var filter = Builders<Prosumer>.Filter.Regex(
-            p => p.Nic,
-            new MongoDB.Bson.BsonRegularExpression($"^{System.Text.RegularExpressions.Regex.Escape(normalised)}$", "i"));
-        return await _collection.Find(filter).FirstOrDefaultAsync();
+        var filter = Builders<Prosumer>.Filter.Eq(p => p.Nic, nic.Trim());
+        var options = new FindOptions<Prosumer> { Collation = new Collation("en", strength: CollationStrength.Secondary) };
+        var cursor = await _collection.FindAsync(filter, options);
+        return await cursor.FirstOrDefaultAsync();
     }
 
     // Paginated list with optional status filter and search across NIC/name.
@@ -115,13 +121,9 @@ public class ProsumerRepository
         return (int)await _collection.CountDocumentsAsync(Builders<Prosumer>.Filter.Empty);
     }
 
-    // Check whether an email is already used by another prosumer.
     public async Task<bool> EmailExistsAsync(string email, string? excludeNic = null)
     {
-        var emailFilter = Builders<Prosumer>.Filter.Regex(
-            p => p.Email,
-            new MongoDB.Bson.BsonRegularExpression(
-                $"^{System.Text.RegularExpressions.Regex.Escape(email)}$", "i"));
+        var emailFilter = Builders<Prosumer>.Filter.Eq(p => p.Email, email.Trim());
 
         if (excludeNic != null)
         {
@@ -129,6 +131,7 @@ public class ProsumerRepository
             emailFilter = Builders<Prosumer>.Filter.And(emailFilter, notSelf);
         }
 
-        return await _collection.CountDocumentsAsync(emailFilter) > 0;
+        var options = new CountOptions { Collation = new Collation("en", strength: CollationStrength.Secondary) };
+        return await _collection.CountDocumentsAsync(emailFilter, options) > 0;
     }
 }

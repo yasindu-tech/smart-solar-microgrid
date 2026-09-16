@@ -107,6 +107,7 @@ the rubric is concerned ("One view only, or values are hard-coded" = Poor band).
 
 | Code | HTTP | Meaning | Rule |
 |---|---|---|---|
+| `E4000` | 400 | Validation Error | |
 | `E4001` | 409 | Duplicate identifier (nodeId / NIC / email) | |
 | `E4002` | 400 | Invalid coordinates or capacity | |
 | `E4003` | 409 | Capacity reduction below committed reservations | |

@@ -22,13 +22,19 @@ namespace SmartSolar.Api.Services;
 public class ProsumerService
 {
     private readonly ProsumerRepository _prosumerRepo;
-    // We would inject M3's ReservationService or Repo here for the BR-04 cascade.
+    private readonly ReservationRepository _reservationRepo;
+    private readonly NodeRepository _nodeRepo;
 
-    public ProsumerService(ProsumerRepository prosumerRepo)
+    public ProsumerService(ProsumerRepository prosumerRepo, ReservationRepository reservationRepo, NodeRepository nodeRepo)
     {
         _prosumerRepo = prosumerRepo;
+        _reservationRepo = reservationRepo;
+        _nodeRepo = nodeRepo;
     }
 
+    /// <summary>
+    /// Registers a new prosumer (PendingActivation).
+    /// </summary>
     public async Task<ProsumerResponse> RegisterAsync(RegisterProsumerRequest request)
     {
         var nic = request.Nic.Trim();
@@ -62,11 +68,22 @@ public class ProsumerService
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _prosumerRepo.CreateAsync(prosumer);
+        try
+        {
+            await _prosumerRepo.CreateAsync(prosumer);
+        }
+        catch (MongoDB.Driver.MongoWriteException ex) when (ex.WriteError.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
+        {
+            // Fallback for race conditions if exact field isn't parsed easily
+            throw new DomainException("E4001", "Email or NIC is already in use.", 409, "emailOrNic");
+        }
 
         return MapToResponse(prosumer);
     }
 
+    /// <summary>
+    /// Gets a paginated list of all prosumers, with optional filtering.
+    /// </summary>
     public async Task<PagedResponse<ProsumerResponse>> GetAllAsync(
         string? status, string? search, int page, int pageSize)
     {
@@ -75,6 +92,9 @@ public class ProsumerService
             items.Select(MapToResponse).ToList(), total, page, pageSize);
     }
 
+    /// <summary>
+    /// Gets a paginated list of PendingActivation prosumers.
+    /// </summary>
     public async Task<PagedResponse<ProsumerResponse>> GetPendingAsync(int page, int pageSize)
     {
         var (items, total) = await _prosumerRepo.GetPendingAsync(page, pageSize);
@@ -82,6 +102,9 @@ public class ProsumerService
             items.Select(MapToResponse).ToList(), total, page, pageSize);
     }
 
+    /// <summary>
+    /// Gets a specific prosumer by NIC, respecting RBAC access rules.
+    /// </summary>
     public async Task<ProsumerResponse> GetByNicAsync(string nic, string callerNic, string callerRole)
     {
         // BR-02: Owner or Backoffice/Operator
@@ -95,6 +118,9 @@ public class ProsumerService
         return MapToResponse(prosumer);
     }
 
+    /// <summary>
+    /// Updates a prosumer's profile details.
+    /// </summary>
     public async Task<ProsumerResponse> UpdateAsync(
         string nic, UpdateProsumerRequest request, string callerNic, string callerRole)
     {
@@ -124,11 +150,21 @@ public class ProsumerService
         prosumer.SolarCapacityKw = request.SolarCapacityKw;
         prosumer.UpdatedAt = DateTime.UtcNow;
 
-        await _prosumerRepo.UpdateAsync(prosumer);
+        try
+        {
+            await _prosumerRepo.UpdateAsync(prosumer);
+        }
+        catch (MongoDB.Driver.MongoWriteException ex) when (ex.WriteError.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
+        {
+            throw new DomainException("E4001", "Email is already in use.", 409, "email");
+        }
 
         return MapToResponse(prosumer);
     }
 
+    /// <summary>
+    /// Approves or reactivates a prosumer (Backoffice only).
+    /// </summary>
     public async Task ActivateAsync(string nic, string callerRole, string callerUserId)
     {
         // BR-03: ONLY Backoffice can reactivate an account.
@@ -153,6 +189,9 @@ public class ProsumerService
         await _prosumerRepo.UpdateAsync(prosumer);
     }
 
+    /// <summary>
+    /// Deactivates a prosumer and cascades cancellation of future reservations.
+    /// </summary>
     public async Task DeactivateAsync(string nic, string callerNic, string callerRole)
     {
         // BR-02: Owner or Backoffice
@@ -175,12 +214,13 @@ public class ProsumerService
         await _prosumerRepo.UpdateAsync(prosumer);
 
         // BR-04 CASCADE: Cancel all future Pending/Approved reservations.
-        // TODO: M3 Integration required here. M3 owns the Reservation Service/Repository.
-        // This must fetch reservations for this NIC, cancel them (bypassing the 12-hour rule),
-        // and restore capacity to M2's slots.
-        // Example: await _reservationService.CancelAllFutureForProsumerAsync(nic);
+        // M3 Integration: We call the ReservationRepository to cancel future slots and restore capacity.
+        await _reservationRepo.CancelAllFutureForProsumerAsync(nic);
     }
 
+    /// <summary>
+    /// Gets aggregated metrics for the Backoffice dashboard.
+    /// </summary>
     public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
     {
         // Total Prosumers
@@ -189,22 +229,25 @@ public class ProsumerService
         // Pending Activations
         var pendingActivations = await _prosumerRepo.CountByStatusAsync("PendingActivation");
 
-        // Active Nodes (TODO: M2 Integration to query SolarStationInfo)
-        var activeNodes = 0; 
+        // Active Nodes (M2 Integration)
+        var activeNodes = await _nodeRepo.CountActiveAsync(); 
 
-        // Reservations by status (TODO: M3 Integration to group by status)
+        // Reservations by status (M3 Integration)
         var reservationsByStatus = new Dictionary<string, int>
         {
-            { "Pending", 0 },
-            { "Approved", 0 },
-            { "Completed", 0 },
-            { "Cancelled", 0 }
+            { "Pending", await _reservationRepo.CountByStatusAsync("Pending") },
+            { "Approved", await _reservationRepo.CountByStatusAsync("Approved") },
+            { "Completed", await _reservationRepo.CountByStatusAsync("Completed") },
+            { "Cancelled", await _reservationRepo.CountByStatusAsync("Cancelled") }
         };
 
         return new BackofficeDashboardResponse(
             totalProsumers, pendingActivations, activeNodes, reservationsByStatus);
     }
 
+    /// <summary>
+    /// Maps a Prosumer document to a DTO.
+    /// </summary>
     private static ProsumerResponse MapToResponse(Prosumer p)
     {
         return new ProsumerResponse(

@@ -26,8 +26,11 @@ builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mong
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 // Register domain repositories
+builder.Services.AddSingleton<CounterRepository>();
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<ProsumerRepository>();
+builder.Services.AddSingleton<NodeRepository>();
+builder.Services.AddSingleton<ReservationRepository>();
 
 // Register domain services
 builder.Services.AddScoped<JwtTokenService>();
@@ -58,6 +61,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse(); // Prevent default 401
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new { code = "E4301", message = "Invalid or missing token.", traceId = context.HttpContext.TraceIdentifier });
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = 403;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new { code = "E4303", message = "You do not have permission to perform this action.", traceId = context.HttpContext.TraceIdentifier });
+            }
         };
     });
 builder.Services.AddAuthorization();
