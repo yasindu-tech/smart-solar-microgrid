@@ -148,6 +148,13 @@
   --sg-sidebar-width: 256px;
   --sg-header-height: 64px;
 
+  /* Loader diameters. Mobile-first values; bumped for wider viewports in the
+     media query below, so <SolarLoader size="md" /> is correct on both without
+     the component knowing anything about breakpoints. */
+  --sg-loader-sm: 2rem;   /* 32px */
+  --sg-loader-md: 3.5rem; /* 56px */
+  --sg-loader-lg: 5rem;   /* 80px */
+
   /* =========================================================
      MOTION
      ========================================================= */
@@ -163,6 +170,17 @@
   --sg-z-sticky: 1100;
   --sg-z-modal: 1200;
   --sg-z-toast: 1300;
+}
+
+/* Tokens that differ between phone and desktop are re-declared here rather
+   than inside each component, so a component never needs a media query of
+   its own. Breakpoint matches Tailwind's md. */
+@media (min-width: 768px) {
+  :root {
+    --sg-loader-sm: 2.5rem; /* 40px */
+    --sg-loader-md: 4.5rem; /* 72px */
+    --sg-loader-lg: 7rem;   /* 112px */
+  }
 }
 
 /* =========================================================
@@ -1059,17 +1077,59 @@ a:hover {
   animation: sg-pulse 1.4s var(--sg-ease) infinite;
 }
 
-/* Branded ring used by <SolarLoader> (web/src/components/SolarLoader) - the
+/* Branded loader used by <SolarLoader> (web/src/components/SolarLoader) - the
    shared, larger loading indicator for a whole page/panel. .sg-spinner above
-   stays the small inline one (e.g. inside a loading button). */
+   stays the small inline one (e.g. inside a loading button).
+
+   Sizes are three named variants, not arbitrary numbers, so every loader in
+   the app is one of three known diameters - same rule as .sg-btn-sm/-lg. */
+.sg-solar-loader {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sg-space-3);
+}
+
+.sg-solar-loader-sm {
+  --sg-loader-size: var(--sg-loader-sm);
+  --sg-loader-ring-width: 3px;
+}
+
+.sg-solar-loader-md {
+  --sg-loader-size: var(--sg-loader-md);
+  --sg-loader-ring-width: 4px;
+}
+
+.sg-solar-loader-lg {
+  --sg-loader-size: var(--sg-loader-lg);
+  --sg-loader-ring-width: 5px;
+}
+
+/* Falls back to the md variant if a size class is somehow missing. */
+.sg-solar-loader-figure {
+  position: relative;
+  width: var(--sg-loader-size, var(--sg-loader-md));
+  height: var(--sg-loader-size, var(--sg-loader-md));
+}
+
 .sg-solar-loader-ring {
   position: absolute;
   inset: 0;
   border-radius: var(--sg-radius-full);
-  border: 4px solid var(--sg-border);
+  border: var(--sg-loader-ring-width, 4px) solid var(--sg-border);
   border-top-color: var(--sg-secondary);
   border-right-color: var(--sg-primary);
   animation: sg-spin 0.9s linear infinite;
+}
+
+.sg-solar-loader-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 58%;
+  height: 58%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
 }
 
 @keyframes sg-spin {
