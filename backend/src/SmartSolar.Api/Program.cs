@@ -40,6 +40,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
+        var signingKey = jwtSettings.SigningKey?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(signingKey)
+            || signingKey.Contains("replace-with-a-long-random-value", StringComparison.OrdinalIgnoreCase)
+            || signingKey.Length < 32)
+        {
+            throw new InvalidOperationException("Jwt:SigningKey must be configured from an external secret and be at least 32 characters.");
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -47,7 +55,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = jwtSettings.Audience,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
