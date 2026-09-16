@@ -2,7 +2,7 @@
 <!--
   SunGrid design-system color tokens for Android.
 
-  These must stay numerically identical to the --sg-* custom properties in
+  These must stay numerically identical to the sg-prefixed custom properties in
   web/src/styles/base.css - see docs/architecture/ui-design-system.md section 22.
   There is no build step that generates one file from the other; if base.css
   changes, update this file by hand in the same PR.
