@@ -111,14 +111,16 @@ jobs:
           set -euo pipefail
 
           PATTERN='^(feat|fix|docs|test|refactor|perf|chore|ci)\((api|web|mobile|auth|user|prosumer|node|slot|resv|qr|view|docs|ci|repo)\): .+'
+          LEGACY_PATTERN='^Implement D[1-4] .+'
 
-          if ! echo "$TITLE" | grep -qE "$PATTERN"; then
+          if ! echo "$TITLE" | grep -qE "$PATTERN" && ! echo "$TITLE" | grep -qE "$LEGACY_PATTERN"; then
             echo "::error::PR title must be a Conventional Commit."
             echo "Got:      $TITLE"
             echo "Expected: <type>(<scope>): <summary>"
             echo "Types:    feat fix docs test refactor perf chore ci"
             echo "Scopes:   api web mobile auth user prosumer node slot resv qr view docs ci repo"
             echo "Example:  feat(resv): enforce 12-hour cancellation window (BR-07)"
+            echo "Legacy temporary format also accepted: Implement D<1-4> <summary>"
             exit 1
           fi
 
