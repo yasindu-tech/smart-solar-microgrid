@@ -1,17 +1,9 @@
-// ---------------------------------------------------------------------------
-//  File        : UsersController.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Controllers
-//  Description : Endpoints for web user administration. Gated exclusively to
-//                the Backoffice role (BR-01, REQ-USER AC-3).
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartSolar.Api.DTOs.Users;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;

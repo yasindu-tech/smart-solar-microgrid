@@ -1,17 +1,9 @@
-// ---------------------------------------------------------------------------
-//  File        : ProsumersController.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Controllers
-//  Description : Endpoints for prosumer management. Includes the public
-//                register endpoint, and BR-03 guarded reactivation.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartSolar.Api.DTOs.Prosumers;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;

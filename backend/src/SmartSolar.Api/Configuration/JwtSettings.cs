@@ -1,15 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : JwtSettings.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Configuration
-//  Description : Strongly typed JWT settings bound from the "Jwt" section of
-//                appsettings.json. The signing key is supplied via
-//                appsettings.Development.json (local) or
-//                appsettings.Production.json (VM) — never committed.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 namespace SmartSolar.Api.Configuration;
 
 public class JwtSettings

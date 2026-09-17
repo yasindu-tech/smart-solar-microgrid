@@ -1,15 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : Program.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Host
-//  Description : Application entry point. Registers controllers, the MongoDB
-//                settings, CORS for the web client and the error envelope
-//                middleware. ALL business logic lives in Services - see
-//                docs/architecture/system-overview.md section 3.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-13
-// ---------------------------------------------------------------------------
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -29,8 +17,6 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 builder.Services.AddSingleton<CounterRepository>();
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<ProsumerRepository>();
-builder.Services.AddSingleton<NodeRepository>();
-builder.Services.AddSingleton<ReservationRepository>();
 
 // Register domain services
 builder.Services.AddScoped<JwtTokenService>();

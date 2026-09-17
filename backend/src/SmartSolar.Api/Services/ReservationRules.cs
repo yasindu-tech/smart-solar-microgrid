@@ -1,21 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : ReservationRules.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Services
-//  Description : The two headline time-window rules of the system, isolated as
-//                pure functions so they can be unit tested at their exact
-//                boundaries. See docs/business-rules/BR-register.md.
-//
-//                BR-05  a slot must start within 7 days of reservation CREATION
-//                BR-06  updates need >= 12 hours notice before the slot start
-//                BR-07  cancellations need >= 12 hours notice before slot start
-//
-//                BR-05 and BR-06/07 use DIFFERENT anchors. Do not merge them
-//                into one helper - that is how the boundary cases go wrong.
-//  Author      : <member name - M3>
-//  Created     : 2026-09-13
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.Middleware;
 
 namespace SmartSolar.Api.Services;

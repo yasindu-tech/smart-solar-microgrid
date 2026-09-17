@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : User.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Models
-//  Description : MongoDB document model for the Users collection. Represents
-//                Backoffice and Grid Operator web accounts. Field names match
-//                docs/architecture/data-model.md section 1.1 exactly.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 

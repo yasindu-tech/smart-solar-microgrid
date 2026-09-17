@@ -1,17 +1,7 @@
-// ---------------------------------------------------------------------------
-//  File        : AuthService.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Services
-//  Description : Authentication business logic. Handles login for all three
-//                roles using a dual-collection lookup (REQ-AUTH §4 step 2):
-//                first tries Users by email, then Prosumers by NIC.
-//                Issues JWTs via JwtTokenService.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.Security.Claims;
-using SmartSolar.Api.DTOs.Auth;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Repositories;
 
@@ -95,7 +85,7 @@ public class AuthService
     /// <summary>
     /// Extract the current principal's identity from the validated JWT claims.
     /// </summary>
-    public PrincipalResponse GetCurrentPrincipal(ClaimsPrincipal user)
+    public CurrentUserResponse GetCurrentPrincipal(ClaimsPrincipal user)
     {
         var subjectId = user.FindFirstValue(ClaimTypes.NameIdentifier)
                      ?? user.FindFirstValue("sub")
@@ -105,6 +95,6 @@ public class AuthService
                        ?? user.FindFirstValue("name") 
                        ?? string.Empty;
 
-        return new PrincipalResponse(subjectId, role, displayName);
+        return new CurrentUserResponse(subjectId, role, displayName);
     }
 }

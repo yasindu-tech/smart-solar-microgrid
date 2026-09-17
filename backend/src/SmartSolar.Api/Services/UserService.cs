@@ -1,16 +1,6 @@
-// ---------------------------------------------------------------------------
-//  File        : UserService.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Services
-//  Description : Business logic for managing web accounts (Backoffice and
-//                Operator). Includes self-deactivation guards and last
-//                active backoffice guards (REQ-USER EC-1, EC-2).
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
-using SmartSolar.Api.DTOs.Common;
-using SmartSolar.Api.DTOs.Users;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Models;
 using SmartSolar.Api.Repositories;
@@ -21,13 +11,10 @@ public class UserService
 {
     private readonly UserRepository _userRepo;
     private readonly CounterRepository _counterRepo;
-    private readonly NodeRepository _nodeRepo;
-
-    public UserService(UserRepository userRepo, CounterRepository counterRepo, NodeRepository nodeRepo)
+    public UserService(UserRepository userRepo, CounterRepository counterRepo)
     {
         _userRepo = userRepo;
         _counterRepo = counterRepo;
-        _nodeRepo = nodeRepo;
     }
 
     /// <summary>
@@ -81,11 +68,7 @@ public class UserService
 
         if (request.Role == "Operator")
         {
-            foreach (var nodeId in assignedNodes)
-            {
-                if (!await _nodeRepo.ExistsAsync(nodeId))
-                    throw new DomainException("E4404", $"Assigned node {nodeId} not found.", 404, "assignedNodeIds");
-            }
+            // TODO (M2): Validate that assigned nodes exist.
         }
 
         var nextIdNum = await _counterRepo.GetNextSequenceValueAsync("userid");
@@ -162,11 +145,7 @@ public class UserService
 
         if (request.Role == "Operator")
         {
-            foreach (var nodeId in assignedNodes)
-            {
-                if (!await _nodeRepo.ExistsAsync(nodeId))
-                    throw new DomainException("E4404", $"Assigned node {nodeId} not found.", 404, "assignedNodeIds");
-            }
+            // TODO (M2): Validate that assigned nodes exist.
         }
         user.AssignedNodeIds = assignedNodes;
 

@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : UserRepository.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Repositories
-//  Description : MongoDB access layer for the Users collection. All queries
-//                go through this class so controllers and services never hold
-//                a direct IMongoCollection reference.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartSolar.Api.Configuration;

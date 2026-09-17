@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : ReservationStateMachine.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Services
-//  Description : The only place a reservation status change is authorised.
-//                Mirrors the transition table in
-//                docs/architecture/state-machines.md section 1.
-//  Author      : <member name - M3>
-//  Created     : 2026-09-13
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.Middleware;
 
 namespace SmartSolar.Api.Services;

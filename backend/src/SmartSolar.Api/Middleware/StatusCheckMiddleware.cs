@@ -1,22 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : StatusCheckMiddleware.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Middleware
-//  Description : Per-request account status re-check. Runs AFTER
-//                UseAuthentication() so the JWT is already validated, but
-//                BEFORE UseAuthorization() so a deactivated account is refused
-//                even with a valid token.
-//
-//                This implements REQ-AUTH EC-6: "Deactivation happens while a
-//                token is still valid → Next API call re-checks status
-//                server-side and returns E4302."
-//
-//                This is the key viva demonstration point for D1 — it shows
-//                that deactivation is real authorisation, not just a login gate.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.Security.Claims;
 using SmartSolar.Api.Repositories;
 

@@ -1,17 +1,8 @@
-// ---------------------------------------------------------------------------
-//  File        : AuthController.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Controllers
-//  Description : Handles POST /api/auth/login, POST /api/auth/logout, and
-//                GET /api/auth/me. All domain logic is in AuthService —
-//                this controller only binds, calls, and maps results.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartSolar.Api.DTOs.Auth;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;

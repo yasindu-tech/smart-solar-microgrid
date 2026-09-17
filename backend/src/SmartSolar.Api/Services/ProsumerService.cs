@@ -1,18 +1,7 @@
-// ---------------------------------------------------------------------------
-//  File        : ProsumerService.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Services
-//  Description : Business logic for Prosumers. Includes NIC validation,
-//                BR-03 (reactivation restricted to Backoffice), and the
-//                BR-04 cascade trigger for deactivation.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.Text.RegularExpressions;
-using SmartSolar.Api.DTOs.Common;
-using SmartSolar.Api.DTOs.Dashboard;
-using SmartSolar.Api.DTOs.Prosumers;
+using SmartSolar.Api.DTOs.Request.Access;
+using SmartSolar.Api.DTOs.Response.Access;
+using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Models;
 using SmartSolar.Api.Repositories;
@@ -22,14 +11,9 @@ namespace SmartSolar.Api.Services;
 public class ProsumerService
 {
     private readonly ProsumerRepository _prosumerRepo;
-    private readonly ReservationRepository _reservationRepo;
-    private readonly NodeRepository _nodeRepo;
-
-    public ProsumerService(ProsumerRepository prosumerRepo, ReservationRepository reservationRepo, NodeRepository nodeRepo)
+    public ProsumerService(ProsumerRepository prosumerRepo)
     {
         _prosumerRepo = prosumerRepo;
-        _reservationRepo = reservationRepo;
-        _nodeRepo = nodeRepo;
     }
 
     /// <summary>
@@ -214,36 +198,9 @@ public class ProsumerService
         await _prosumerRepo.UpdateAsync(prosumer);
 
         // BR-04 CASCADE: Cancel all future Pending/Approved reservations.
-        // M3 Integration: We call the ReservationRepository to cancel future slots and restore capacity.
-        await _reservationRepo.CancelAllFutureForProsumerAsync(nic);
+        // TODO (M3): Call ReservationService to cancel all future Pending/Approved reservations.
     }
 
-    /// <summary>
-    /// Gets aggregated metrics for the Backoffice dashboard.
-    /// </summary>
-    public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
-    {
-        // Total Prosumers
-        var totalProsumers = await _prosumerRepo.CountTotalAsync();
-
-        // Pending Activations
-        var pendingActivations = await _prosumerRepo.CountByStatusAsync("PendingActivation");
-
-        // Active Nodes (M2 Integration)
-        var activeNodes = await _nodeRepo.CountActiveAsync(); 
-
-        // Reservations by status (M3 Integration)
-        var reservationsByStatus = new Dictionary<string, int>
-        {
-            { "Pending", await _reservationRepo.CountByStatusAsync("Pending") },
-            { "Approved", await _reservationRepo.CountByStatusAsync("Approved") },
-            { "Completed", await _reservationRepo.CountByStatusAsync("Completed") },
-            { "Cancelled", await _reservationRepo.CountByStatusAsync("Cancelled") }
-        };
-
-        return new BackofficeDashboardResponse(
-            totalProsumers, pendingActivations, activeNodes, reservationsByStatus);
-    }
 
     /// <summary>
     /// Maps a Prosumer document to a DTO.

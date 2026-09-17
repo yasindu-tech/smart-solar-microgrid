@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : ProsumerRepository.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Repositories
-//  Description : MongoDB access layer for the Prosumers collection. NIC is
-//                the _id (ADR-002). All D1 service classes go through this
-//                class for prosumer data.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartSolar.Api.Configuration;

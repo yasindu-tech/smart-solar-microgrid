@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : Prosumer.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Models
-//  Description : MongoDB document model for the Prosumers collection. NIC is
-//                the _id per ADR-002. Field names match
-//                docs/architecture/data-model.md section 1.2 exactly.
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace SmartSolar.Api.Models;

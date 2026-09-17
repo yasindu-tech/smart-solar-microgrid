@@ -1,16 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : JwtTokenService.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Middleware
-//  Description : Generates signed JWT tokens for authenticated principals.
-//                Token lifetime, issuer, and audience are driven by
-//                JwtSettings bound from configuration. The signing key is
-//                never hard-coded (BR-13 analogue — server controls all
-//                security-sensitive values).
-//  Author      : <member name - M1>
-//  Created     : 2026-09-16
-// ---------------------------------------------------------------------------
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
