@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* base.css already sets body background/color from --sg-bg/--sg-text - this
+   just gives every element a sensible default border color, matching
+   shadcn components' expectation of a global `border-border`. */
+@layer base {
+  * {
+    @apply border-border;
+  }
+}

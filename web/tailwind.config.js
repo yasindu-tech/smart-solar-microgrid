@@ -69,6 +69,43 @@ export default {
           white: 'var(--sg-white)',
           black: 'var(--sg-black)',
         },
+
+        // shadcn's semantic slots, pointed at the SunGrid tokens above instead
+        // of shadcn's own default palette - no new colors, no hsl() conversion
+        // needed since --sg-* is already a plain color value.
+        background: 'var(--sg-bg)',
+        foreground: 'var(--sg-text)',
+        card: {
+          DEFAULT: 'var(--sg-surface)',
+          foreground: 'var(--sg-text)',
+        },
+        popover: {
+          DEFAULT: 'var(--sg-surface)',
+          foreground: 'var(--sg-text)',
+        },
+        primary: {
+          DEFAULT: 'var(--sg-primary)',
+          foreground: 'var(--sg-text-on-primary)',
+        },
+        secondary: {
+          DEFAULT: 'var(--sg-surface)',
+          foreground: 'var(--sg-text)',
+        },
+        muted: {
+          DEFAULT: 'var(--sg-surface-muted)',
+          foreground: 'var(--sg-text-muted)',
+        },
+        accent: {
+          DEFAULT: 'var(--sg-primary-soft)',
+          foreground: 'var(--sg-primary-hover)',
+        },
+        destructive: {
+          DEFAULT: 'var(--sg-danger)',
+          foreground: 'var(--sg-white)',
+        },
+        border: 'var(--sg-border)',
+        input: 'var(--sg-border-strong)',
+        ring: 'var(--sg-border-focus)',
       },
 
       // Keys match base.css exactly. The numeric values are identical to
@@ -161,5 +198,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 }
