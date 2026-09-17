@@ -1,14 +1,3 @@
-// ---------------------------------------------------------------------------
-//  File        : ErrorHandlingMiddleware.cs
-//  Project     : Smart Solar Microgrid Trading System - Web API
-//  Module      : Middleware
-//  Description : Converts every unhandled exception into the one error
-//                envelope defined in docs/architecture/system-overview.md
-//                section 5, so both clients handle failures with one code path.
-//  Author      : <member name>
-//  Created     : 2026-09-13
-// ---------------------------------------------------------------------------
-
 using System.Text.Json;
 
 namespace SmartSolar.Api.Middleware;
