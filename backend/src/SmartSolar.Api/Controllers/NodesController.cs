@@ -1,6 +1,15 @@
+// ---------------------------------------------------------------------------
+//  NodesController.cs - HTTP surface for microgrid node CRUD.
+//  REQ-NODE - Microgrid Node Management. Binds, authorises and maps only -
+//  every business rule lives in NodeService.
+// ---------------------------------------------------------------------------
+
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartSolar.Api.DTOs.Request.Nodes;
+using SmartSolar.Api.DTOs.Response.Common;
+using SmartSolar.Api.DTOs.Response.Nodes;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;
@@ -23,17 +32,27 @@ public class NodesController : ControllerBase
     /// Any authenticated caller. Map the service tuple into the paged envelope.
     /// </summary>
     [HttpGet]
-    public Task<IActionResult> GetAll(
+    public async Task<IActionResult> GetAll(
         [FromQuery] bool? active, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-        => throw new NotImplementedException();
+    {
+        // Delegate paging/filtering to the service; it owns the clamp rules.
+        var (items, total, effectivePage, effectivePageSize) =
+            await _nodeService.GetAllAsync(active, page, pageSize);
+
+        return Ok(new PagedResponse<NodeResponse>(items, total, effectivePage, effectivePageSize));
+    }
 
     /// <summary>
     /// GET /api/nodes/{nodeId}
     /// Any authenticated caller. E4404 from the service becomes a 404 envelope.
     /// </summary>
     [HttpGet("{nodeId}")]
-    public Task<IActionResult> GetById(string nodeId)
-        => throw new NotImplementedException();
+    public async Task<IActionResult> GetById(string nodeId)
+    {
+        // The service throws E4404 for an unknown id; the error middleware maps it to 404.
+        var response = await _nodeService.GetByIdAsync(nodeId);
+        return Ok(response);
+    }
 
     /// <summary>
     /// POST /api/nodes
@@ -42,8 +61,15 @@ public class NodesController : ControllerBase
     /// </summary>
     [HttpPost]
     [Authorize(Roles = "Backoffice")]
-    public Task<IActionResult> Create([FromBody] CreateNodeRequest request)
-        => throw new NotImplementedException();
+    public async Task<IActionResult> Create([FromBody] CreateNodeRequest request)
+    {
+        // Read the caller's identity from the token, never trust a body field for it.
+        var callerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub") ?? string.Empty;
+
+        var response = await _nodeService.CreateAsync(request, callerUserId);
+        return CreatedAtAction(nameof(GetById), new { nodeId = response.NodeId }, response);
+    }
 
     /// <summary>
     /// PUT /api/nodes/{nodeId}
@@ -51,8 +77,12 @@ public class NodesController : ControllerBase
     /// </summary>
     [HttpPut("{nodeId}")]
     [Authorize(Roles = "Backoffice")]
-    public Task<IActionResult> Update(string nodeId, [FromBody] UpdateNodeRequest request)
-        => throw new NotImplementedException();
+    public async Task<IActionResult> Update(string nodeId, [FromBody] UpdateNodeRequest request)
+    {
+        // The service re-runs every create-time validation and rejects an unknown id with E4404.
+        var response = await _nodeService.UpdateAsync(nodeId, request);
+        return Ok(response);
+    }
 
     // There is deliberately no DELETE. REQ-NODE EC-4: nodes are deactivated,
     // never hard deleted, because their historical reservations stay readable.

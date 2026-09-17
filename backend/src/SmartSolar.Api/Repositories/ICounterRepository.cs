@@ -1,3 +1,8 @@
+// ---------------------------------------------------------------------------
+//  ICounterRepository.cs - sequence-generator contract for human-readable ids.
+//  REQ-NODE - Microgrid Node Management
+// ---------------------------------------------------------------------------
+
 namespace SmartSolar.Api.Repositories;
 
 public interface ICounterRepository

@@ -1,3 +1,8 @@
+// ---------------------------------------------------------------------------
+//  NodeServiceTests.cs - executable specification for NodeService.
+//  REQ-NODE - Microgrid Node Management
+// ---------------------------------------------------------------------------
+
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
 using SmartSolar.Api.DTOs.Response.Nodes;
@@ -160,6 +165,8 @@ public class NodeServiceTests
 
         Assert.InRange(result.CreatedAt, before, DateTime.UtcNow.AddSeconds(1));
         Assert.Equal(result.CreatedAt, result.UpdatedAt);
+        Assert.Equal(DateTimeKind.Utc, result.CreatedAt.Kind);
+        Assert.Equal(DateTimeKind.Utc, result.UpdatedAt.Kind);
     }
 
     // -- Create: coordinate validation ---------------------------------------
@@ -439,6 +446,7 @@ public class NodeServiceTests
         var updated = await _service.UpdateAsync(created.NodeId, ValidUpdate());
 
         Assert.True(updated.UpdatedAt >= created.UpdatedAt);
+        Assert.Equal(DateTimeKind.Utc, updated.UpdatedAt.Kind);
     }
 
     [Fact] // an update can produce exactly the same invalid state a create can
@@ -465,6 +473,80 @@ public class NodeServiceTests
 
         var ex = await Assert.ThrowsAsync<DomainException>(
             () => _service.UpdateAsync(created.NodeId, ValidUpdate(schedule: bad)));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("schedule", ex.Field);
+    }
+
+    [Fact] // UpdateAsync must re-run every CreateAsync guard, not just latitude and overlap
+    public async Task UpdateAsync_RevalidatesLongitude()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(longitude: 200.0)));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("longitude", ex.Field);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RevalidatesCapacity()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(capacityKwh: 0.0)));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("capacityKwh", ex.Field);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RevalidatesBatterySlotCount()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(batterySlotCount: 0)));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("batterySlotCount", ex.Field);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RevalidatesType()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(type: "HVDC")));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("type", ex.Field);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RevalidatesTimeFormat()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+        var malformed = new List<ScheduleWindowDto> { new("Mon", "6am", "18:00") };
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(schedule: malformed)));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("schedule", ex.Field);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RevalidatesOpenBeforeClose()
+    {
+        var created = await _service.CreateAsync(ValidCreate(), Caller);
+        var nonIncreasing = new List<ScheduleWindowDto> { new("Mon", "18:00", "06:00") };
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.UpdateAsync(created.NodeId, ValidUpdate(schedule: nonIncreasing)));
 
         Assert.Equal("E4002", ex.Code);
         Assert.Equal("schedule", ex.Field);

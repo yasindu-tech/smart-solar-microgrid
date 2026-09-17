@@ -1,3 +1,9 @@
+// ---------------------------------------------------------------------------
+//  NodeService.cs - node CRUD and REQ-NODE validation (coordinates, capacity,
+//  battery slots, type, schedule). All business logic for microgrid nodes
+//  lives here - controllers only bind, authorise and map.
+// ---------------------------------------------------------------------------
+
 using System.Globalization;
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
@@ -64,15 +70,20 @@ public class NodeService
         return MapToResponse(node);
     }
 
-    /// <summary>Page the node list, clamping paging inputs before they reach the repository.</summary>
-    public async Task<(List<NodeResponse> Items, int Total)> GetAllAsync(bool? active, int page, int pageSize)
+    /// <summary>
+    /// Page the node list, clamping paging inputs before they reach the repository. Returns the
+    /// clamped Page/PageSize alongside the results so the controller can build the paged envelope
+    /// without re-deriving the clamp.
+    /// </summary>
+    public async Task<(List<NodeResponse> Items, int Total, int Page, int PageSize)> GetAllAsync(
+        bool? active, int page, int pageSize)
     {
         // An unbounded pageSize would let a caller pull the whole collection in one request.
         var safePage = page < 1 ? 1 : page;
         var safePageSize = pageSize < MinPageSize ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
 
         var (items, total) = await _nodeRepo.GetAllAsync(active, safePage, safePageSize);
-        return (items.Select(MapToResponse).ToList(), total);
+        return (items.Select(MapToResponse).ToList(), total, safePage, safePageSize);
     }
 
     /// <summary>Edit an existing hub. Unknown id -> E4404. NodeId, IsActive, CreatedBy and CreatedAt never move.</summary>
@@ -161,7 +172,7 @@ public class NodeService
             }
         }
 
-        return parsed.Select(p => p.Window).ToList();
+        return [.. parsed.Select(p => p.Window)];
     }
 
     // Map the wire-shape location DTO to the storage model.
@@ -186,7 +197,7 @@ public class NodeService
             node.CapacityKwh,
             node.BatterySlotCount,
             node.Type,
-            node.Schedule.Select(w => new ScheduleWindowDto(w.DayOfWeek, w.OpenTime, w.CloseTime)).ToList(),
+            [.. node.Schedule.Select(w => new ScheduleWindowDto(w.DayOfWeek, w.OpenTime, w.CloseTime))],
             node.IsActive,
             node.CreatedBy,
             node.CreatedAt,

@@ -1,3 +1,8 @@
+// ---------------------------------------------------------------------------
+//  CreateNodeRequest.cs - POST /api/nodes request body.
+//  REQ-NODE - Microgrid Node Management
+// ---------------------------------------------------------------------------
+
 using SmartSolar.Api.DTOs.Common.Nodes;
 
 namespace SmartSolar.Api.DTOs.Request.Nodes;
