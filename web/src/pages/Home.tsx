@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BatteryCharging, CalendarCheck, QrCode } from 'lucide-react'
 
 const FEATURES = [
@@ -23,9 +24,9 @@ export default function Home() {
     <div className="sg-page">
       <header className="sticky top-0 z-sticky flex items-center justify-between gap-4 border-b border-sg-border bg-sg-surface px-6 py-4">
         <img src="/logo-navbar.png" alt="SunGrid" className="h-8 w-auto" />
-        <button type="button" className="sg-btn sg-btn-primary">
+        <Link to="/login" className="sg-btn sg-btn-primary">
           Sign in
-        </button>
+        </Link>
       </header>
 
       <main className="sg-page-content">
@@ -40,9 +41,9 @@ export default function Home() {
                 Trading System — sign in to manage nodes, review reservations, and verify energy
                 transfers.
               </p>
-              <button type="button" className="sg-btn sg-btn-primary sg-btn-lg mt-6">
+              <Link to="/login" className="sg-btn sg-btn-primary sg-btn-lg mt-6 inline-flex">
                 Sign in to continue
-              </button>
+              </Link>
             </div>
 
             <img

@@ -8,7 +8,7 @@
  * Author      : <member name - M2>
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api'
 
 /** The error envelope every non-2xx response from the API uses. */
 export interface ApiError {
