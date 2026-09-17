@@ -1,40 +1,46 @@
-/**
- * File        : client.ts
- * Project     : Smart Solar Microgrid Trading System - Web client
- * Description : Single place the web app talks to the Web API. Every call goes
- *               through here so the error envelope defined in
- *               docs/architecture/system-overview.md section 5 is handled once.
- *               No business rule is evaluated in this file - it only transports.
- * Author      : <member name - M2>
- */
+import axios from 'axios'
+import { ApiRequestError, ApiError } from './types'
 
-import { ApiRequestError } from './types'
+// Overridden per environment via .env (see .env.example) - never hard-code a host.
+const apiClient = axios.create({
+  // Using 5001 here to match the backend HTTPS configuration
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api',
+})
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api'
+const TOKEN_STORAGE_KEY = 'token'
 
-// Issue a request, attaching the bearer token, and translate any non-2xx
-// response into an ApiRequestError carrying the documented error code.
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = sessionStorage.getItem('token')
-
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const envelope = (await response.json().catch(() => ({
-      code: 'E5000',
-      message: 'A network or parsing error occurred.',
-    })))
-    throw new ApiRequestError(envelope)
-  }
-
-  // Handle empty responses gracefully
-  const text = await response.text()
-  return text ? JSON.parse(text) : ({} as T)
+// The session token, and nothing else, lives here - the one place that reads
+// or writes it, so every other file treats the session as opaque.
+export const session = {
+  getToken: (): string | null => sessionStorage.getItem(TOKEN_STORAGE_KEY),
+  setToken: (token: string): void => sessionStorage.setItem(TOKEN_STORAGE_KEY, token),
+  clearToken: (): void => sessionStorage.removeItem(TOKEN_STORAGE_KEY),
 }
+
+apiClient.interceptors.request.use((config) => {
+  const token = session.getToken()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Translate axios errors into our domain ApiRequestError so the rest of the app 
+// can cleanly catch them.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response && error.response.data) {
+      const envelope = error.response.data as ApiError
+      return Promise.reject(new ApiRequestError(envelope))
+    }
+    return Promise.reject(
+      new ApiRequestError({
+        code: 'E5000',
+        message: 'A network or parsing error occurred.',
+      })
+    )
+  }
+)
+
+export default apiClient

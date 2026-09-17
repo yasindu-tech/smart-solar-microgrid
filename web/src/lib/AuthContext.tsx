@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { getMeApi, logoutApi } from '../api/api'
+import { session } from '../api/client'
 import { User } from '../api/types'
 
 interface AuthContextType {
@@ -18,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Attempt to restore session on mount
     const restoreSession = async () => {
-      const token = sessionStorage.getItem('token')
+      const token = session.getToken()
       if (!token) {
         setIsLoading(false)
         return
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData)
       } catch (error) {
         // Token might be expired or invalid
-        sessionStorage.removeItem('token')
+        session.clearToken()
         setUser(null)
       } finally {
         setIsLoading(false)
@@ -40,19 +41,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = (token: string, userData: User) => {
-    sessionStorage.setItem('token', token)
+    session.setToken(token)
     setUser(userData)
   }
 
   const logout = async () => {
     try {
-      if (sessionStorage.getItem('token')) {
+      if (session.getToken()) {
         await logoutApi()
       }
     } catch (err) {
       console.warn('Logout API call failed, but clearing local session anyway.')
     } finally {
-      sessionStorage.removeItem('token')
+      session.clearToken()
       setUser(null)
     }
   }

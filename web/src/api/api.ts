@@ -1,21 +1,16 @@
-import { request } from './client'
+import apiClient from './client'
 import { LoginCredentials, LoginResponse, User } from './types'
 
 export async function loginApi(credentials: LoginCredentials): Promise<LoginResponse> {
-  return request<LoginResponse>('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-  })
+  const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
+  return response.data
 }
 
 export async function logoutApi(): Promise<void> {
-  return request<void>('/auth/logout', {
-    method: 'POST',
-  })
+  await apiClient.post('/auth/logout')
 }
 
 export async function getMeApi(): Promise<User> {
-  return request<User>('/auth/me', {
-    method: 'GET',
-  })
+  const response = await apiClient.get<User>('/auth/me')
+  return response.data
 }
