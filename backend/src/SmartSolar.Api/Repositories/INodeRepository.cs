@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  INodeRepository.cs - data-access contract for the "SolarStationInfo" collection.
-//  REQ-NODE - Microgrid Node Management
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.Models;
 
 namespace SmartSolar.Api.Repositories;

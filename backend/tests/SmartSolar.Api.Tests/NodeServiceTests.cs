@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  NodeServiceTests.cs - executable specification for NodeService.
-//  REQ-NODE - Microgrid Node Management
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
 using SmartSolar.Api.DTOs.Response.Nodes;

@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  NodeResponse.cs - wire shape returned by every node endpoint.
-//  REQ-NODE - Microgrid Node Management
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.DTOs.Common.Nodes;
 
 namespace SmartSolar.Api.DTOs.Response.Nodes;

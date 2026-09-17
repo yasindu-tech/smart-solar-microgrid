@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  Node.cs - Mongo document shapes for the "SolarStationInfo" collection.
-//  REQ-NODE - Microgrid Node Management (data-model.md 1.3)
-// ---------------------------------------------------------------------------
-
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 

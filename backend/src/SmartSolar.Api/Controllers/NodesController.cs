@@ -1,9 +1,3 @@
-// ---------------------------------------------------------------------------
-//  NodesController.cs - HTTP surface for microgrid node CRUD.
-//  REQ-NODE - Microgrid Node Management. Binds, authorises and maps only -
-//  every business rule lives in NodeService.
-// ---------------------------------------------------------------------------
-
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

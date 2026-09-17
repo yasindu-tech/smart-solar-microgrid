@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  NodeRepository.cs - Mongo-backed implementation of INodeRepository.
-//  REQ-NODE - Microgrid Node Management (data-model.md 1.3)
-// ---------------------------------------------------------------------------
-
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartSolar.Api.Configuration;

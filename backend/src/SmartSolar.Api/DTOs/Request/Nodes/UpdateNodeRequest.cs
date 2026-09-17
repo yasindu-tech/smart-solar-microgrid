@@ -1,8 +1,3 @@
-// ---------------------------------------------------------------------------
-//  UpdateNodeRequest.cs - PUT /api/nodes/{nodeId} request body.
-//  REQ-NODE - Microgrid Node Management
-// ---------------------------------------------------------------------------
-
 using SmartSolar.Api.DTOs.Common.Nodes;
 
 namespace SmartSolar.Api.DTOs.Request.Nodes;

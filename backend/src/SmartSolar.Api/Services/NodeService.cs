@@ -1,9 +1,3 @@
-// ---------------------------------------------------------------------------
-//  NodeService.cs - node CRUD and REQ-NODE validation (coordinates, capacity,
-//  battery slots, type, schedule). All business logic for microgrid nodes
-//  lives here - controllers only bind, authorise and map.
-// ---------------------------------------------------------------------------
-
 using System.Globalization;
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
