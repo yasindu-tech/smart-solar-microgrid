@@ -1,10 +1,3 @@
-/**
- * File        : BackofficeLayout.tsx
- * Project     : Smart Solar Microgrid Trading System - Web client
- * Description : Layout shell and navigation for the Backoffice administration view.
- * Author      : <member name - M2>
- */
-
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
 import { LogOut, Users, Battery, CheckCircle } from 'lucide-react'

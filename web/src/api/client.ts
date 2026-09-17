@@ -8,21 +8,9 @@
  * Author      : <member name - M2>
  */
 
+import { ApiRequestError } from './types'
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api'
-
-/** The error envelope every non-2xx response from the API uses. */
-export interface ApiError {
-  code: string
-  message: string
-  field?: string
-  traceId?: string
-}
-
-export class ApiRequestError extends Error {
-  constructor(public readonly envelope: ApiError) {
-    super(envelope.message)
-  }
-}
 
 // Issue a request, attaching the bearer token, and translate any non-2xx
 // response into an ApiRequestError carrying the documented error code.
@@ -41,11 +29,12 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   if (!response.ok) {
     const envelope = (await response.json().catch(() => ({
       code: 'E5000',
-      message: 'The server could not be reached.',
-    }))) as ApiError
-
+      message: 'A network or parsing error occurred.',
+    })))
     throw new ApiRequestError(envelope)
   }
 
-  return response.status === 204 ? (undefined as T) : ((await response.json()) as T)
+  // Handle empty responses gracefully
+  const text = await response.text()
+  return text ? JSON.parse(text) : ({} as T)
 }

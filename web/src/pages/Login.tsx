@@ -1,55 +1,33 @@
-/**
- * File        : Login.tsx
- * Project     : Smart Solar Microgrid Trading System - Web client
- * Description : Login page for Web users (Backoffice and Operators).
- * Author      : <member name - M2>
- */
-
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { request, ApiRequestError } from '../api/client'
 import { useAuth } from '../lib/AuthContext'
+import { useLogin } from '../api/hooks'
 import { Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { loginAction, isLoading, error: apiError } = useLogin()
+  
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  const error = validationError || apiError
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
+    setValidationError(null)
 
     if (!identifier || !password) {
-      setError('Please enter both identifier and password.')
+      setValidationError('Please enter both identifier and password.')
       return
     }
 
-    setIsLoading(true)
-
-    try {
-      const response = await request<{
-        token: string
-        role: string
-        displayName: string
-        nicOrUserId: string
-        expiresAt: string
-      }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ identifier, password }),
-      })
-
-      // We explicitly reject Prosumers attempting to login on the Web app,
-      // as they must use the Android app per REQ-AUTH Section 10 and Actors table.
-      if (response.role === 'Prosumer') {
-        setError('Please use the SunGrid Android app to access your Prosumer account.')
-        return
-      }
-
+    const response = await loginAction({ identifier, password })
+    
+    if (response) {
       login(response.token, {
         subjectId: response.nicOrUserId,
         role: response.role,
@@ -61,17 +39,8 @@ export default function Login() {
       } else if (response.role === 'Operator') {
         navigate('/operator')
       } else {
-        // Fallback for unknown valid roles (shouldn't happen)
         navigate('/')
       }
-    } catch (err) {
-      if (err instanceof ApiRequestError) {
-        setError(err.envelope.message || 'An error occurred during login.')
-      } else {
-        setError('A network error occurred. Please try again.')
-      }
-    } finally {
-      setIsLoading(false)
     }
   }
 
