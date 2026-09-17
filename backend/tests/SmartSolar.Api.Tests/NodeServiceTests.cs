@@ -1,4 +1,6 @@
-using SmartSolar.Api.DTOs.Nodes;
+using SmartSolar.Api.DTOs.Common.Nodes;
+using SmartSolar.Api.DTOs.Request.Nodes;
+using SmartSolar.Api.DTOs.Response.Nodes;
 using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Models;
 using SmartSolar.Api.Repositories;

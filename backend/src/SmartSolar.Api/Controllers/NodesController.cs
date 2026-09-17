@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartSolar.Api.DTOs.Nodes;
+using SmartSolar.Api.DTOs.Request.Nodes;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;
