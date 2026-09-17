@@ -1,3 +1,5 @@
+using System.Globalization;
+using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
 using SmartSolar.Api.DTOs.Response.Nodes;
 using SmartSolar.Api.Middleware;
@@ -6,8 +8,13 @@ using SmartSolar.Api.Repositories;
 
 namespace SmartSolar.Api.Services;
 
+/// <summary>Node CRUD and REQ-NODE validation (coordinates, capacity, schedule).</summary>
 public class NodeService
 {
+    private const int MinPageSize = 1;
+    private const int MaxPageSize = 100;
+    private const int DefaultPageSize = 20;
+
     private readonly INodeRepository _nodeRepo;
     private readonly ICounterRepository _counterRepo;
 
@@ -18,78 +25,170 @@ public class NodeService
         _counterRepo = counterRepo;
     }
 
-    /// <summary>
-    /// Register a new hub (REQ-NODE section 4.1).
-    ///
-    /// Validate, in whatever order you like, but validate BEFORE writing -
-    /// AC-2 requires that a rejected request writes nothing at all:
-    ///
-    ///   - Latitude  must be within [-90, 90]    -> E4002, field "latitude"
-    ///   - Longitude must be within [-180, 180]  -> E4002, field "longitude"
-    ///   - CapacityKwh must be greater than 0    -> E4002, field "capacityKwh"
-    ///   - BatterySlotCount must be at least 1   -> E4002, field "batterySlotCount"
-    ///   - Type must be "AC" or "DC"             -> E4002, field "type"
-    ///   - Every schedule window must have OpenTime strictly before CloseTime
-    ///                                           -> E4002, field "schedule"
-    ///   - Two windows on the SAME day must not overlap (EC-2, ambiguous
-    ///     availability)                         -> E4002, field "schedule"
-    ///
-    /// Bounds are inclusive: latitude 90 and -90 are valid.
-    ///
-    /// Times are zero-padded "HH:mm" strings (data-model.md 1.3). Parse them
-    /// with TimeOnly.TryParseExact(value, "HH:mm", ...) and reject anything that
-    /// fails with E4002. Do NOT use plain TimeOnly.TryParse - it accepts "6am"
-    /// and "6:00", which would then be stored in a format nothing else expects.
-    /// Compare the parsed values, never the raw strings.
-    ///
-    /// Then: NodeId comes from _counterRepo.GetNextSequenceValueAsync("nodeid")
-    /// formatted as ND-0001 (four digits). IsActive starts true. CreatedBy is
-    /// the caller's UserId. CreatedAt and UpdatedAt are DateTime.UtcNow -
-    /// server clock only, never a client timestamp (BR-13).
-    /// </summary>
-    public Task<NodeResponse> CreateAsync(CreateNodeRequest request, string callerUserId)
-        => throw new NotImplementedException();
+    /// <summary>Register a new hub (REQ-NODE 4.1). Nothing is written if validation fails (AC-2).</summary>
+    public async Task<NodeResponse> CreateAsync(CreateNodeRequest request, string callerUserId)
+    {
+        // Validate every field before touching the repository - a rejected create must write nothing.
+        var schedule = ValidateAndMapSchedule(
+            request.Location, request.CapacityKwh, request.BatterySlotCount, request.Type, request.Schedule);
+
+        var sequence = await _counterRepo.GetNextSequenceValueAsync("nodeid");
+        var now = DateTime.UtcNow;
+
+        var node = new Node
+        {
+            NodeId = $"ND-{sequence:D4}",
+            Name = request.Name,
+            Location = ToModel(request.Location),
+            CapacityKwh = request.CapacityKwh,
+            BatterySlotCount = request.BatterySlotCount,
+            Type = request.Type,
+            Schedule = schedule,
+            IsActive = true,
+            CreatedBy = callerUserId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        await _nodeRepo.CreateAsync(node);
+        return MapToResponse(node);
+    }
+
+    /// <summary>Fetch one node. Unknown id -> DomainException E4404, HTTP 404.</summary>
+    public async Task<NodeResponse> GetByIdAsync(string nodeId)
+    {
+        // Unknown id is a 404, not an empty result - callers always hold a concrete nodeId.
+        var node = await _nodeRepo.GetByNodeIdAsync(nodeId)
+            ?? throw new DomainException("E4404", $"Node '{nodeId}' was not found.", 404);
+
+        return MapToResponse(node);
+    }
+
+    /// <summary>Page the node list, clamping paging inputs before they reach the repository.</summary>
+    public async Task<(List<NodeResponse> Items, int Total)> GetAllAsync(bool? active, int page, int pageSize)
+    {
+        // An unbounded pageSize would let a caller pull the whole collection in one request.
+        var safePage = page < 1 ? 1 : page;
+        var safePageSize = pageSize < MinPageSize ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
+
+        var (items, total) = await _nodeRepo.GetAllAsync(active, safePage, safePageSize);
+        return (items.Select(MapToResponse).ToList(), total);
+    }
+
+    /// <summary>Edit an existing hub. Unknown id -> E4404. NodeId, IsActive, CreatedBy and CreatedAt never move.</summary>
+    public async Task<NodeResponse> UpdateAsync(string nodeId, UpdateNodeRequest request)
+    {
+        // Load first so an unknown id fails fast, before any validation work.
+        var node = await _nodeRepo.GetByNodeIdAsync(nodeId)
+            ?? throw new DomainException("E4404", $"Node '{nodeId}' was not found.", 404);
+
+        // Re-run every CreateAsync validation - an update can put a node into the same invalid state a create can.
+        var schedule = ValidateAndMapSchedule(
+            request.Location, request.CapacityKwh, request.BatterySlotCount, request.Type, request.Schedule);
+
+        node.Name = request.Name;
+        node.Location = ToModel(request.Location);
+        node.CapacityKwh = request.CapacityKwh;
+        node.BatterySlotCount = request.BatterySlotCount;
+        node.Type = request.Type;
+        node.Schedule = schedule;
+        node.UpdatedAt = DateTime.UtcNow;
+
+        await _nodeRepo.UpdateAsync(node);
+        return MapToResponse(node);
+    }
 
     /// <summary>
-    /// Fetch one node. Unknown id -> DomainException E4404, HTTP 404.
+    /// Validate coordinates, capacity, battery slots, type and schedule (REQ-NODE AC-2), and
+    /// return the schedule mapped to the storage model. Bounds on latitude/longitude are inclusive.
     /// </summary>
-    public Task<NodeResponse> GetByIdAsync(string nodeId)
-        => throw new NotImplementedException();
+    private static List<ScheduleWindow> ValidateAndMapSchedule(
+        NodeLocationDto location,
+        double capacityKwh,
+        int batterySlotCount,
+        string type,
+        List<ScheduleWindowDto> schedule)
+    {
+        // Latitude and longitude bounds are inclusive - REQ-NODE AC-2.
+        if (location.Latitude is < -90 or > 90)
+            throw new DomainException("E4002", "Latitude must be between -90 and 90.", 400, "latitude");
 
-    /// <summary>
-    /// Page the node list. Pass the active filter straight through to the
-    /// repository. Guard the paging inputs: page below 1 becomes 1, pageSize
-    /// below 1 becomes a sensible default, pageSize above 100 is capped - an
-    /// unbounded pageSize lets a caller pull the whole collection in one request.
-    ///
-    /// The controller maps the tuple to whatever paged envelope the contract
-    /// uses. Returning a tuple here keeps this slice independent of D1's
-    /// PagedResponse type, which is not on develop yet.
-    /// </summary>
-    public Task<(List<NodeResponse> Items, int Total)> GetAllAsync(bool? active, int page, int pageSize)
-        => throw new NotImplementedException();
+        if (location.Longitude is < -180 or > 180)
+            throw new DomainException("E4002", "Longitude must be between -180 and 180.", 400, "longitude");
 
-    /// <summary>
-    /// Edit an existing hub. Unknown id -> E4404.
-    ///
-    /// Re-run every validation from CreateAsync - an update can put a node into
-    /// exactly the same invalid state a create can.
-    ///
-    /// Do NOT change NodeId, IsActive, CreatedBy or CreatedAt here. NodeId is
-    /// the reference every reservation and slot holds; activation has its own
-    /// endpoint. Set UpdatedAt to DateTime.UtcNow.
-    ///
-    /// Note for the next slice: reducing BatterySlotCount below the number of
-    /// approved future reservations is refused with E4003 (BR-19). That check
-    /// needs M3's reservation count, so it is deliberately absent here.
-    /// </summary>
-    public Task<NodeResponse> UpdateAsync(string nodeId, UpdateNodeRequest request)
-        => throw new NotImplementedException();
+        if (capacityKwh <= 0)
+            throw new DomainException("E4002", "Capacity must be greater than zero.", 400, "capacityKwh");
+
+        if (batterySlotCount < 1)
+            throw new DomainException("E4002", "Battery slot count must be at least 1.", 400, "batterySlotCount");
+
+        if (type != "AC" && type != "DC")
+            throw new DomainException("E4002", "Type must be 'AC' or 'DC'.", 400, "type");
+
+        // Parse strictly with TryParseExact - plain TryParse accepts "6am"/"6:00", which would then
+        // sit in Mongo in a format nothing else expects (data-model.md 1.3).
+        var parsed = new List<(ScheduleWindow Window, TimeOnly Open, TimeOnly Close)>();
+        foreach (var window in schedule)
+        {
+            var openOk = TimeOnly.TryParseExact(
+                window.OpenTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var open);
+            var closeOk = TimeOnly.TryParseExact(
+                window.CloseTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var close);
+
+            if (!openOk || !closeOk)
+                throw new DomainException("E4002", "Schedule times must be in strict HH:mm format.", 400, "schedule");
+
+            if (open >= close)
+                throw new DomainException("E4002", "Schedule open time must be strictly before close time.", 400, "schedule");
+
+            parsed.Add((new ScheduleWindow
+            {
+                DayOfWeek = window.DayOfWeek,
+                OpenTime = window.OpenTime,
+                CloseTime = window.CloseTime,
+            }, open, close));
+        }
+
+        // Two windows on the SAME day must not overlap (EC-2). Touching at the boundary is not
+        // overlapping - a split shift (e.g. 06:00-12:00, 12:00-18:00) is legal.
+        foreach (var group in parsed.GroupBy(p => p.Window.DayOfWeek))
+        {
+            var ordered = group.OrderBy(p => p.Open).ToList();
+            for (var i = 1; i < ordered.Count; i++)
+            {
+                if (ordered[i].Open < ordered[i - 1].Close)
+                    throw new DomainException("E4002", "Schedule windows on the same day must not overlap.", 400, "schedule");
+            }
+        }
+
+        return parsed.Select(p => p.Window).ToList();
+    }
+
+    // Map the wire-shape location DTO to the storage model.
+    private static NodeLocation ToModel(NodeLocationDto location)
+        => new()
+        {
+            Latitude = location.Latitude,
+            Longitude = location.Longitude,
+            AddressLine = location.AddressLine,
+        };
 
     /// <summary>
     /// Map the stored document to the wire shape. Keep this private and use it
     /// everywhere, so no endpoint can accidentally return the raw document.
     /// </summary>
     private static NodeResponse MapToResponse(Node node)
-        => throw new NotImplementedException();
+        // Convert every embedded model type to its DTO counterpart, never leak the Mongo document.
+        => new(
+            node.NodeId,
+            node.Name,
+            new NodeLocationDto(node.Location.Latitude, node.Location.Longitude, node.Location.AddressLine),
+            node.CapacityKwh,
+            node.BatterySlotCount,
+            node.Type,
+            node.Schedule.Select(w => new ScheduleWindowDto(w.DayOfWeek, w.OpenTime, w.CloseTime)).ToList(),
+            node.IsActive,
+            node.CreatedBy,
+            node.CreatedAt,
+            node.UpdatedAt);
 }
