@@ -5,7 +5,6 @@
  * Author      : <member name - M2>
  */
 
-import React from 'react'
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
 import { LogOut, Users, Battery, CheckCircle } from 'lucide-react'
