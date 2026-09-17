@@ -15,7 +15,6 @@ public class CounterRepository : ICounterRepository
 {
     private readonly IMongoCollection<Counter> _counters;
 
-    // Resolve the collection once at construction; IMongoClient is thread-safe.
     public CounterRepository(IOptions<MongoSettings> settings)
     {
         var client = new MongoClient(settings.Value.ConnectionString);
