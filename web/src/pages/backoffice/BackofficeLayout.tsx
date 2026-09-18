@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
-import { LogOut, Users, Battery, CheckCircle } from 'lucide-react'
+import { LogOut, Users, Battery, CheckCircle, Zap } from 'lucide-react'
 
 export default function BackofficeLayout() {
   const { user, logout } = useAuth()
@@ -14,6 +14,7 @@ export default function BackofficeLayout() {
 
   const navItems = [
     { name: 'Dashboard', path: '/backoffice', icon: Battery },
+    { name: 'Nodes', path: '/backoffice/nodes', icon: Zap },
     { name: 'Users', path: '/backoffice/users', icon: Users },
     { name: 'Approvals', path: '/backoffice/approvals', icon: CheckCircle },
   ]

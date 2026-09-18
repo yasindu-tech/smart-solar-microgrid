@@ -12,6 +12,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import BackofficeLayout from './pages/backoffice/BackofficeLayout'
+import Dashboard from './pages/backoffice/Dashboard'
+import NodeManagement from './pages/backoffice/NodeManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
 
 export default function App() {
@@ -21,10 +23,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          
+
           <Route element={<ProtectedRoute allowedRoles={['Backoffice']} />}>
             <Route path="/backoffice" element={<BackofficeLayout />}>
-              <Route index element={<div>Backoffice Dashboard Coming Soon</div>} />
+              <Route index element={<Dashboard />} />
+              <Route path="nodes" element={<NodeManagement />} />
               <Route path="users" element={<div>Users Management Coming Soon</div>} />
               <Route path="approvals" element={<div>Pending Approvals Coming Soon</div>} />
             </Route>
