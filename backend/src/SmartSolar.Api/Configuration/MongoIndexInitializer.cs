@@ -1,3 +1,10 @@
+// ---------------------------------------------------------------------------
+//  File        : MongoIndexInitializer.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : Asynchronous background hosted service for initializing and
+//                verifying required MongoDB indexes at application startup.
+// ---------------------------------------------------------------------------
+
 using MongoDB.Driver;
 using SmartSolar.Api.Models;
 
@@ -8,12 +15,14 @@ public class MongoIndexInitializer : IHostedService
     private readonly IMongoDatabase _database;
     private readonly ILogger<MongoIndexInitializer> _logger;
 
+    // Injects the MongoDB database instance and logging provider.
     public MongoIndexInitializer(IMongoDatabase database, ILogger<MongoIndexInitializer> logger)
     {
         _database = database;
         _logger = logger;
     }
 
+    // Executes index initialization asynchronously during application boot.
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Initializing MongoDB indexes asynchronously...");
@@ -26,10 +35,12 @@ public class MongoIndexInitializer : IHostedService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize one or more MongoDB indexes.");
+            _logger.LogCritical(ex, "Failed to initialize required MongoDB indexes. Aborting application startup to prevent data inconsistency.");
+            throw;
         }
     }
 
+    // Ensures unique indexes on the Users collection for email and userId.
     private async Task InitializeUserIndexesAsync(CancellationToken cancellationToken)
     {
         var users = _database.GetCollection<User>("Users");
@@ -43,6 +54,7 @@ public class MongoIndexInitializer : IHostedService
         await users.Indexes.CreateManyAsync(new[] { emailIndex, userIdIndex }, cancellationToken);
     }
 
+    // Ensures unique and collation indexes on the Prosumers collection for email, nic, and status.
     private async Task InitializeProsumerIndexesAsync(CancellationToken cancellationToken)
     {
         var prosumers = _database.GetCollection<Prosumer>("Prosumers");
@@ -78,5 +90,6 @@ public class MongoIndexInitializer : IHostedService
         }
     }
 
+    // Handles graceful shutdown when the host stops.
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
