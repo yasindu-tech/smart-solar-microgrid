@@ -14,6 +14,7 @@ import Login from './pages/Login'
 import BackofficeLayout from './pages/backoffice/BackofficeLayout'
 import Dashboard from './pages/backoffice/Dashboard'
 import NodeManagement from './pages/backoffice/NodeManagement'
+import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/backoffice" element={<BackofficeLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="nodes" element={<NodeManagement />} />
+              <Route path="nodes/:nodeId/slots" element={<SlotManagement />} />
               <Route path="users" element={<div>Users Management Coming Soon</div>} />
               <Route path="approvals" element={<div>Pending Approvals Coming Soon</div>} />
             </Route>

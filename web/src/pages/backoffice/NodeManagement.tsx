@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Plus, Zap } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CalendarClock, Plus, Zap } from 'lucide-react'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import {
@@ -184,6 +185,7 @@ export default function NodeManagement() {
                 <TableHead>Battery slots</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -199,6 +201,15 @@ export default function NodeManagement() {
                     <Badge variant={node.isActive ? 'default' : 'secondary'}>
                       {node.isActive ? 'Active' : 'Inactive'}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Link
+                      to={`/backoffice/nodes/${node.nodeId}/slots`}
+                      className="inline-flex items-center gap-1 text-sm text-sg-primary hover:underline"
+                    >
+                      <CalendarClock size={14} />
+                      Slots
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}
