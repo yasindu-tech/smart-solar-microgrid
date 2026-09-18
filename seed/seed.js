@@ -18,6 +18,10 @@ db.Prosumers.deleteMany({});
 db.SolarStationInfo.deleteMany({});
 db.EnergyBookingSlots.deleteMany({});
 db.EnergyReservation.deleteMany({});
+db.Counters.deleteMany({});
+
+// Initialize sequence counters so new user creation (e.g. USR-0004) does not collide with seed users
+db.Counters.insertOne({ _id: "userid", SequenceValue: 3 });
 
 // --- Web accounts: one back-office officer, two operators -------------------
 // Passwords: Nimal123, Sunil123, Ruwan123
@@ -66,7 +70,8 @@ db.EnergyReservation.insertMany([
 db.Users.createIndex({ email: 1 }, { unique: true });
 db.Users.createIndex({ userId: 1 }, { unique: true });
 db.Prosumers.createIndex({ email: 1 }, { unique: true });
-db.Prosumers.createIndex({ nic: 1 }, { collation: { locale: "en", strength: 2 } });
+try { db.Prosumers.dropIndex("nic_1"); } catch (e) {}
+db.Prosumers.createIndex({ nic: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
 db.Prosumers.createIndex({ status: 1 });
 db.SolarStationInfo.createIndex({ nodeId: 1 }, { unique: true });
 db.SolarStationInfo.createIndex({ isActive: 1 });

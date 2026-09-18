@@ -9,19 +9,10 @@ public class UserRepository
 {
     private readonly IMongoCollection<User> _collection;
 
-    // Resolve the collection once at construction; IMongoClient is thread-safe.
-    public UserRepository(IOptions<MongoSettings> settings)
+    // Resolve the collection once at construction; IMongoDatabase is thread-safe.
+    public UserRepository(IMongoDatabase database)
     {
-        var client = new MongoClient(settings.Value.ConnectionString);
-        var db = client.GetDatabase(settings.Value.DatabaseName);
-        _collection = db.GetCollection<User>("Users");
-
-        // Create indexes
-        var indexOptions = new CreateIndexOptions { Unique = true };
-        _collection.Indexes.CreateOne(new CreateIndexModel<User>(
-            Builders<User>.IndexKeys.Ascending(u => u.Email), indexOptions));
-        _collection.Indexes.CreateOne(new CreateIndexModel<User>(
-            Builders<User>.IndexKeys.Ascending(u => u.UserId), indexOptions));
+        _collection = database.GetCollection<User>("Users");
     }
 
     // Find a user by their email address (case-insensitive). Used at login.
