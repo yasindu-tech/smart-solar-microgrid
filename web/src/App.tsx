@@ -7,14 +7,37 @@
  */
 
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './lib/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
+import Login from './pages/Login'
+import BackofficeLayout from './pages/backoffice/BackofficeLayout'
+import OperatorLayout from './pages/operator/OperatorLayout'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          
+          <Route element={<ProtectedRoute allowedRoles={['Backoffice']} />}>
+            <Route path="/backoffice" element={<BackofficeLayout />}>
+              <Route index element={<div>Backoffice Dashboard Coming Soon</div>} />
+              <Route path="users" element={<div>Users Management Coming Soon</div>} />
+              <Route path="approvals" element={<div>Pending Approvals Coming Soon</div>} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
+            <Route path="/operator" element={<OperatorLayout />}>
+              <Route index element={<div>Operator Dashboard Coming Soon</div>} />
+              <Route path="reservations" element={<div>Reservations Coming Soon</div>} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

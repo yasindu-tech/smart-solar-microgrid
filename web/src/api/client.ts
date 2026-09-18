@@ -1,8 +1,10 @@
 import axios from 'axios'
+import { ApiRequestError, ApiError } from './types'
 
 // Overridden per environment via .env (see .env.example) - never hard-code a host.
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api',
+  // Using 5001 here to match the backend HTTPS configuration
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5001/api',
 })
 
 const TOKEN_STORAGE_KEY = 'token'
@@ -22,5 +24,23 @@ apiClient.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Translate axios errors into our domain ApiRequestError so the rest of the app 
+// can cleanly catch them.
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response && error.response.data) {
+      const envelope = error.response.data as ApiError
+      return Promise.reject(new ApiRequestError(envelope))
+    }
+    return Promise.reject(
+      new ApiRequestError({
+        code: 'E5000',
+        message: 'A network or parsing error occurred.',
+      })
+    )
+  }
+)
 
 export default apiClient
