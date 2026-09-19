@@ -13,7 +13,7 @@ public class Counter
     public int SequenceValue { get; set; }
 }
 
-public class CounterRepository
+public class CounterRepository : ICounterRepository
 {
     private readonly IMongoCollection<Counter> _counters;
 

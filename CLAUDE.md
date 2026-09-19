@@ -86,14 +86,3 @@ Connection strings, JWT or QR signing secrets, Google Maps keys, keystores,
 any build output. CI blocks the obvious cases; that is a net, not a substitute
 for looking.
 
-## 7. AI use policy — read this, it is assessed
-
-This assignment is set at **AI Assessment Scale Level 2 — AI Planning**. AI may
-be used for planning, brainstorming and research. **The implementation must be
-written by the team.** Each member discloses the AI tools they used in planning
-in their individual contribution section, and must be able to explain and
-justify every design decision at the viva.
-
-So: use an agent to query and maintain `docs/`, to review a diff against the
-documented rules, to draft a PR description. Do not use one to write the C#,
-Kotlin or React that gets submitted.
