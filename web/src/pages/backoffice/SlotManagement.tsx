@@ -28,7 +28,13 @@ interface DummySlot {
 function isoDateOffset(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
+  // Build the string from local calendar components - toISOString() converts
+  // to UTC first, which rolls the date back a day near midnight in zones ahead
+  // of UTC (e.g. Sri Lanka, UTC+5:30).
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function formatSlotDate(isoDate: string): string {
@@ -91,7 +97,13 @@ export default function SlotManagement() {
 
   const updateAvailableCapacity = (slotId: string, value: number) => {
     setSlots((prev) =>
-      prev.map((slot) => (slot.slotId === slotId ? { ...slot, availableCapacity: value } : slot)),
+      prev.map((slot) =>
+        // The "max" attribute is only a UI hint - clamp here so a typed value
+        // can never exceed totalCapacity (which would show as e.g. "5 / 4").
+        slot.slotId === slotId
+          ? { ...slot, availableCapacity: Math.min(Math.max(value, 0), slot.totalCapacity) }
+          : slot,
+      ),
     )
   }
 

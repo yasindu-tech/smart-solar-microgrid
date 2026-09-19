@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Zap } from 'lucide-react'
+import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Trash2, Zap } from 'lucide-react'
 import { useCreateNode, useNodes } from '../../api/NodesApi'
 import type { ApiRequestError } from '../../api/types'
 import SolarLoader from '../../components/SolarLoader/SolarLoader'
@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import {
   Sheet,
   SheetBody,
@@ -19,7 +20,11 @@ import {
   SheetTitle,
 } from '../../components/ui/sheet'
 import { useToast } from '../../lib/useToast'
-import type { Node } from '../../types/NodeTypes'
+import type { Node, NodeType, ScheduleWindow } from '../../types/NodeTypes'
+
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+const EMPTY_SCHEDULE_WINDOW: ScheduleWindow = { dayOfWeek: 'Mon', openTime: '', closeTime: '' }
 
 const EMPTY_FORM = {
   name: '',
@@ -28,7 +33,9 @@ const EMPTY_FORM = {
   longitude: '',
   capacityKwh: '',
   batterySlotCount: '',
-  type: 'AC' as const,
+  type: 'AC' as NodeType,
+  // REQ-NODE 4.1 requires at least one operating window before a node can go live.
+  schedule: [EMPTY_SCHEDULE_WINDOW] as ScheduleWindow[],
 }
 
 export default function NodeManagement() {
@@ -69,8 +76,23 @@ export default function NodeManagement() {
       capacityKwh: Number(form.capacityKwh) || 0,
       batterySlotCount: Number(form.batterySlotCount) || 0,
       type: form.type,
-      schedule: [],
+      schedule: form.schedule,
     })
+  }
+
+  const addScheduleWindow = () => {
+    setForm((p) => ({ ...p, schedule: [...p.schedule, { ...EMPTY_SCHEDULE_WINDOW }] }))
+  }
+
+  const removeScheduleWindow = (index: number) => {
+    setForm((p) => ({ ...p, schedule: p.schedule.filter((_, i) => i !== index) }))
+  }
+
+  const updateScheduleWindow = (index: number, field: keyof ScheduleWindow, value: string) => {
+    setForm((p) => ({
+      ...p,
+      schedule: p.schedule.map((window, i) => (i === index ? { ...window, [field]: value } : window)),
+    }))
   }
 
   const nodes = data?.items ?? []
@@ -173,6 +195,88 @@ export default function NodeManagement() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="type">Type</Label>
+                  <Select value={form.type} onValueChange={(value: NodeType) => setForm((p) => ({ ...p, type: value }))}>
+                    <SelectTrigger id="type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AC">AC</SelectItem>
+                      <SelectItem value="DC">DC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Weekly schedule</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addScheduleWindow}>
+                      <Plus size={14} className="mr-1" />
+                      Add window
+                    </Button>
+                  </div>
+
+                  {form.schedule.map((window, index) => (
+                    <div key={index} className="flex items-end gap-2 rounded-md border border-sg-border p-3">
+                      <div className="flex flex-1 flex-col gap-1.5">
+                        <Label htmlFor={`schedule-day-${index}`} className="sg-caption">
+                          Day
+                        </Label>
+                        <Select
+                          value={window.dayOfWeek}
+                          onValueChange={(value) => updateScheduleWindow(index, 'dayOfWeek', value)}
+                        >
+                          <SelectTrigger id={`schedule-day-${index}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DAYS_OF_WEEK.map((day) => (
+                              <SelectItem key={day} value={day}>
+                                {day}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5">
+                        <Label htmlFor={`schedule-open-${index}`} className="sg-caption">
+                          Open
+                        </Label>
+                        <Input
+                          id={`schedule-open-${index}`}
+                          type="time"
+                          value={window.openTime}
+                          onChange={(e) => updateScheduleWindow(index, 'openTime', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5">
+                        <Label htmlFor={`schedule-close-${index}`} className="sg-caption">
+                          Close
+                        </Label>
+                        <Input
+                          id={`schedule-close-${index}`}
+                          type="time"
+                          value={window.closeTime}
+                          onChange={(e) => updateScheduleWindow(index, 'closeTime', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeScheduleWindow(index)}
+                        disabled={form.schedule.length === 1}
+                        aria-label="Remove window"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </SheetBody>
 
