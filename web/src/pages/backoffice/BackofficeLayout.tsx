@@ -65,7 +65,7 @@ export default function BackofficeLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto">
         <header className="h-header border-b border-sg-border bg-sg-surface flex items-center px-8">
           <h1 className="sg-h3">Backoffice Administration</h1>
         </header>

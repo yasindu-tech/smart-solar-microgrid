@@ -1,26 +1,20 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarClock, Plus, Zap } from 'lucide-react'
-import { Badge } from '../../components/ui/badge'
+import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Zap } from 'lucide-react'
 import { Button } from '../../components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/dialog'
+import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../../components/ui/table'
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '../../components/ui/sheet'
 
 interface DummyNode {
   nodeId: string
@@ -104,19 +98,27 @@ export default function NodeManagement() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus size={16} className="mr-2" />
-            Add node
-          </Button>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus size={16} className="mr-2" />
+          Add node
+        </Button>
 
-          <DialogContent>
-            <form onSubmit={handleSubmit}>
-              <DialogHeader>
-                <DialogTitle>Add node</DialogTitle>
-              </DialogHeader>
+        <Sheet open={isDialogOpen} onOpenChange={setDialogOpen}>
+          <SheetContent className="p-0">
+            <form onSubmit={handleSubmit} className="flex h-full flex-col">
+              <SheetHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sg-primary-soft text-sg-primary">
+                    <Radio size={18} />
+                  </div>
+                  <div>
+                    <SheetTitle>Add node</SheetTitle>
+                    <SheetDescription>Register a new microgrid hub.</SheetDescription>
+                  </div>
+                </div>
+              </SheetHeader>
 
-              <div className="flex flex-col gap-4 py-4">
+              <SheetBody className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -157,14 +159,17 @@ export default function NodeManagement() {
                     />
                   </div>
                 </div>
-              </div>
+              </SheetBody>
 
-              <DialogFooter>
+              <SheetFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit">Create node</Button>
-              </DialogFooter>
+              </SheetFooter>
             </form>
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {nodes.length === 0 ? (
@@ -174,47 +179,64 @@ export default function NodeManagement() {
           <p className="sg-body-sm text-sg-text-secondary">Registered microgrid hubs will appear here.</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-sg-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Node ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Capacity</TableHead>
-                <TableHead>Battery slots</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {nodes.map((node) => (
-                <TableRow key={node.nodeId}>
-                  <TableCell className="font-medium">{node.nodeId}</TableCell>
-                  <TableCell>{node.name}</TableCell>
-                  <TableCell>{node.addressLine}</TableCell>
-                  <TableCell>{node.capacityKwh} kWh</TableCell>
-                  <TableCell>{node.batterySlotCount}</TableCell>
-                  <TableCell>{node.type}</TableCell>
-                  <TableCell>
-                    <Badge variant={node.isActive ? 'default' : 'secondary'}>
-                      {node.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link
-                      to={`/backoffice/nodes/${node.nodeId}/slots`}
-                      className="inline-flex items-center gap-1 text-sm text-sg-primary hover:underline"
-                    >
-                      <CalendarClock size={14} />
-                      Slots
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {nodes.map((node) => (
+            <Card key={node.nodeId} className="flex flex-col overflow-hidden">
+              <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 border-b border-sg-border bg-sg-surface-muted/60 pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sg-primary-soft text-sg-primary">
+                    <Radio size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="sg-h4 truncate">{node.name}</p>
+                    <p className="sg-caption font-mono">{node.nodeId}</p>
+                  </div>
+                </div>
+                <span className={`sg-badge shrink-0 ${node.isActive ? 'sg-badge-success' : 'sg-badge-neutral'}`}>
+                  <span className="sg-status-dot" />
+                  {node.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </CardHeader>
+
+              <CardContent className="flex flex-1 flex-col gap-4 pt-4">
+                <div className="flex items-start gap-2">
+                  <MapPin size={15} className="mt-0.5 shrink-0 text-sg-text-muted" />
+                  <p className="sg-body-sm">{node.addressLine}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-md border border-sg-border p-3">
+                    <div className="flex items-center gap-1.5 text-sg-text-muted">
+                      <Zap size={13} />
+                      <p className="sg-caption">Capacity</p>
+                    </div>
+                    <p className="mt-1 text-lg font-semibold text-sg-text">
+                      {node.capacityKwh}
+                      <span className="ml-1 text-xs font-normal text-sg-text-muted">kWh</span>
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-sg-border p-3">
+                    <div className="flex items-center gap-1.5 text-sg-text-muted">
+                      <BatteryCharging size={13} />
+                      <p className="sg-caption">Battery slots</p>
+                    </div>
+                    <p className="mt-1 text-lg font-semibold text-sg-text">{node.batterySlotCount}</p>
+                  </div>
+                </div>
+
+                <span className={`sg-badge w-fit ${node.type === 'AC' ? 'sg-badge-info' : 'sg-badge-primary'}`}>
+                  {node.type} node
+                </span>
+              </CardContent>
+
+              <CardFooter className="border-t border-sg-border pt-4">
+                <Link to={`/backoffice/nodes/${node.nodeId}/slots`} className="sg-btn sg-btn-ghost sg-btn-sm w-full">
+                  <CalendarClock size={14} />
+                  View slots
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       )}
     </div>
