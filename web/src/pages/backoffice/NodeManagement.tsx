@@ -26,36 +26,6 @@ interface DummyNode {
   isActive: boolean
 }
 
-const INITIAL_NODES: DummyNode[] = [
-  {
-    nodeId: 'ND-0001',
-    name: 'Moratuwa Microgrid Hub A',
-    addressLine: 'Katubedda, Moratuwa',
-    capacityKwh: 250,
-    batterySlotCount: 8,
-    type: 'AC',
-    isActive: true,
-  },
-  {
-    nodeId: 'ND-0002',
-    name: 'Colombo 07 Hub',
-    addressLine: 'Cinnamon Gardens, Colombo 07',
-    capacityKwh: 180,
-    batterySlotCount: 6,
-    type: 'DC',
-    isActive: true,
-  },
-  {
-    nodeId: 'ND-0003',
-    name: 'Kadawatha Hub',
-    addressLine: 'Kadawatha Junction',
-    capacityKwh: 120,
-    batterySlotCount: 4,
-    type: 'AC',
-    isActive: false,
-  },
-]
-
 const EMPTY_FORM = { name: '', addressLine: '', capacityKwh: '', batterySlotCount: '', type: 'AC' as const }
 
 /**
@@ -63,7 +33,7 @@ const EMPTY_FORM = { name: '', addressLine: '', capacityKwh: '', batterySlotCoun
  * "Add node" appends to local state so the screen still feels interactive.
  */
 export default function NodeManagement() {
-  const [nodes, setNodes] = useState<DummyNode[]>(INITIAL_NODES)
+  const [nodes, setNodes] = useState<DummyNode[]>([])
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
 

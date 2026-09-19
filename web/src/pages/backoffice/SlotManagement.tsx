@@ -39,36 +39,6 @@ function formatSlotDate(isoDate: string): string {
   })
 }
 
-const INITIAL_SLOTS: DummySlot[] = [
-  {
-    slotId: 'SL-0001',
-    date: isoDateOffset(0),
-    startTime: '09:00',
-    endTime: '11:00',
-    totalCapacity: 4,
-    availableCapacity: 3,
-    energyOfferedKwh: 20,
-  },
-  {
-    slotId: 'SL-0002',
-    date: isoDateOffset(1),
-    startTime: '14:00',
-    endTime: '16:00',
-    totalCapacity: 4,
-    availableCapacity: 4,
-    energyOfferedKwh: 20,
-  },
-  {
-    slotId: 'SL-0003',
-    date: isoDateOffset(2),
-    startTime: '09:00',
-    endTime: '10:00',
-    totalCapacity: 2,
-    availableCapacity: 0,
-    energyOfferedKwh: 10,
-  },
-]
-
 const EMPTY_FORM = { date: isoDateOffset(0), startTime: '', endTime: '', totalCapacity: '', energyOfferedKwh: '' }
 
 /**
@@ -77,7 +47,7 @@ const EMPTY_FORM = { date: isoDateOffset(0), startTime: '', endTime: '', totalCa
  */
 export default function SlotManagement() {
   const { nodeId } = useParams<{ nodeId: string }>()
-  const [slots, setSlots] = useState<DummySlot[]>(INITIAL_SLOTS)
+  const [slots, setSlots] = useState<DummySlot[]>([])
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
 

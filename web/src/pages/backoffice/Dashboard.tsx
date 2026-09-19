@@ -2,17 +2,17 @@ import { Users, Clock, Battery, CalendarCheck } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 
 const STATS = [
-  { label: 'Total Prosumers', value: 128, icon: Users },
-  { label: 'Pending Activations', value: 6, icon: Clock },
-  { label: 'Active Nodes', value: 3, icon: Battery },
-  { label: 'Total Reservations', value: 342, icon: CalendarCheck },
+  { label: 'Total Prosumers', value: 0, icon: Users },
+  { label: 'Pending Activations', value: 0, icon: Clock },
+  { label: 'Active Nodes', value: 0, icon: Battery },
+  { label: 'Total Reservations', value: 0, icon: CalendarCheck },
 ] as const
 
 const RESERVATIONS_BY_STATUS = [
-  { status: 'Pending', count: 14 },
-  { status: 'Approved', count: 22 },
-  { status: 'Completed', count: 289 },
-  { status: 'Cancelled', count: 17 },
+  { status: 'Pending', count: 0 },
+  { status: 'Approved', count: 0 },
+  { status: 'Completed', count: 0 },
+  { status: 'Cancelled', count: 0 },
 ] as const
 
 export default function Dashboard() {
