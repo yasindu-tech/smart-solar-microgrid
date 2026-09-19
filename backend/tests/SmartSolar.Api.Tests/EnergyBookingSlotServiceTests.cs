@@ -338,7 +338,7 @@ public class EnergyBookingSlotServiceTests
         Assert.Empty(results);
     }
 
-    [Fact]
+    [Fact] // unknown node is a 404, matching the same contract as slot lookups
     public async Task GetByNodeIdAsync_UnknownNode_IsRejectedWithNotFound()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -349,7 +349,7 @@ public class EnergyBookingSlotServiceTests
 
     // -- Update -----------------------------------------------------------------------
 
-    [Fact]
+    [Fact] // same E4404 contract as GetByNodeIdAsync for an unknown id
     public async Task UpdateAsync_UnknownSlot_IsRejectedWithNotFound()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -419,7 +419,7 @@ public class EnergyBookingSlotServiceTests
 
     // -- Update availability (EC-6) ----------------------------------------------------
 
-    [Fact]
+    [Fact] // the happy path - a value inside [0, totalCapacity] is just saved
     public async Task UpdateAvailabilityAsync_WithinBounds_IsApplied()
     {
         var created = await _service.CreateAsync(NodeId, ValidCreate(totalCapacity: 4), BackofficeCaller, "Backoffice");
@@ -468,7 +468,7 @@ public class EnergyBookingSlotServiceTests
         Assert.False(_slots.Slots.Single(s => s.SlotId == created.SlotId).IsActive);
     }
 
-    [Fact]
+    [Fact] // same E4404 contract as every other lookup-by-id path
     public async Task DeleteAsync_UnknownSlot_IsRejectedWithNotFound()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(() => _service.DeleteAsync("SL-9999"));
