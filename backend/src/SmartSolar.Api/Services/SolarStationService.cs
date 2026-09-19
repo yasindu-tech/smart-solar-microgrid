@@ -1,3 +1,12 @@
+// ---------------------------------------------------------------------------
+//  File        : SolarStationService.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : Node CRUD and REQ-NODE validation (coordinates, capacity,
+//                battery slots, type, schedule). All business logic for
+//                microgrid nodes lives here - SolarStationsController only
+//                binds, authorises and maps.
+// ---------------------------------------------------------------------------
+
 using System.Globalization;
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
@@ -8,30 +17,32 @@ using SmartSolar.Api.Repositories;
 
 namespace SmartSolar.Api.Services;
 
-public class NodeService
+public class SolarStationService
 {
     private const int MinPageSize = 1;
     private const int MaxPageSize = 100;
     private const int DefaultPageSize = 20;
 
-    private readonly INodeRepository _nodeRepo;
+    private readonly ISolarStationRepository _nodeRepo;
     private readonly ICounterRepository _counterRepo;
 
-    public NodeService(INodeRepository nodeRepo, ICounterRepository counterRepo)
+    public SolarStationService(ISolarStationRepository nodeRepo, ICounterRepository counterRepo)
     {
+        // Inject the data-access contracts. No IMongoCollection ever reaches this class.
         _nodeRepo = nodeRepo;
         _counterRepo = counterRepo;
     }
 
     public async Task<NodeResponse> CreateAsync(CreateNodeRequest request, string callerUserId)
     {
+        // Validate every field before touching the repository - a rejected create must write nothing.
         var schedule = ValidateAndMapSchedule(
             request.Location, request.CapacityKwh, request.BatterySlotCount, request.Type, request.Schedule);
 
         var sequence = await _counterRepo.GetNextSequenceValueAsync("nodeid");
         var now = DateTime.UtcNow;
 
-        var node = new Node
+        var node = new SolarStationInfo
         {
             NodeId = $"ND-{sequence:D4}",
             Name = request.Name,
@@ -52,6 +63,7 @@ public class NodeService
 
     public async Task<NodeResponse> GetByIdAsync(string nodeId)
     {
+        // Unknown id is a 404, not an empty result - callers always hold a concrete nodeId.
         var node = await _nodeRepo.GetByNodeIdAsync(nodeId)
             ?? throw new DomainException("E4404", $"Node '{nodeId}' was not found.", 404);
 
@@ -61,6 +73,8 @@ public class NodeService
     public async Task<(List<NodeResponse> Items, int Total, int Page, int PageSize)> GetAllAsync(
         bool? active, int page, int pageSize)
     {
+        // Clamp paging inputs before they reach the repository - an unbounded
+        // pageSize would let a caller pull the whole collection in one request.
         var safePage = page < 1 ? 1 : page;
         var safePageSize = pageSize < MinPageSize ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
 
@@ -70,9 +84,11 @@ public class NodeService
 
     public async Task<NodeResponse> UpdateAsync(string nodeId, UpdateNodeRequest request)
     {
+        // Load first so an unknown id fails fast, before any validation work.
         var node = await _nodeRepo.GetByNodeIdAsync(nodeId)
             ?? throw new DomainException("E4404", $"Node '{nodeId}' was not found.", 404);
 
+        // Re-run every CreateAsync validation - an update can put a node into the same invalid state a create can.
         var schedule = ValidateAndMapSchedule(
             request.Location, request.CapacityKwh, request.BatterySlotCount, request.Type, request.Schedule);
 
@@ -95,6 +111,7 @@ public class NodeService
         string type,
         List<ScheduleWindowDto> schedule)
     {
+        // Latitude and longitude bounds are inclusive - REQ-NODE AC-2.
         if (location.Latitude is < -90 or > 90)
             throw new DomainException("E4002", "Latitude must be between -90 and 90.", 400, "latitude");
 
@@ -110,6 +127,8 @@ public class NodeService
         if (type != "AC" && type != "DC")
             throw new DomainException("E4002", "Type must be 'AC' or 'DC'.", 400, "type");
 
+        // Parse strictly with TryParseExact - plain TryParse accepts "6am"/"6:00", which would then
+        // sit in Mongo in a format nothing else expects (data-model.md 1.3).
         var parsed = new List<(ScheduleWindow Window, TimeOnly Open, TimeOnly Close)>();
         foreach (var window in schedule)
         {
@@ -132,6 +151,8 @@ public class NodeService
             }, open, close));
         }
 
+        // Two windows on the SAME day must not overlap (EC-2). Touching at the boundary is not
+        // overlapping - a split shift (e.g. 06:00-12:00, 12:00-18:00) is legal.
         foreach (var group in parsed.GroupBy(p => p.Window.DayOfWeek))
         {
             var ordered = group.OrderBy(p => p.Open).ToList();
@@ -146,6 +167,7 @@ public class NodeService
     }
 
     private static NodeLocation ToModel(NodeLocationDto location)
+        // Map the wire-shape location DTO to the storage model.
         => new()
         {
             Latitude = location.Latitude,
@@ -153,7 +175,8 @@ public class NodeService
             AddressLine = location.AddressLine,
         };
 
-    private static NodeResponse MapToResponse(Node node)
+    private static NodeResponse MapToResponse(SolarStationInfo node)
+        // Convert every embedded model type to its DTO counterpart, never leak the Mongo document.
         => new(
             node.NodeId,
             node.Name,

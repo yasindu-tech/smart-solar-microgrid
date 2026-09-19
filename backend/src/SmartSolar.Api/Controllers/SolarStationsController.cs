@@ -1,3 +1,13 @@
+// ---------------------------------------------------------------------------
+//  File        : SolarStationsController.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : HTTP surface for microgrid node CRUD. Binds, authorises and
+//                maps only - every business rule lives in SolarStationService.
+//                Route stays "api/nodes" (frozen in api-contract.md) even
+//                though the class is named for the SolarStationInfo
+//                collection it manages.
+// ---------------------------------------------------------------------------
+
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,14 +19,14 @@ using SmartSolar.Api.Services;
 namespace SmartSolar.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/nodes")]
 [Authorize]
-public class NodesController : ControllerBase
+public class SolarStationsController : ControllerBase
 {
-    private readonly NodeService _nodeService;
+    private readonly SolarStationService _nodeService;
 
     // Inject the service. The controller holds no state of its own.
-    public NodesController(NodeService nodeService)
+    public SolarStationsController(SolarStationService nodeService)
     {
         _nodeService = nodeService;
     }

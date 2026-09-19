@@ -1,9 +1,41 @@
+// ---------------------------------------------------------------------------
+//  File        : SolarStationInfo.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : Mongo document shapes for the "SolarStationInfo" collection
+//                (a microgrid node): the schedule window, the GPS location,
+//                and the node itself.
+// ---------------------------------------------------------------------------
+
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace SmartSolar.Api.Models;
 
-public class Node
+public class ScheduleWindow
+{
+    [BsonElement("dayOfWeek")]
+    public string DayOfWeek { get; set; } = string.Empty;
+
+    [BsonElement("openTime")]
+    public string OpenTime { get; set; } = string.Empty;
+
+    [BsonElement("closeTime")]
+    public string CloseTime { get; set; } = string.Empty;
+}
+
+public class NodeLocation
+{
+    [BsonElement("latitude")]
+    public double Latitude { get; set; }
+
+    [BsonElement("longitude")]
+    public double Longitude { get; set; }
+
+    [BsonElement("addressLine")]
+    public string AddressLine { get; set; } = string.Empty;
+}
+
+public class SolarStationInfo
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]

@@ -1,3 +1,11 @@
+// ---------------------------------------------------------------------------
+//  File        : SolarStationServiceTests.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : Executable specification for SolarStationService -
+//                REQ-NODE's validation rules, sequential id generation, and
+//                CRUD behaviour.
+// ---------------------------------------------------------------------------
+
 using SmartSolar.Api.DTOs.Common.Nodes;
 using SmartSolar.Api.DTOs.Request.Nodes;
 using SmartSolar.Api.DTOs.Response.Nodes;
@@ -14,19 +22,19 @@ namespace SmartSolar.Api.Tests;
 // ---------------------------------------------------------------------------
 
 /// <summary>In-memory stand-in for the Mongo-backed node repository.</summary>
-internal sealed class FakeNodeRepository : INodeRepository
+internal sealed class FakeSolarStationRepository : ISolarStationRepository
 {
-    public readonly List<Node> Nodes = new();
+    public readonly List<SolarStationInfo> Nodes = new();
 
     // Recorded so tests can assert what the service passed down.
     public bool? LastActiveFilter;
     public int LastPage;
     public int LastPageSize;
 
-    public Task<Node?> GetByNodeIdAsync(string nodeId)
+    public Task<SolarStationInfo?> GetByNodeIdAsync(string nodeId)
         => Task.FromResult(Nodes.FirstOrDefault(n => n.NodeId == nodeId));
 
-    public Task<(List<Node> Items, int Total)> GetAllAsync(bool? active, int page, int pageSize)
+    public Task<(List<SolarStationInfo> Items, int Total)> GetAllAsync(bool? active, int page, int pageSize)
     {
         LastActiveFilter = active;
         LastPage = page;
@@ -37,13 +45,13 @@ internal sealed class FakeNodeRepository : INodeRepository
         return Task.FromResult((pageItems, matching.Count));
     }
 
-    public Task CreateAsync(Node node)
+    public Task CreateAsync(SolarStationInfo node)
     {
         Nodes.Add(node);
         return Task.CompletedTask;
     }
 
-    public Task UpdateAsync(Node node)
+    public Task UpdateAsync(SolarStationInfo node)
     {
         var index = Nodes.FindIndex(n => n.NodeId == node.NodeId);
         if (index >= 0) Nodes[index] = node;
@@ -62,6 +70,7 @@ internal sealed class FakeCounterRepository : ICounterRepository
 {
     private readonly Dictionary<string, int> _sequences = new();
 
+    // Increment and return an in-memory counter, keyed by sequence name.
     public Task<int> GetNextSequenceValueAsync(string sequenceName)
     {
         _sequences.TryGetValue(sequenceName, out var current);
@@ -75,16 +84,16 @@ internal sealed class FakeCounterRepository : ICounterRepository
 //  Tests
 // ---------------------------------------------------------------------------
 
-public class NodeServiceTests
+public class SolarStationServiceTests
 {
-    private readonly FakeNodeRepository _nodes = new();
-    private readonly NodeService _service;
+    private readonly FakeSolarStationRepository _nodes = new();
+    private readonly SolarStationService _service;
 
     private const string Caller = "USR-0001";
 
-    public NodeServiceTests()
+    public SolarStationServiceTests()
     {
-        _service = new NodeService(_nodes, new FakeCounterRepository());
+        _service = new SolarStationService(_nodes, new FakeCounterRepository());
     }
 
     // Real Colombo-area coordinates, per the D2 definition of done.
@@ -103,6 +112,7 @@ public class NodeServiceTests
             type,
             schedule ?? new List<ScheduleWindowDto> { new("Mon", "06:00", "18:00") });
 
+    // Same shape as ValidCreate, with different values so tests can assert an edit actually applied.
     private static UpdateNodeRequest ValidUpdate(
         string name = "Moratuwa Microgrid Hub A (renamed)",
         double latitude = 6.7729,
@@ -347,7 +357,7 @@ public class NodeServiceTests
 
     // -- Read ------------------------------------------------------------------
 
-    [Fact]
+    [Fact] // unknown id is a 404, not a null result
     public async Task GetByIdAsync_UnknownNode_IsRejectedWithNotFound()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -357,7 +367,7 @@ public class NodeServiceTests
         Assert.Equal(404, ex.StatusCode);
     }
 
-    [Fact]
+    [Fact] // the happy path round-trips through MapToResponse correctly
     public async Task GetByIdAsync_KnownNode_ReturnsIt()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -399,7 +409,7 @@ public class NodeServiceTests
 
     // -- Update ----------------------------------------------------------------
 
-    [Fact]
+    [Fact] // same E4404 contract as GetByIdAsync for an unknown id
     public async Task UpdateAsync_UnknownNode_IsRejectedWithNotFound()
     {
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -408,7 +418,7 @@ public class NodeServiceTests
         Assert.Equal("E4404", ex.Code);
     }
 
-    [Fact]
+    [Fact] // every field ValidUpdate changes actually lands on the stored document
     public async Task UpdateAsync_AppliesTheEditableFields()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -433,7 +443,7 @@ public class NodeServiceTests
         Assert.True(updated.IsActive);
     }
 
-    [Fact]
+    [Fact] // UpdatedAt must advance and stay a UTC timestamp
     public async Task UpdateAsync_MovesUpdatedAtForward()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -456,7 +466,7 @@ public class NodeServiceTests
         Assert.Equal("latitude", ex.Field);
     }
 
-    [Fact]
+    [Fact] // an update can put the schedule into the same overlapping state a create can
     public async Task UpdateAsync_RevalidatesTheSchedule()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -485,7 +495,7 @@ public class NodeServiceTests
         Assert.Equal("longitude", ex.Field);
     }
 
-    [Fact]
+    [Fact] // same guard group as UpdateAsync_RevalidatesLongitude - capacity this time
     public async Task UpdateAsync_RevalidatesCapacity()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -497,7 +507,7 @@ public class NodeServiceTests
         Assert.Equal("capacityKwh", ex.Field);
     }
 
-    [Fact]
+    [Fact] // same guard group - battery slot count this time
     public async Task UpdateAsync_RevalidatesBatterySlotCount()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -509,7 +519,7 @@ public class NodeServiceTests
         Assert.Equal("batterySlotCount", ex.Field);
     }
 
-    [Fact]
+    [Fact] // same guard group - type enum this time
     public async Task UpdateAsync_RevalidatesType()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -521,7 +531,7 @@ public class NodeServiceTests
         Assert.Equal("type", ex.Field);
     }
 
-    [Fact]
+    [Fact] // same guard group - strict HH:mm parsing this time
     public async Task UpdateAsync_RevalidatesTimeFormat()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
@@ -534,7 +544,7 @@ public class NodeServiceTests
         Assert.Equal("schedule", ex.Field);
     }
 
-    [Fact]
+    [Fact] // same guard group - open-before-close ordering this time
     public async Task UpdateAsync_RevalidatesOpenBeforeClose()
     {
         var created = await _service.CreateAsync(ValidCreate(), Caller);
