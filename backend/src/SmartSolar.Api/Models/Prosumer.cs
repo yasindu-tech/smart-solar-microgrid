@@ -2,6 +2,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace SmartSolar.Api.Models;
 
+[BsonIgnoreExtraElements]
 public class Prosumer
 {
     // NIC IS the _id. Stored as a string, not ObjectId (ADR-002 §1).
@@ -42,6 +43,7 @@ public class Prosumer
 
     // Timestamp when the prosumer requested deactivation. Null if never (BR-04).
     [BsonElement("deactivationRequestedAt")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime? DeactivationRequestedAt { get; set; }
 
     // UserId of the Backoffice officer who last reactivated this account (BR-03).
@@ -50,9 +52,11 @@ public class Prosumer
 
     // Timestamp when the account was created (UTC — BR-13).
     [BsonElement("createdAt")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime CreatedAt { get; set; }
 
     // Timestamp of the last update (UTC — BR-13).
     [BsonElement("updatedAt")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime UpdatedAt { get; set; }
 }

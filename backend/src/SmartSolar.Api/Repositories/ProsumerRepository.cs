@@ -10,20 +10,9 @@ public class ProsumerRepository
     private readonly IMongoCollection<Prosumer> _collection;
 
     // Resolve the collection once at construction.
-    public ProsumerRepository(IOptions<MongoSettings> settings)
+    public ProsumerRepository(IMongoDatabase database)
     {
-        var client = new MongoClient(settings.Value.ConnectionString);
-        var db = client.GetDatabase(settings.Value.DatabaseName);
-        _collection = db.GetCollection<Prosumer>("Prosumers");
-
-        // Create indexes
-        var uniqueOptions = new CreateIndexOptions { Unique = true };
-        _collection.Indexes.CreateOne(new CreateIndexModel<Prosumer>(
-            Builders<Prosumer>.IndexKeys.Ascending(p => p.Email), uniqueOptions));
-
-        var collationOptions = new CreateIndexOptions { Collation = new Collation("en", strength: CollationStrength.Secondary) };
-        _collection.Indexes.CreateOne(new CreateIndexModel<Prosumer>(
-            Builders<Prosumer>.IndexKeys.Ascending(p => p.Nic), collationOptions));
+        _collection = database.GetCollection<Prosumer>("Prosumers");
     }
 
     public async Task<Prosumer?> GetByNicAsync(string nic)

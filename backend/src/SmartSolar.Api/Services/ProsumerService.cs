@@ -21,7 +21,7 @@ public class ProsumerService
     /// </summary>
     public async Task<ProsumerResponse> RegisterAsync(RegisterProsumerRequest request)
     {
-        var nic = request.Nic.Trim();
+        var nic = request.Nic.Trim().ToUpperInvariant();
 
         // EC-1: Validate Sri Lankan NIC formats
         if (!Regex.IsMatch(nic, "^([0-9]{9}[vVxX]|[0-9]{12})$"))
