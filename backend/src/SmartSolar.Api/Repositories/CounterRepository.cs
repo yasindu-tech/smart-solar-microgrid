@@ -8,18 +8,18 @@ public class Counter
 {
     [MongoDB.Bson.Serialization.Attributes.BsonId]
     public string Id { get; set; } = string.Empty;
+
+    [MongoDB.Bson.Serialization.Attributes.BsonElement("sequenceValue")]
     public int SequenceValue { get; set; }
 }
 
-public class CounterRepository
+public class CounterRepository : ICounterRepository
 {
     private readonly IMongoCollection<Counter> _counters;
 
-    public CounterRepository(IOptions<MongoSettings> settings)
+    public CounterRepository(IMongoDatabase database)
     {
-        var client = new MongoClient(settings.Value.ConnectionString);
-        var db = client.GetDatabase(settings.Value.DatabaseName);
-        _counters = db.GetCollection<Counter>("Counters");
+        _counters = database.GetCollection<Counter>("Counters");
     }
 
     /// <summary>
