@@ -3,3 +3,7 @@ export const authEndpoints = {
   LOGOUT: '/auth/logout',
   ME: '/auth/me',
 }
+
+export const nodeEndpoints = {
+  BASE: '/nodes',
+}

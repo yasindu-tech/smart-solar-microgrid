@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Zap } from 'lucide-react'
+import { useCreateNode, useNodes } from '../../api/NodesApi'
+import type { ApiRequestError } from '../../api/types'
+import SolarLoader from '../../components/SolarLoader/SolarLoader'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card'
 import { Input } from '../../components/ui/input'
@@ -15,48 +18,62 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet'
+import { useToast } from '../../lib/useToast'
+import type { Node } from '../../types/NodeTypes'
 
-interface DummyNode {
-  nodeId: string
-  name: string
-  addressLine: string
-  capacityKwh: number
-  batterySlotCount: number
-  type: 'AC' | 'DC'
-  isActive: boolean
+const EMPTY_FORM = {
+  name: '',
+  addressLine: '',
+  latitude: '',
+  longitude: '',
+  capacityKwh: '',
+  batterySlotCount: '',
+  type: 'AC' as const,
 }
 
-const EMPTY_FORM = { name: '', addressLine: '', capacityKwh: '', batterySlotCount: '', type: 'AC' as const }
-
-/**
- * Placeholder UI only - not wired to the real /api/nodes endpoints yet.
- * "Add node" appends to local state so the screen still feels interactive.
- */
 export default function NodeManagement() {
-  const [nodes, setNodes] = useState<DummyNode[]>([])
+  const { data, isLoading, isError } = useNodes()
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
+  const { showToast } = useToast()
+
+  const handleCreateSuccess = (node: Node) => {
+    showToast({
+      variant: 'success',
+      title: 'Node created',
+      message: `${node.name} (${node.nodeId}) was added to the grid.`,
+    })
+    setForm(EMPTY_FORM)
+    setDialogOpen(false)
+  }
+
+  const handleCreateError = (error: ApiRequestError) => {
+    showToast({ variant: 'danger', title: 'Could not create node', message: error.envelope.message })
+  }
+
+  const { mutate: createNode, isPending: isCreating } = useCreateNode({
+    onSuccess: handleCreateSuccess,
+    onError: handleCreateError,
+  })
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
 
-    const nextId = `ND-${String(nodes.length + 1).padStart(4, '0')}`
-    setNodes((prev) => [
-      ...prev,
-      {
-        nodeId: nextId,
-        name: form.name,
+    createNode({
+      name: form.name,
+      location: {
+        latitude: Number(form.latitude) || 0,
+        longitude: Number(form.longitude) || 0,
         addressLine: form.addressLine,
-        capacityKwh: Number(form.capacityKwh) || 0,
-        batterySlotCount: Number(form.batterySlotCount) || 0,
-        type: form.type,
-        isActive: true,
       },
-    ])
-
-    setForm(EMPTY_FORM)
-    setDialogOpen(false)
+      capacityKwh: Number(form.capacityKwh) || 0,
+      batterySlotCount: Number(form.batterySlotCount) || 0,
+      type: form.type,
+      schedule: [],
+    })
   }
+
+  const nodes = data?.items ?? []
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,7 +81,7 @@ export default function NodeManagement() {
         <div>
           <h2 className="sg-h3">Microgrid nodes</h2>
           <p className="sg-body-sm text-sg-text-secondary">
-            Solar hubs registered across the grid. (Placeholder screen — not yet wired to the API.)
+            Solar hubs registered across the grid.
           </p>
         </div>
 
@@ -109,6 +126,34 @@ export default function NodeManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
+                    <Label htmlFor="latitude">Latitude</Label>
+                    <Input
+                      id="latitude"
+                      type="number"
+                      step="any"
+                      min={-90}
+                      max={90}
+                      value={form.latitude}
+                      onChange={(e) => setForm((p) => ({ ...p, latitude: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="longitude">Longitude</Label>
+                    <Input
+                      id="longitude"
+                      type="number"
+                      step="any"
+                      min={-180}
+                      max={180}
+                      value={form.longitude}
+                      onChange={(e) => setForm((p) => ({ ...p, longitude: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
                     <Label htmlFor="capacityKwh">Capacity (kWh)</Label>
                     <Input
                       id="capacityKwh"
@@ -135,14 +180,24 @@ export default function NodeManagement() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Create node</Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? 'Creating...' : 'Create node'}
+                </Button>
               </SheetFooter>
             </form>
           </SheetContent>
         </Sheet>
       </div>
 
-      {nodes.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <SolarLoader showLabel label="Loading nodes..." />
+        </div>
+      ) : isError ? (
+        <div className="sg-alert sg-alert-danger" role="alert">
+          Could not load nodes. Please try again.
+        </div>
+      ) : nodes.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-sg-border py-16 text-center">
           <Zap size={28} className="text-sg-text-muted" />
           <p className="sg-h4">No nodes yet</p>
@@ -171,7 +226,7 @@ export default function NodeManagement() {
               <CardContent className="flex flex-1 flex-col gap-4 pt-4">
                 <div className="flex items-start gap-2">
                   <MapPin size={15} className="mt-0.5 shrink-0 text-sg-text-muted" />
-                  <p className="sg-body-sm">{node.addressLine}</p>
+                  <p className="sg-body-sm">{node.location.addressLine}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
