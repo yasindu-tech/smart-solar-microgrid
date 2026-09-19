@@ -7,11 +7,39 @@ using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Repositories;
 using SmartSolar.Api.Services;
 
+using Microsoft.Extensions.Options;
+using MongoDB.Bson.Serialization.Conventions;
+using MongoDB.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Register MongoDB BSON conventions
+var conventionPack = new ConventionPack
+{
+    new CamelCaseElementNameConvention(),
+    new IgnoreExtraElementsConvention(true)
+};
+ConventionRegistry.Register("SmartSolarConventions", conventionPack, _ => true);
 
 // Bind MongoDB connection settings from configuration (never hard-coded).
 builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+// Register single shared MongoClient and IMongoDatabase connection pool
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+    return new MongoClient(settings.ConnectionString);
+});
+builder.Services.AddSingleton<IMongoDatabase>(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(settings.DatabaseName);
+});
+
+// Asynchronously initialize and verify MongoDB indexes on application boot
+builder.Services.AddHostedService<MongoIndexInitializer>();
 
 // Register domain repositories
 builder.Services.AddSingleton<CounterRepository>();
@@ -81,14 +109,15 @@ builder.Services.AddSwaggerGen(c =>
     // Add the "Authorize" button to Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGci...\"",
+        Description = "JWT Authorization header using the Bearer scheme. Enter your token below (without 'Bearer').",
         Name = "Authorization",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -97,12 +126,9 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header,
+                }
             },
-            new List<string>()
+            Array.Empty<string>()
         }
     });
 });

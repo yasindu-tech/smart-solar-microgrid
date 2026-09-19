@@ -5,8 +5,8 @@
 //
 //  Creates every status at least once so each business rule can be shown
 //  working AND failing. See docs/architecture/data-model.md section 4.
-//  Passwords here are placeholders - replace the hashes with real BCrypt
-//  output from the API before demoing, or register through the app.
+//  Web passwords: Nimal123, Sunil123, Ruwan123
+//  Prosumer passwords: Kamal123, Saman123, Dilani123, Anura123
 // ---------------------------------------------------------------------------
 
 const now = new Date();
@@ -18,20 +18,26 @@ db.Prosumers.deleteMany({});
 db.SolarStationInfo.deleteMany({});
 db.EnergyBookingSlots.deleteMany({});
 db.EnergyReservation.deleteMany({});
+db.Counters.deleteMany({});
+
+// Initialize sequence counters so new user creation (e.g. USR-0004) does not collide with seed users
+db.Counters.insertOne({ _id: "userid", sequenceValue: 3 });
 
 // --- Web accounts: one back-office officer, two operators -------------------
+// Passwords: Nimal123, Sunil123, Ruwan123
 db.Users.insertMany([
-  { userId: "USR-0001", fullName: "Nimal Perera", email: "backoffice@grid.lk", passwordHash: "", role: "Backoffice", assignedNodeIds: [], isActive: true, createdAt: now, updatedAt: now },
-  { userId: "USR-0002", fullName: "Sunil Fernando", email: "op1@grid.lk", passwordHash: "<bcrypt>", role: "Operator", assignedNodeIds: ["ND-001"], isActive: true, createdAt: now, updatedAt: now },
-  { userId: "USR-0003", fullName: "Ruwan Jayasuriya", email: "op2@grid.lk", passwordHash: "<bcrypt>", role: "Operator", assignedNodeIds: ["ND-002"], isActive: true, createdAt: now, updatedAt: now }
+  { userId: "USR-0001", fullName: "Nimal Perera", email: "backoffice@grid.lk", passwordHash: "$2a$11$UvzNzk/nb.8MrRuH0BZLj.wour.S7NXZ2V1LjKtKZHthQuNY5xPQq", role: "Backoffice", assignedNodeIds: [], isActive: true, createdAt: now, updatedAt: now },
+  { userId: "USR-0002", fullName: "Sunil Fernando", email: "op1@grid.lk", passwordHash: "$2a$11$fdeYPMWH4e..TeVyq3DCOugPZxrZ5VTFBdJ8ph6PEE3rW1mRo1mpy", role: "Operator", assignedNodeIds: ["ND-001"], isActive: true, createdAt: now, updatedAt: now },
+  { userId: "USR-0003", fullName: "Ruwan Jayasuriya", email: "op2@grid.lk", passwordHash: "$2a$11$vhLULSYFDVxW.HkpL1OZheSqw0nzAu7px1aEDw8PhE1FARUq0gQaS", role: "Operator", assignedNodeIds: ["ND-002"], isActive: true, createdAt: now, updatedAt: now }
 ]);
 
 // --- Prosumers: every account status represented ----------------------------
+// Passwords: Kamal123, Saman123, Dilani123, Anura123
 db.Prosumers.insertMany([
-  { _id: "199512345678", nic: "199512345678", fullName: "Kamal Silva", email: "kamal@mail.com", phone: "0771234567", address: "12 Galle Rd, Colombo 03", passwordHash: "<bcrypt>", solarCapacityKw: 5.5, status: "Active", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
-  { _id: "199887654321", nic: "199887654321", fullName: "Saman Wijesinghe", email: "saman@mail.com", phone: "0719876543", address: "44 Kandy Rd, Kadawatha", passwordHash: "<bcrypt>", solarCapacityKw: 3.0, status: "Active", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
-  { _id: "200012349876", nic: "200012349876", fullName: "Dilani Rathnayake", email: "dilani@mail.com", phone: "0765554443", address: "7 Lake Dr, Kotte", passwordHash: "<bcrypt>", solarCapacityKw: 7.2, status: "PendingActivation", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
-  { _id: "197744556677", nic: "197744556677", fullName: "Anura Bandara", email: "anura@mail.com", phone: "0701112223", address: "90 Main St, Moratuwa", passwordHash: "<bcrypt>", solarCapacityKw: 4.1, status: "Deactivated", deactivationRequestedAt: days(-3), reactivatedBy: null, createdAt: now, updatedAt: now }
+  { _id: "199512345678", nic: "199512345678", fullName: "Kamal Silva", email: "kamal@mail.com", phone: "0771234567", address: "12 Galle Rd, Colombo 03", passwordHash: "$2a$11$HZUiQ8HLAkev0f8HjjI8BueVRDD1BE0xrYgwBuWb74vET7KNeHDGm", solarCapacityKw: 5.5, status: "Active", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
+  { _id: "199887654321", nic: "199887654321", fullName: "Saman Wijesinghe", email: "saman@mail.com", phone: "0719876543", address: "44 Kandy Rd, Kadawatha", passwordHash: "$2a$11$d/EFr0DYgJHGz/ad4R./jOFzmWjA6eNDOI4Lx7Ph2HOJqjJwZ6f3q", solarCapacityKw: 3.0, status: "Active", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
+  { _id: "200012349876", nic: "200012349876", fullName: "Dilani Rathnayake", email: "dilani@mail.com", phone: "0765554443", address: "7 Lake Dr, Kotte", passwordHash: "$2a$11$wJ.pin.p3SQmCIwqYtF/Vu2Fyss6bMAmAAsD1WW3ca9NHcBe0VhLq", solarCapacityKw: 7.2, status: "PendingActivation", deactivationRequestedAt: null, reactivatedBy: null, createdAt: now, updatedAt: now },
+  { _id: "197744556677", nic: "197744556677", fullName: "Anura Bandara", email: "anura@mail.com", phone: "0701112223", address: "90 Main St, Moratuwa", passwordHash: "$2a$11$5sLtehSojp.tt64TIsHi5OERemGpKhW.5cZYdotUhYtyujxJISkNm", solarCapacityKw: 4.1, status: "Deactivated", deactivationRequestedAt: days(-3), reactivatedBy: null, createdAt: now, updatedAt: now }
 ]);
 
 // --- Microgrid hubs: real Colombo-area coordinates so the map looks right ---
@@ -63,7 +69,9 @@ db.EnergyReservation.insertMany([
 // --- Indexes the data model requires -----------------------------------------
 db.Users.createIndex({ email: 1 }, { unique: true });
 db.Users.createIndex({ userId: 1 }, { unique: true });
-db.Prosumers.createIndex({ nic: 1 }, { unique: true });
+db.Prosumers.createIndex({ email: 1 }, { unique: true });
+try { db.Prosumers.dropIndex("nic_1"); } catch (e) { }
+db.Prosumers.createIndex({ nic: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
 db.Prosumers.createIndex({ status: 1 });
 db.SolarStationInfo.createIndex({ nodeId: 1 }, { unique: true });
 db.SolarStationInfo.createIndex({ isActive: 1 });

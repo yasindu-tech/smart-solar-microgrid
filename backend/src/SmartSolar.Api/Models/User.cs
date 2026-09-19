@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace SmartSolar.Api.Models;
 
+[BsonIgnoreExtraElements]
 public class User
 {
     // MongoDB auto-generated document identifier.
@@ -40,9 +41,11 @@ public class User
 
     // Timestamp when the account was created (UTC — BR-13).
     [BsonElement("createdAt")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime CreatedAt { get; set; }
 
     // Timestamp of the last update (UTC — BR-13).
     [BsonElement("updatedAt")]
+    [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime UpdatedAt { get; set; }
 }
