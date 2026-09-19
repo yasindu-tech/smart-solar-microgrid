@@ -3,7 +3,7 @@
 //  Project     : Smart Solar Microgrid Trading System - Web API tests
 //  Module      : Tests
 //  Description : Unit tests verifying field mapping and BSON serialization
-//                for EnergyBookingSlots and EnergyReservation models (DOM-03).
+//                for EnergyBookingSlot and EnergyReservation models (DOM-03).
 //  Author      : Member 3
 //  Created     : 2026-09-19
 // ---------------------------------------------------------------------------
@@ -17,12 +17,12 @@ namespace SmartSolar.Api.Tests;
 
 public class EnergyModelTests
 {
-    // Verifies that EnergyBookingSlots serializes and deserializes correctly with MongoDB BSON.
+    // Verifies that EnergyBookingSlot serializes and deserializes correctly with MongoDB BSON.
     [Fact]
-    public void EnergyBookingSlots_BsonSerialization_RoundTripsSuccessfully()
+    public void EnergyBookingSlot_BsonSerialization_RoundTripsSuccessfully()
     {
         var now = DateTime.UtcNow;
-        var slot = new EnergyBookingSlots
+        var slot = new EnergyBookingSlot
         {
             SlotId = "SL-0042",
             NodeId = "ND-003",
@@ -44,7 +44,7 @@ public class EnergyModelTests
         Assert.Equal(20.0, bsonDoc["energyOfferedKwh"].AsDouble);
         Assert.True(bsonDoc["isActive"].AsBoolean);
 
-        var deserialized = BsonSerializer.Deserialize<EnergyBookingSlots>(bsonDoc);
+        var deserialized = BsonSerializer.Deserialize<EnergyBookingSlot>(bsonDoc);
         Assert.Equal(slot.SlotId, deserialized.SlotId);
         Assert.Equal(slot.NodeId, deserialized.NodeId);
         Assert.Equal(slot.TotalCapacity, deserialized.TotalCapacity);

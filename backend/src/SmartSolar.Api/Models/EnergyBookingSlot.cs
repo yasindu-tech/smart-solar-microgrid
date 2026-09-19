@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-//  File        : EnergyBookingSlots.cs
+//  File        : EnergyBookingSlot.cs
 //  Project     : Smart Solar Microgrid Trading System - Web API
 //  Description : Mongo document model representing a bookable energy transfer
 //                time window at a microgrid node ("EnergyBookingSlots" collection).
@@ -11,7 +11,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace SmartSolar.Api.Models;
 
 [BsonIgnoreExtraElements]
-public class EnergyBookingSlots
+public class EnergyBookingSlot
 {
     // MongoDB auto-generated document identifier.
     [BsonId]

@@ -95,14 +95,14 @@ public class MongoIndexInitializer : IHostedService
     // Ensures unique and compound indexes on the EnergyBookingSlots collection for slotId and { nodeId: 1, startTime: 1 }.
     private async Task InitializeEnergyBookingSlotsIndexesAsync(CancellationToken cancellationToken)
     {
-        var slots = _database.GetCollection<EnergyBookingSlots>("EnergyBookingSlots");
+        var slots = _database.GetCollection<EnergyBookingSlot>("EnergyBookingSlots");
 
-        var slotIdIndex = new CreateIndexModel<EnergyBookingSlots>(
-            Builders<EnergyBookingSlots>.IndexKeys.Ascending(s => s.SlotId),
+        var slotIdIndex = new CreateIndexModel<EnergyBookingSlot>(
+            Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.SlotId),
             new CreateIndexOptions { Unique = true });
 
-        var nodeTimeIndex = new CreateIndexModel<EnergyBookingSlots>(
-            Builders<EnergyBookingSlots>.IndexKeys
+        var nodeTimeIndex = new CreateIndexModel<EnergyBookingSlot>(
+            Builders<EnergyBookingSlot>.IndexKeys
                 .Ascending(s => s.NodeId)
                 .Ascending(s => s.StartTime));
 
