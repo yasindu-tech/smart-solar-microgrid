@@ -43,14 +43,17 @@ builder.Services.AddHostedService<MongoIndexInitializer>();
 
 // Register domain repositories
 builder.Services.AddSingleton<CounterRepository>();
+builder.Services.AddSingleton<ICounterRepository>(sp => sp.GetRequiredService<CounterRepository>());
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<ProsumerRepository>();
+builder.Services.AddSingleton<ISolarStationRepository, SolarStationRepository>();
 
 // Register domain services
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProsumerService>();
+builder.Services.AddScoped<SolarStationService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
