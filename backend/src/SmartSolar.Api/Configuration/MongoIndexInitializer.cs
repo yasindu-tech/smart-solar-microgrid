@@ -31,6 +31,8 @@ public class MongoIndexInitializer : IHostedService
         {
             await InitializeUserIndexesAsync(cancellationToken);
             await InitializeProsumerIndexesAsync(cancellationToken);
+            await InitializeEnergyBookingSlotsIndexesAsync(cancellationToken);
+            await InitializeEnergyReservationIndexesAsync(cancellationToken);
             _logger.LogInformation("MongoDB indexes verified successfully.");
         }
         catch (Exception ex)
@@ -88,6 +90,45 @@ public class MongoIndexInitializer : IHostedService
             await prosumers.Indexes.DropOneAsync("nic_1", cancellationToken);
             await prosumers.Indexes.CreateOneAsync(nicIndex, cancellationToken: cancellationToken);
         }
+    }
+
+    // Ensures unique and compound indexes on the EnergyBookingSlots collection for slotId and { nodeId: 1, startTime: 1 }.
+    private async Task InitializeEnergyBookingSlotsIndexesAsync(CancellationToken cancellationToken)
+    {
+        var slots = _database.GetCollection<EnergyBookingSlots>("EnergyBookingSlots");
+
+        var slotIdIndex = new CreateIndexModel<EnergyBookingSlots>(
+            Builders<EnergyBookingSlots>.IndexKeys.Ascending(s => s.SlotId),
+            new CreateIndexOptions { Unique = true });
+
+        var nodeTimeIndex = new CreateIndexModel<EnergyBookingSlots>(
+            Builders<EnergyBookingSlots>.IndexKeys
+                .Ascending(s => s.NodeId)
+                .Ascending(s => s.StartTime));
+
+        await slots.Indexes.CreateManyAsync(new[] { slotIdIndex, nodeTimeIndex }, cancellationToken);
+    }
+
+    // Ensures unique and compound indexes on the EnergyReservation collection for reservationId, { nic: 1, status: 1 }, and { nodeId: 1, slotStartTime: 1 }.
+    private async Task InitializeEnergyReservationIndexesAsync(CancellationToken cancellationToken)
+    {
+        var reservations = _database.GetCollection<EnergyReservation>("EnergyReservation");
+
+        var resIdIndex = new CreateIndexModel<EnergyReservation>(
+            Builders<EnergyReservation>.IndexKeys.Ascending(r => r.ReservationId),
+            new CreateIndexOptions { Unique = true });
+
+        var nicStatusIndex = new CreateIndexModel<EnergyReservation>(
+            Builders<EnergyReservation>.IndexKeys
+                .Ascending(r => r.Nic)
+                .Ascending(r => r.Status));
+
+        var nodeSlotTimeIndex = new CreateIndexModel<EnergyReservation>(
+            Builders<EnergyReservation>.IndexKeys
+                .Ascending(r => r.NodeId)
+                .Ascending(r => r.SlotStartTime));
+
+        await reservations.Indexes.CreateManyAsync(new[] { resIdIndex, nicStatusIndex, nodeSlotTimeIndex }, cancellationToken);
     }
 
     // Handles graceful shutdown when the host stops.

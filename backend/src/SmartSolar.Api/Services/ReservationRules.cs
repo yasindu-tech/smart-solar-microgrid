@@ -1,3 +1,10 @@
+// ---------------------------------------------------------------------------
+//  File        : ReservationRules.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : Pure domain scheduling and notice rules for reservations
+//                (BR-05, BR-06, BR-07, BR-08).
+// ---------------------------------------------------------------------------
+
 using SmartSolar.Api.Middleware;
 
 namespace SmartSolar.Api.Services;
@@ -24,6 +31,12 @@ public static class ReservationRules
         return slotStartUtc - nowUtc >= MinimumNotice;
     }
 
+    // BR-08: the chosen slot start time must be in the future.
+    public static bool IsInFuture(DateTime nowUtc, DateTime slotStartUtc)
+    {
+        return slotStartUtc > nowUtc;
+    }
+
     // Guard used by the create path. Throws E4101 when the 7-day horizon is exceeded.
     public static void AssertWithinBookingHorizon(DateTime createdAtUtc, DateTime slotStartUtc)
     {
@@ -32,6 +45,19 @@ public static class ReservationRules
             throw new DomainException(
                 "E4101",
                 "Reservations must be scheduled within 7 days of the booking date.",
+                400,
+                "slotStartTime");
+        }
+    }
+
+    // Guard used by create and update paths. Throws E4104 when slot start time is in the past (BR-08).
+    public static void AssertInFuture(DateTime nowUtc, DateTime slotStartUtc)
+    {
+        if (!IsInFuture(nowUtc, slotStartUtc))
+        {
+            throw new DomainException(
+                "E4104",
+                "Slot start time must be in the future.",
                 400,
                 "slotStartTime");
         }
