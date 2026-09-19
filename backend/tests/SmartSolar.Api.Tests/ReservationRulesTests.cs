@@ -121,6 +121,6 @@ public class ReservationRulesTests
         var ex = Assert.Throws<DomainException>(
             () => ReservationRules.AssertInFuture(Now, Now.AddHours(-1)));
 
-        Assert.Equal("E4104", ex.Code);
+        Assert.Equal("That slot has already started.", ex.Message);
     }
 }

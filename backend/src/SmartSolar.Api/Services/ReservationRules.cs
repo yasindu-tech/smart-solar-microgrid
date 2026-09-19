@@ -50,14 +50,14 @@ public static class ReservationRules
         }
     }
 
-    // Guard used by create and update paths. Throws E4104 when slot start time is in the past (BR-08).
+    // Guard used by create and update paths. Throws E4104 when the slot has already started (BR-08).
     public static void AssertInFuture(DateTime nowUtc, DateTime slotStartUtc)
     {
         if (!IsInFuture(nowUtc, slotStartUtc))
         {
             throw new DomainException(
                 "E4104",
-                "Slot start time must be in the future.",
+                "That slot has already started.",
                 400,
                 "slotStartTime");
         }
