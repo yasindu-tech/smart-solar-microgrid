@@ -31,6 +31,8 @@ public class MongoIndexInitializer : IHostedService
         {
             await InitializeUserIndexesAsync(cancellationToken);
             await InitializeProsumerIndexesAsync(cancellationToken);
+            await InitializeSolarStationIndexesAsync(cancellationToken);
+            await InitializeEnergyBookingSlotIndexesAsync(cancellationToken);
             _logger.LogInformation("MongoDB indexes verified successfully.");
         }
         catch (Exception ex)
@@ -88,6 +90,37 @@ public class MongoIndexInitializer : IHostedService
             await prosumers.Indexes.DropOneAsync("nic_1", cancellationToken);
             await prosumers.Indexes.CreateOneAsync(nicIndex, cancellationToken: cancellationToken);
         }
+    }
+
+    // Ensures a unique index on nodeId and a lookup index on isActive for SolarStationInfo.
+    private async Task InitializeSolarStationIndexesAsync(CancellationToken cancellationToken)
+    {
+        var nodes = _database.GetCollection<SolarStationInfo>("SolarStationInfo");
+        var uniqueOptions = new CreateIndexOptions { Unique = true };
+
+        var nodeIdIndex = new CreateIndexModel<SolarStationInfo>(
+            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.NodeId), uniqueOptions);
+        var isActiveIndex = new CreateIndexModel<SolarStationInfo>(
+            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.IsActive));
+
+        await nodes.Indexes.CreateManyAsync(new[] { nodeIdIndex, isActiveIndex }, cancellationToken);
+    }
+
+    // Ensures a unique index on slotId and a compound index on { nodeId, startTime }
+    // for EnergyBookingSlots (data-model.md 1.4) - the compound index makes the
+    // overlap/window queries in EnergyBookingSlotService index hits, not scans.
+    private async Task InitializeEnergyBookingSlotIndexesAsync(CancellationToken cancellationToken)
+    {
+        var slots = _database.GetCollection<EnergyBookingSlot>("EnergyBookingSlots");
+
+        var slotIdIndex = new CreateIndexModel<EnergyBookingSlot>(
+            Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.SlotId),
+            new CreateIndexOptions { Unique = true });
+
+        var nodeStartIndex = new CreateIndexModel<EnergyBookingSlot>(
+            Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.NodeId).Ascending(s => s.StartTime));
+
+        await slots.Indexes.CreateManyAsync(new[] { slotIdIndex, nodeStartIndex }, cancellationToken);
     }
 
     // Handles graceful shutdown when the host stops.
