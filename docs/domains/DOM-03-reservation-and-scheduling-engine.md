@@ -40,8 +40,8 @@ notice.
 ## Business rules owned
 
 **BR-05** (7-day booking horizon) · **BR-06** (12h update notice) · **BR-07**
-(12h cancel notice) · BR-08 (no past slots) · BR-15 (slot capacity) · BR-16
-(referenced entities must exist and be active) · BR-18 (QR reissue/invalidate
+(12h cancel notice) · **BR-08** (no past slots) · **BR-15** (slot capacity) · **BR-16**
+(referenced entities must exist and be active) · **BR-18** (QR reissue/invalidate
 on update — the reservation-side trigger; D4 owns the token's format)
 
 ## Data owned
