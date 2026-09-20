@@ -21,11 +21,10 @@ public class QrTokenService
     public QrTokenService(IOptions<QrSettings> qrSettings)
     {
         // Resolve secret key bytes from configuration.
-        var secret = qrSettings.Value.SigningSecret?.Trim() ?? string.Empty;
+        var secret = qrSettings.Value.SigningSecret?.Trim();
         if (string.IsNullOrWhiteSpace(secret))
         {
-            // Fallback for development if not explicitly configured
-            secret = "smart-solar-microgrid-default-qr-secret-key-32bytes!";
+            throw new InvalidOperationException("QR signing secret must be configured.");
         }
         _keyBytes = Encoding.UTF8.GetBytes(secret);
     }
