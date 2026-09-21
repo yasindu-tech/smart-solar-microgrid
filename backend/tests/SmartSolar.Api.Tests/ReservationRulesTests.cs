@@ -99,4 +99,28 @@ public class ReservationRulesTests
         Assert.True(ReservationRules.IsWithinBookingHorizon(createdAt, slotStart));
         Assert.True(ReservationRules.HasSufficientNotice(Now, slotStart));
     }
+
+    // BR-08: a slot starting in the future is allowed.
+    [Fact]
+    public void SlotInFuture_IsAllowed()
+    {
+        Assert.True(ReservationRules.IsInFuture(Now, Now.AddMinutes(1)));
+    }
+
+    // BR-08: a slot starting in the past is refused.
+    [Fact]
+    public void SlotInPast_IsRefused()
+    {
+        Assert.False(ReservationRules.IsInFuture(Now, Now.AddMinutes(-1)));
+    }
+
+    // BR-08: the guard raises the documented error code E4104 when slot is in the past.
+    [Fact]
+    public void AssertInFuture_ThrowsE4104_WhenSlotInPast()
+    {
+        var ex = Assert.Throws<DomainException>(
+            () => ReservationRules.AssertInFuture(Now, Now.AddHours(-1)));
+
+        Assert.Equal("That slot has already started.", ex.Message);
+    }
 }
