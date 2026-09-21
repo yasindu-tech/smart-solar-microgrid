@@ -22,3 +22,5 @@ export const TOAST_ICON_COLOR_BY_VARIANT: Record<ToastVariant, string> = {
 }
 
 export const TOAST_AUTO_DISMISS_MS = 5000
+
+export const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']

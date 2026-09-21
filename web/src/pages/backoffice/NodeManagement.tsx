@@ -19,10 +19,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet'
+import { DAYS_OF_WEEK } from '../../lib/constants'
 import { useToast } from '../../lib/useToast'
 import type { Node, NodeType, ScheduleWindow } from '../../types/NodeTypes'
-
-const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
 const EMPTY_SCHEDULE_WINDOW: ScheduleWindow = { dayOfWeek: 'Mon', openTime: '', closeTime: '' }
 
