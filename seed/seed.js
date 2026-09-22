@@ -20,8 +20,12 @@ db.EnergyBookingSlots.deleteMany({});
 db.EnergyReservation.deleteMany({});
 db.Counters.deleteMany({});
 
-// Initialize sequence counters so new user creation (e.g. USR-0004) does not collide with seed users
+// Initialize sequence counters so new user/slot creation (e.g. USR-0004, SL-0006)
+// does not collide with seed data. Nodes are seeded as 3-digit ("ND-001") specifically
+// to avoid colliding with the 4-digit "ND-000N" the API generates, so no nodeid counter
+// entry is needed - slots and users use the same 4-digit style as their seed rows, so they do.
 db.Counters.insertOne({ _id: "userid", sequenceValue: 3 });
+db.Counters.insertOne({ _id: "slotid", sequenceValue: 5 });
 
 // --- Web accounts: one back-office officer, two operators -------------------
 // Passwords: Nimal123, Sunil123, Ruwan123

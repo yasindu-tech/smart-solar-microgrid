@@ -46,8 +46,10 @@ builder.Services.AddHostedService<MongoIndexInitializer>();
 builder.Services.AddSingleton<CounterRepository>();
 builder.Services.AddSingleton<ICounterRepository>(sp => sp.GetRequiredService<CounterRepository>());
 builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<UserRepository>());
 builder.Services.AddSingleton<ProsumerRepository>();
 builder.Services.AddSingleton<ISolarStationRepository, SolarStationRepository>();
+builder.Services.AddSingleton<IEnergyBookingSlotRepository, EnergyBookingSlotRepository>();
 
 // Register domain services
 builder.Services.AddSingleton<QrTokenService>();
@@ -56,6 +58,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProsumerService>();
 builder.Services.AddScoped<SolarStationService>();
+builder.Services.AddScoped<EnergyBookingSlotService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
