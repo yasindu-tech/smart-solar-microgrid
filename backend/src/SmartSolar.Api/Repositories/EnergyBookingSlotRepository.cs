@@ -76,4 +76,33 @@ public class EnergyBookingSlotRepository : IEnergyBookingSlotRepository
         var filter = Builders<EnergyBookingSlot>.Filter.Eq(s => s.SlotId, slot.SlotId);
         await _collection.ReplaceOneAsync(filter, slot);
     }
+
+    // Atomically decrements availableCapacity if availableCapacity > 0.
+    public async Task<bool> TryDecrementCapacityAsync(string slotId)
+    {
+        // Atomically decrement available slot capacity using filter guard.
+        var filter = Builders<EnergyBookingSlot>.Filter.And(
+            Builders<EnergyBookingSlot>.Filter.Eq(s => s.SlotId, slotId),
+            Builders<EnergyBookingSlot>.Filter.Gt(s => s.AvailableCapacity, 0));
+
+        var update = Builders<EnergyBookingSlot>.Update
+            .Inc(s => s.AvailableCapacity, -1)
+            .Set(s => s.UpdatedAt, DateTime.UtcNow);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
+    // Atomically restores availableCapacity by 1 upon cancellation of an approved booking.
+    public async Task IncrementCapacityAsync(string slotId)
+    {
+        // Increment available slot capacity by one.
+        var filter = Builders<EnergyBookingSlot>.Filter.Eq(s => s.SlotId, slotId);
+
+        var update = Builders<EnergyBookingSlot>.Update
+            .Inc(s => s.AvailableCapacity, 1)
+            .Set(s => s.UpdatedAt, DateTime.UtcNow);
+
+        await _collection.UpdateOneAsync(filter, update);
+    }
 }

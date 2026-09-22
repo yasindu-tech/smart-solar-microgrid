@@ -72,7 +72,7 @@ Errors: `E4301` bad credentials · `E4302` account not active (message states Pe
 |---|---|---|---|
 | POST | `/reservations` | Prosumer | `{ nodeId, slotId, requestedKwh }` — NIC taken from the token, never the body |
 | GET | `/reservations?status=&nodeId=&from=&to=&search=&page=` | Operator, Backoffice | operational list + filters |
-| GET | `/reservations/mine?status=&page=` | Prosumer | own bookings; `status=history` → terminal states |
+| GET | `/reservations/me?status=&page=` | Prosumer | own bookings; `status=history` → terminal states |
 | GET | `/reservations/{reservationId}` | owner, Operator, Backoffice | |
 | PUT | `/reservations/{reservationId}` | owner, Operator | `{ slotId, requestedKwh }` — **BR-06** |
 | PATCH | `/reservations/{reservationId}/approve` | Operator, Backoffice | issues `qrToken` |
