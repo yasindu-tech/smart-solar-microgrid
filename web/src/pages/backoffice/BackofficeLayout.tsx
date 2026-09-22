@@ -1,6 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
-import { LogOut, Users, Battery, CheckCircle, UserCog } from 'lucide-react'
 import { LogOut, Users, Battery, CheckCircle, Zap , UserCog } from 'lucide-react'
 
 export default function BackofficeLayout() {
