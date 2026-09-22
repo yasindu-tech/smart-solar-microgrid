@@ -5,3 +5,11 @@ export interface ApiError {
   field?: string
   traceId?: string
 }
+
+/** The paging envelope every list endpoint returns. */
+export interface PagedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}

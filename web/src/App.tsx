@@ -8,6 +8,7 @@
 
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
+import { ToastProvider } from './lib/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -16,34 +17,39 @@ import BackofficeDashboard from './pages/backoffice/BackofficeDashboard'
 import UsersPage from './pages/backoffice/UsersPage'
 import PendingApprovalsPage from './pages/backoffice/PendingApprovalsPage'
 import ProsumersPage from './pages/backoffice/ProsumersPage'
+import NodeManagement from './pages/backoffice/NodeManagement'
+import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          
-          <Route element={<ProtectedRoute allowedRoles={['Backoffice']} />}>
-            <Route path="/backoffice" element={<BackofficeLayout />}>
-              <Route index element={<BackofficeDashboard />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="approvals" element={<PendingApprovalsPage />} />
-              <Route path="prosumers" element={<ProsumersPage />} />
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            
+            <Route element={<ProtectedRoute allowedRoles={['Backoffice']} />}>
+              <Route path="/backoffice" element={<BackofficeLayout />}>
+                <Route index element={<BackofficeDashboard />} />
+                <Route path="nodes" element={<NodeManagement />} />
+                <Route path="nodes/:nodeId/slots" element={<SlotManagement />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="approvals" element={<PendingApprovalsPage />} />
+                <Route path="prosumers" element={<ProsumersPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
-            <Route path="/operator" element={<OperatorLayout />}>
-              <Route index element={<div>Operator Dashboard Coming Soon</div>} />
-              <Route path="reservations" element={<div>Reservations Coming Soon</div>} />
+            <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
+              <Route path="/operator" element={<OperatorLayout />}>
+                <Route index element={<div>Operator Dashboard Coming Soon</div>} />
+                <Route path="reservations" element={<div>Reservations Coming Soon</div>} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ToastProvider>
   )
 }
-

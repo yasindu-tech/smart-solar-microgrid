@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
 import { LogOut, Users, Battery, CheckCircle, UserCog } from 'lucide-react'
+import { LogOut, Users, Battery, CheckCircle, Zap , UserCog } from 'lucide-react'
 
 export default function BackofficeLayout() {
   const { user, logout } = useAuth()
@@ -14,6 +15,7 @@ export default function BackofficeLayout() {
 
   const navItems = [
     { name: 'Dashboard', path: '/backoffice', icon: Battery },
+    { name: 'Nodes', path: '/backoffice/nodes', icon: Zap },
     { name: 'Users', path: '/backoffice/users', icon: Users },
     { name: 'Prosumers', path: '/backoffice/prosumers', icon: UserCog },
     { name: 'Approvals', path: '/backoffice/approvals', icon: CheckCircle },
@@ -30,7 +32,12 @@ export default function BackofficeLayout() {
         <div className="p-4 flex-1 overflow-y-auto">
           <nav className="sg-stack-sm">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.path
+              // Dashboard only matches its exact root; every other item also
+              // matches its child routes (e.g. /backoffice/nodes/ND-001/slots).
+              const isActive =
+                item.path === '/backoffice'
+                  ? location.pathname === item.path
+                  : location.pathname.startsWith(item.path)
               return (
                 <Link
                   key={item.path}
@@ -65,7 +72,7 @@ export default function BackofficeLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto">
         <header className="h-header border-b border-sg-border bg-sg-surface flex items-center px-8">
           <h1 className="sg-h3">Backoffice Administration</h1>
         </header>
