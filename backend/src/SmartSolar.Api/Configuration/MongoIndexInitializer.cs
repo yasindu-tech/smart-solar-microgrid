@@ -32,7 +32,6 @@ public class MongoIndexInitializer : IHostedService
             await InitializeUserIndexesAsync(cancellationToken);
             await InitializeProsumerIndexesAsync(cancellationToken);
             await InitializeSolarStationIndexesAsync(cancellationToken);
-            await InitializeEnergyBookingSlotIndexesAsync(cancellationToken);
             await InitializeEnergyBookingSlotsIndexesAsync(cancellationToken);
             await InitializeEnergyReservationIndexesAsync(cancellationToken);
             _logger.LogInformation("MongoDB indexes verified successfully.");
@@ -107,22 +106,7 @@ public class MongoIndexInitializer : IHostedService
 
         await nodes.Indexes.CreateManyAsync(new[] { nodeIdIndex, isActiveIndex }, cancellationToken);
     }
-
-    // Ensures a unique index on slotId and a compound index on { nodeId, startTime }
-    // for EnergyBookingSlots (data-model.md 1.4) - the compound index makes the
-    // overlap/window queries in EnergyBookingSlotService index hits, not scans.
-    private async Task InitializeEnergyBookingSlotIndexesAsync(CancellationToken cancellationToken)
-    {
-        var slots = _database.GetCollection<EnergyBookingSlot>("EnergyBookingSlots");
-
-        var slotIdIndex = new CreateIndexModel<EnergyBookingSlot>(
-            Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.SlotId),
-            new CreateIndexOptions { Unique = true });
-
-        var nodeStartIndex = new CreateIndexModel<EnergyBookingSlot>(
-            Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.NodeId).Ascending(s => s.StartTime));
-
-        await slots.Indexes.CreateManyAsync(new[] { slotIdIndex, nodeStartIndex }, cancellationToken);
+    
     // Ensures unique and compound indexes on the EnergyBookingSlots collection for slotId and { nodeId: 1, startTime: 1 }.
     private async Task InitializeEnergyBookingSlotsIndexesAsync(CancellationToken cancellationToken)
     {
