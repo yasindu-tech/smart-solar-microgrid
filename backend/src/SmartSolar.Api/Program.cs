@@ -56,6 +56,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProsumerService>();
 builder.Services.AddScoped<SolarStationService>();
+builder.Services.AddScoped<DashboardService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -153,6 +154,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
 app.UseCors("WebClient");
 
 app.UseAuthentication();

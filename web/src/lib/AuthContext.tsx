@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const userData = await getMeApi()
         setUser(userData)
-      } catch (error) {
+      } catch {
         // Token might be expired or invalid
         session.clearToken()
         setUser(null)
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session.getToken()) {
         await logoutApi()
       }
-    } catch (err) {
+    } catch {
       console.warn('Logout API call failed, but clearing local session anyway.')
     } finally {
       session.clearToken()
