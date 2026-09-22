@@ -80,7 +80,7 @@ public class ReservationsController : ControllerBase
     /// Gets a specific reservation by its unique reservation identifier.
     /// </summary>
     [HttpGet("{reservationId}")]
-    [Authorize]
+    [Authorize(Roles = "Prosumer,Operator,Backoffice")]
     public async Task<IActionResult> GetById(string reservationId)
     {
         // Load reservation details and enforce caller ownership permissions.
@@ -94,7 +94,7 @@ public class ReservationsController : ControllerBase
     /// Modifies an existing reservation slot or kWh amount within the allowed notice window.
     /// </summary>
     [HttpPut("{reservationId}")]
-    [Authorize]
+    [Authorize(Roles = "Prosumer,Operator")]
     public async Task<IActionResult> Update(string reservationId, [FromBody] UpdateReservationRequest request)
     {
         // Modify reservation schedule and enforce 12-hour notice rule (BR-06).
@@ -120,7 +120,7 @@ public class ReservationsController : ControllerBase
     /// Cancels a reservation with at least 12 hours' notice and restores slot capacity.
     /// </summary>
     [HttpPatch("{reservationId}/cancel")]
-    [Authorize]
+    [Authorize(Roles = "Prosumer,Operator")]
     public async Task<IActionResult> Cancel(string reservationId)
     {
         // Cancel reservation and enforce 12-hour cancellation notice rule (BR-07).

@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using SmartSolar.Api.Models;
+using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Repositories;
 
@@ -178,5 +179,95 @@ public class ReservationRepository : IReservationRepository
             await nextReservationTask,
             await recentHistoryTask
         );
+    }
+
+    // Atomically moves a Pending reservation to Approved and sets QR token. Returns false if not Pending.
+    public async Task<bool> TryApproveAsync(string reservationId, string qrToken, DateTime qrIssuedAt)
+    {
+        var filter = Builders<EnergyReservation>.Filter.And(
+            Builders<EnergyReservation>.Filter.Eq(r => r.ReservationId, reservationId),
+            Builders<EnergyReservation>.Filter.Eq(r => r.Status, ReservationStateMachine.Pending));
+
+        var update = Builders<EnergyReservation>.Update
+            .Set(r => r.Status, ReservationStateMachine.Approved)
+            .Set(r => r.QrToken, qrToken)
+            .Set(r => r.QrIssuedAt, qrIssuedAt)
+            .Set(r => r.UpdatedAt, qrIssuedAt);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
+    // Reverts an Approved reservation back to Pending if slot capacity decrement fails.
+    public async Task<bool> RevertApprovalAsync(string reservationId, DateTime updatedAt)
+    {
+        var filter = Builders<EnergyReservation>.Filter.And(
+            Builders<EnergyReservation>.Filter.Eq(r => r.ReservationId, reservationId),
+            Builders<EnergyReservation>.Filter.Eq(r => r.Status, ReservationStateMachine.Approved));
+
+        var update = Builders<EnergyReservation>.Update
+            .Set(r => r.Status, ReservationStateMachine.Pending)
+            .Set(r => r.QrToken, null)
+            .Set(r => r.QrIssuedAt, null)
+            .Set(r => r.UpdatedAt, updatedAt);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
+    // Atomically moves a Pending or Approved reservation to Cancelled. Returns (true, previousStatus) on success.
+    public async Task<(bool Success, string? PreviousStatus)> TryCancelAsync(
+        string reservationId, string cancelledBy, DateTime cancelledAt)
+    {
+        var filter = Builders<EnergyReservation>.Filter.And(
+            Builders<EnergyReservation>.Filter.Eq(r => r.ReservationId, reservationId),
+            Builders<EnergyReservation>.Filter.In(r => r.Status, new[] { ReservationStateMachine.Pending, ReservationStateMachine.Approved }));
+
+        var update = Builders<EnergyReservation>.Update
+            .Set(r => r.Status, ReservationStateMachine.Cancelled)
+            .Set(r => r.CancelledAt, cancelledAt)
+            .Set(r => r.CancelledBy, cancelledBy)
+            .Set(r => r.QrToken, null)
+            .Set(r => r.UpdatedAt, cancelledAt);
+
+        var options = new FindOneAndUpdateOptions<EnergyReservation>
+        {
+            ReturnDocument = ReturnDocument.Before
+        };
+
+        var prev = await _collection.FindOneAndUpdateAsync(filter, update, options);
+        if (prev == null)
+        {
+            return (false, null);
+        }
+
+        return (true, prev.Status);
+    }
+
+    // Atomically moves a past Pending or Approved reservation to Expired (ADR-001). Returns (true, previousStatus) on success.
+    public async Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc)
+    {
+        var filter = Builders<EnergyReservation>.Filter.And(
+            Builders<EnergyReservation>.Filter.Eq(r => r.ReservationId, reservationId),
+            Builders<EnergyReservation>.Filter.In(r => r.Status, new[] { ReservationStateMachine.Pending, ReservationStateMachine.Approved }),
+            Builders<EnergyReservation>.Filter.Lt(r => r.SlotEndTime, nowUtc));
+
+        var update = Builders<EnergyReservation>.Update
+            .Set(r => r.Status, ReservationStateMachine.Expired)
+            .Set(r => r.QrToken, null)
+            .Set(r => r.UpdatedAt, nowUtc);
+
+        var options = new FindOneAndUpdateOptions<EnergyReservation>
+        {
+            ReturnDocument = ReturnDocument.Before
+        };
+
+        var prev = await _collection.FindOneAndUpdateAsync(filter, update, options);
+        if (prev == null)
+        {
+            return (false, null);
+        }
+
+        return (true, prev.Status);
     }
 }

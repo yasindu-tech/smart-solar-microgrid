@@ -2,6 +2,10 @@ using SmartSolar.Api.Middleware;
 
 namespace SmartSolar.Api.Services;
 
+/// <summary>
+/// Static class holding the reservation state machine definition.
+/// This is used to validate transitions between reservation statuses (Pending, Approved, Cancelled, Completed, Expired).
+/// </summary>
 public static class ReservationStateMachine
 {
     public const string Pending   = "Pending";

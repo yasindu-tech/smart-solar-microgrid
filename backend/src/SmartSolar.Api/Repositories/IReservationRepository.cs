@@ -30,4 +30,16 @@ public interface IReservationRepository
     // Aggregates dashboard metrics (active, pending, next, recent history) for a prosumer.
     Task<(int ActiveCount, int PendingCount, EnergyReservation? NextReservation, List<EnergyReservation> RecentHistory)>
         GetDashboardMetricsAsync(string nic, DateTime nowUtc);
+
+    // Atomically moves a Pending reservation to Approved and sets QR token. Returns false if not Pending.
+    Task<bool> TryApproveAsync(string reservationId, string qrToken, DateTime qrIssuedAt);
+
+    // Reverts an Approved reservation back to Pending if slot capacity decrement fails.
+    Task<bool> RevertApprovalAsync(string reservationId, DateTime updatedAt);
+
+    // Atomically moves a Pending or Approved reservation to Cancelled. Returns (true, previousStatus) on success.
+    Task<(bool Success, string? PreviousStatus)> TryCancelAsync(string reservationId, string cancelledBy, DateTime cancelledAt);
+
+    // Atomically moves a past Pending or Approved reservation to Expired (ADR-001). Returns (true, previousStatus) on success.
+    Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc);
 }

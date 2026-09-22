@@ -110,7 +110,12 @@ public class ReservationService
         string? status, string? nodeId, DateTime? from, DateTime? to, string? search, int page, int pageSize)
     {
         // Query paginated reservations matching operational filter criteria.
+        var now = DateTime.UtcNow;
         var (items, total) = await _reservationRepo.GetAllAsync(status, nodeId, from, to, search, page, pageSize);
+        for (int i = 0; i < items.Count; i++)
+        {
+            items[i] = await ApplyLazyExpiryAsync(items[i], now);
+        }
         var dtos = items.Select(MapToResponse).ToList();
         return new PagedResponse<ReservationResponse>(dtos, total, page, pageSize);
     }
@@ -120,7 +125,12 @@ public class ReservationService
         string callerNic, string? status, int page, int pageSize)
     {
         // Query paginated reservations belonging to the calling prosumer.
+        var now = DateTime.UtcNow;
         var (items, total) = await _reservationRepo.GetMineAsync(callerNic, status, page, pageSize);
+        for (int i = 0; i < items.Count; i++)
+        {
+            items[i] = await ApplyLazyExpiryAsync(items[i], now);
+        }
         var dtos = items.Select(MapToResponse).ToList();
         return new PagedResponse<ReservationResponse>(dtos, total, page, pageSize);
     }
@@ -129,6 +139,7 @@ public class ReservationService
     public async Task<ReservationResponse> GetByIdAsync(string reservationId, string callerSubject, string callerRole)
     {
         // Retrieve reservation document by identifier.
+        var now = DateTime.UtcNow;
         var reservation = await _reservationRepo.GetByIdAsync(reservationId);
         if (reservation == null)
             throw new DomainException("E4404", "Reservation not found.", 404);
@@ -137,10 +148,12 @@ public class ReservationService
         if (callerRole == "Prosumer" && !string.Equals(reservation.Nic, callerSubject, StringComparison.OrdinalIgnoreCase))
             throw new DomainException("E4304", "You do not have permission to view this reservation.", 403);
 
+        reservation = await ApplyLazyExpiryAsync(reservation, now);
+
         return MapToResponse(reservation);
     }
 
-    // Modifies an existing reservation enforcing BR-02, BR-06 (12h notice), BR-05, and BR-18 (QR reissue).
+    // Modifies an existing reservation enforcing BR-02, BR-17 (active prosumer), BR-06 (12h notice), BR-05, and BR-18 (QR reissue).
     public async Task<ReservationResponse> UpdateAsync(
         string reservationId, UpdateReservationRequest request, string callerSubject, string callerRole)
     {
@@ -154,6 +167,20 @@ public class ReservationService
         // BR-02: Prosumers can only modify their own reservations.
         if (callerRole == "Prosumer" && !string.Equals(reservation.Nic, callerSubject, StringComparison.OrdinalIgnoreCase))
             throw new DomainException("E4304", "You do not have permission to modify this reservation.", 403);
+
+        // BR-17, REQ-RESV EC-8: Caller prosumer must exist and have status "Active".
+        if (callerRole == "Prosumer")
+        {
+            var prosumer = await _prosumerRepo.GetByNicAsync(callerSubject);
+            if (prosumer == null)
+                throw new DomainException("E4404", "Prosumer account not found.", 404, "nic");
+
+            if (prosumer.Status != "Active")
+                throw new DomainException("E4302", "Your prosumer account is not active.", 403, "status");
+        }
+
+        // Apply lazy expiry before checking terminal status
+        reservation = await ApplyLazyExpiryAsync(reservation, now);
 
         // Terminal status check: Only Pending or Approved reservations may be modified.
         if (reservation.Status != ReservationStateMachine.Pending && reservation.Status != ReservationStateMachine.Approved)
@@ -218,20 +245,49 @@ public class ReservationService
         if (reservation == null)
             throw new DomainException("E4404", "Reservation not found.", 404);
 
-        // Validate state transition Pending -> Approved.
-        ReservationStateMachine.AssertTransition(reservation.Status, ReservationStateMachine.Approved);
+        reservation = await ApplyLazyExpiryAsync(reservation, now);
 
-        // BR-15: Atomically decrement available slot capacity.
-        var decremented = await _slotRepo.TryDecrementCapacityAsync(reservation.SlotId);
-        if (!decremented)
+        // Validate state transition: only Pending can be approved.
+        if (reservation.Status != ReservationStateMachine.Pending)
+        {
+            ReservationStateMachine.AssertTransition(reservation.Status, ReservationStateMachine.Approved);
+            throw new DomainException("E4105", $"Cannot approve reservation: current status is '{reservation.Status}'.", 409, "status");
+        }
+
+        // BR-15: Pre-check available slot capacity.
+        var slot = await _slotRepo.GetBySlotIdAsync(reservation.SlotId);
+        if (slot == null || slot.AvailableCapacity <= 0)
             throw new DomainException("E4106", "Cannot approve reservation: the slot has no remaining capacity.", 409, "slotId");
 
+        var qrToken = _qrTokenService.GenerateToken(reservation.ReservationId);
+
+        // Atomically transition from Pending to Approved in persistence (prevents race conditions)
+        var transitioned = await _reservationRepo.TryApproveAsync(reservation.ReservationId, qrToken, now);
+        if (!transitioned)
+        {
+            // Another concurrent request already transitioned or cancelled this reservation
+            var latest = await _reservationRepo.GetByIdAsync(reservationId);
+            if (latest == null)
+                throw new DomainException("E4404", "Reservation not found.", 404);
+
+            ReservationStateMachine.AssertTransition(latest.Status, ReservationStateMachine.Approved);
+            throw new DomainException("E4105", $"Cannot approve reservation: current status is '{latest.Status}'.", 409, "status");
+        }
+
+        // BR-15: Atomically decrement available slot capacity only after successful status transition.
+        var decremented = await _slotRepo.TryDecrementCapacityAsync(reservation.SlotId);
+        if (!decremented)
+        {
+            // Roll back the reservation status to Pending since capacity could not be secured
+            await _reservationRepo.RevertApprovalAsync(reservation.ReservationId, DateTime.UtcNow);
+            throw new DomainException("E4106", "Cannot approve reservation: the slot has no remaining capacity.", 409, "slotId");
+        }
+
         reservation.Status = ReservationStateMachine.Approved;
-        reservation.QrToken = _qrTokenService.GenerateToken(reservation.ReservationId);
+        reservation.QrToken = qrToken;
         reservation.QrIssuedAt = now;
         reservation.UpdatedAt = now;
 
-        await _reservationRepo.UpdateAsync(reservation);
         _logger.LogInformation("Approved reservation {ReservationId} and issued QR token.", reservationId);
 
         return MapToResponse(reservation);
@@ -251,14 +307,27 @@ public class ReservationService
         if (callerRole == "Prosumer" && !string.Equals(reservation.Nic, callerSubject, StringComparison.OrdinalIgnoreCase))
             throw new DomainException("E4304", "You do not have permission to cancel this reservation.", 403);
 
-        // Assert valid state transition to Cancelled.
+        // Assert valid state transition to Cancelled (e.g. from Pending or Approved).
         ReservationStateMachine.AssertTransition(reservation.Status, ReservationStateMachine.Cancelled);
 
         // BR-07: Cancellation requires at least 12 hours' notice before slot start.
         ReservationRules.AssertCanCancel(now, reservation.SlotStartTime);
 
+        // Atomically transition status to Cancelled in persistence
+        var (success, previousStatus) = await _reservationRepo.TryCancelAsync(reservation.ReservationId, callerSubject, now);
+        if (!success)
+        {
+            // Another concurrent request already updated/cancelled the reservation
+            var latest = await _reservationRepo.GetByIdAsync(reservationId);
+            if (latest == null)
+                throw new DomainException("E4404", "Reservation not found.", 404);
+
+            ReservationStateMachine.AssertTransition(latest.Status, ReservationStateMachine.Cancelled);
+            throw new DomainException("E4105", $"Cannot cancel reservation in '{latest.Status}' status.", 409, "status");
+        }
+
         // BR-15: If the reservation was previously Approved, restore slot capacity (+1).
-        if (reservation.Status == ReservationStateMachine.Approved)
+        if (previousStatus == ReservationStateMachine.Approved)
         {
             await _slotRepo.IncrementCapacityAsync(reservation.SlotId);
         }
@@ -269,7 +338,6 @@ public class ReservationService
         reservation.QrToken = null; // Invalidate QR on cancellation
         reservation.UpdatedAt = now;
 
-        await _reservationRepo.UpdateAsync(reservation);
         _logger.LogInformation("Cancelled reservation {ReservationId} by {CancelledBy}.", reservationId, callerSubject);
 
         return MapToResponse(reservation);
@@ -279,6 +347,7 @@ public class ReservationService
     public async Task<QrTokenResponse> GetQrAsync(string reservationId, string callerSubject, string callerRole)
     {
         // Validate caller permissions and return cryptographic QR token for approved reservation.
+        var now = DateTime.UtcNow;
         var reservation = await _reservationRepo.GetByIdAsync(reservationId);
         if (reservation == null)
             throw new DomainException("E4404", "Reservation not found.", 404);
@@ -287,10 +356,37 @@ public class ReservationService
         if (callerRole == "Prosumer" && !string.Equals(reservation.Nic, callerSubject, StringComparison.OrdinalIgnoreCase))
             throw new DomainException("E4304", "You do not have permission to view this QR code.", 403);
 
+        reservation = await ApplyLazyExpiryAsync(reservation, now);
+
         if (reservation.Status != ReservationStateMachine.Approved || string.IsNullOrWhiteSpace(reservation.QrToken))
             throw new DomainException("E4201", "QR code is only available for Approved reservations.", 400, "status");
 
         return new QrTokenResponse(reservation.QrToken, reservation.SlotEndTime);
+    }
+
+    // Applies lazy expiry (ADR-001) if slotEndTime has passed for a Pending or Approved reservation,
+    // persisting the Expired status and restoring slot capacity if it was Approved (BR-15).
+    private async Task<EnergyReservation> ApplyLazyExpiryAsync(EnergyReservation reservation, DateTime nowUtc)
+    {
+        if ((reservation.Status == ReservationStateMachine.Pending || reservation.Status == ReservationStateMachine.Approved)
+            && reservation.SlotEndTime < nowUtc)
+        {
+            var (success, previousStatus) = await _reservationRepo.TryExpireAsync(reservation.ReservationId, nowUtc);
+            if (success)
+            {
+                if (previousStatus == ReservationStateMachine.Approved)
+                {
+                    await _slotRepo.IncrementCapacityAsync(reservation.SlotId);
+                }
+
+                reservation.Status = ReservationStateMachine.Expired;
+                reservation.QrToken = null;
+                reservation.UpdatedAt = nowUtc;
+                _logger.LogInformation("Lazily expired reservation {ReservationId} (past slotEndTime).", reservation.ReservationId);
+            }
+        }
+
+        return reservation;
     }
 
     // Maps a domain EnergyReservation model to a response DTO.

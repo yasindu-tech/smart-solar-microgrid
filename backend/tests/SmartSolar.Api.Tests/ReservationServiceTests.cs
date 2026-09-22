@@ -99,6 +99,72 @@ internal sealed class FakeReservationRepository : IReservationRepository
 
         return Task.FromResult((activeCount, pendingCount, next, history));
     }
+
+    public Task<bool> TryApproveAsync(string reservationId, string qrToken, DateTime qrIssuedAt)
+    {
+        lock (Reservations)
+        {
+            var res = Reservations.FirstOrDefault(r => r.ReservationId == reservationId && r.Status == ReservationStateMachine.Pending);
+            if (res == null) return Task.FromResult(false);
+
+            res.Status = ReservationStateMachine.Approved;
+            res.QrToken = qrToken;
+            res.QrIssuedAt = qrIssuedAt;
+            res.UpdatedAt = qrIssuedAt;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<bool> RevertApprovalAsync(string reservationId, DateTime updatedAt)
+    {
+        lock (Reservations)
+        {
+            var res = Reservations.FirstOrDefault(r => r.ReservationId == reservationId && r.Status == ReservationStateMachine.Approved);
+            if (res == null) return Task.FromResult(false);
+
+            res.Status = ReservationStateMachine.Pending;
+            res.QrToken = null;
+            res.QrIssuedAt = null;
+            res.UpdatedAt = updatedAt;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<(bool Success, string? PreviousStatus)> TryCancelAsync(
+        string reservationId, string cancelledBy, DateTime cancelledAt)
+    {
+        lock (Reservations)
+        {
+            var res = Reservations.FirstOrDefault(r => r.ReservationId == reservationId &&
+                (r.Status == ReservationStateMachine.Pending || r.Status == ReservationStateMachine.Approved));
+            if (res == null) return Task.FromResult((false, (string?)null));
+
+            var prevStatus = res.Status;
+            res.Status = ReservationStateMachine.Cancelled;
+            res.CancelledAt = cancelledAt;
+            res.CancelledBy = cancelledBy;
+            res.QrToken = null;
+            res.UpdatedAt = cancelledAt;
+            return Task.FromResult((true, (string?)prevStatus));
+        }
+    }
+
+    public Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc)
+    {
+        lock (Reservations)
+        {
+            var res = Reservations.FirstOrDefault(r => r.ReservationId == reservationId &&
+                (r.Status == ReservationStateMachine.Pending || r.Status == ReservationStateMachine.Approved) &&
+                r.SlotEndTime < nowUtc);
+            if (res == null) return Task.FromResult((false, (string?)null));
+
+            var prevStatus = res.Status;
+            res.Status = ReservationStateMachine.Expired;
+            res.QrToken = null;
+            res.UpdatedAt = nowUtc;
+            return Task.FromResult((true, (string?)prevStatus));
+        }
+    }
 }
 
 internal static class EnumerableExtensions
@@ -111,21 +177,32 @@ internal sealed class FakeSlotRepository : IEnergyBookingSlotRepository
     public readonly List<EnergyBookingSlot> Slots = new();
 
     public Task<EnergyBookingSlot?> GetBySlotIdAsync(string slotId)
-        => Task.FromResult(Slots.FirstOrDefault(s => s.SlotId == slotId));
+    {
+        lock (Slots)
+        {
+            return Task.FromResult(Slots.FirstOrDefault(s => s.SlotId == slotId));
+        }
+    }
 
     public Task<bool> TryDecrementCapacityAsync(string slotId)
     {
-        var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
-        if (slot == null || slot.AvailableCapacity <= 0) return Task.FromResult(false);
-        slot.AvailableCapacity--;
-        return Task.FromResult(true);
+        lock (Slots)
+        {
+            var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
+            if (slot == null || slot.AvailableCapacity <= 0) return Task.FromResult(false);
+            slot.AvailableCapacity--;
+            return Task.FromResult(true);
+        }
     }
 
     public Task IncrementCapacityAsync(string slotId)
     {
-        var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
-        if (slot != null) slot.AvailableCapacity++;
-        return Task.CompletedTask;
+        lock (Slots)
+        {
+            var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
+            if (slot != null) slot.AvailableCapacity++;
+            return Task.CompletedTask;
+        }
     }
 
     public Task<List<EnergyBookingSlot>> GetByNodeIdAsync(string nodeId, DateTime? from, DateTime? to)
@@ -203,6 +280,13 @@ public class ReservationServiceTests
     public ReservationServiceTests()
     {
         // Initialize ReservationService with in-memory fakes.
+        _prosumerRepo.Prosumers["199512345678"] = new Prosumer
+        {
+            Nic = "199512345678",
+            FullName = "Default Prosumer",
+            Status = "Active"
+        };
+
         _service = new ReservationService(
             _reservationRepo,
             _slotRepo,
@@ -571,6 +655,158 @@ public class ReservationServiceTests
     }
 
     [Fact]
+    public async Task ApproveAsync_ConcurrentRequests_OnlyOneSucceeds_AndCapacityDecrementsOnce_EC9()
+    {
+        var now = DateTime.UtcNow;
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-CONC-01",
+            NodeId = "ND-001",
+            TotalCapacity = 5,
+            AvailableCapacity = 5,
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-CONC-01",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-CONC-01",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 10,
+            Status = "Pending",
+            CreatedAt = now
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        // Run 10 concurrent approval tasks on the same reservation
+        var tasks = Enumerable.Range(0, 10).Select(_ => Task.Run(async () =>
+        {
+            try
+            {
+                await _service.ApproveAsync("RS-CONC-01");
+                return (Success: true, ErrorCode: (string?)null);
+            }
+            catch (DomainException ex)
+            {
+                return (Success: false, ErrorCode: (string?)ex.Code);
+            }
+        })).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        var successCount = results.Count(r => r.Success);
+        var conflictCount = results.Count(r => !r.Success && r.ErrorCode == "E4105");
+
+        Assert.Equal(1, successCount);
+        Assert.Equal(9, conflictCount);
+        // Slot capacity MUST decrement exactly once (from 5 down to 4), never double-decremented!
+        Assert.Equal(4, slot.AvailableCapacity);
+    }
+
+    [Fact]
+    public async Task ApproveAsync_WhenSlotCapacityExhausted_ThrowsE4106()
+    {
+        var now = DateTime.UtcNow;
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-CONC-02",
+            NodeId = "ND-001",
+            TotalCapacity = 5,
+            AvailableCapacity = 0, // No capacity remaining
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-CONC-02",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-CONC-02",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 10,
+            Status = "Pending",
+            CreatedAt = now
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() =>
+            _service.ApproveAsync("RS-CONC-02"));
+
+        Assert.Equal("E4106", ex.Code);
+        Assert.Equal("Pending", reservation.Status);
+        Assert.Equal(0, slot.AvailableCapacity);
+    }
+
+    [Fact]
+    public async Task CancelAsync_ConcurrentRequests_OnlyOneSucceeds_AndCapacityRestoresOnce()
+    {
+        var now = DateTime.UtcNow;
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-CONC-03",
+            NodeId = "ND-001",
+            TotalCapacity = 5,
+            AvailableCapacity = 2,
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-CONC-03",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-CONC-03",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 10,
+            Status = "Approved",
+            QrToken = "token-123",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        // Run 10 concurrent cancellation requests on the same approved reservation
+        var tasks = Enumerable.Range(0, 10).Select(_ => Task.Run(async () =>
+        {
+            try
+            {
+                await _service.CancelAsync("RS-CONC-03", "199512345678", "Prosumer");
+                return (Success: true, ErrorCode: (string?)null);
+            }
+            catch (DomainException ex)
+            {
+                return (Success: false, ErrorCode: (string?)ex.Code);
+            }
+        })).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        var successCount = results.Count(r => r.Success);
+        var conflictCount = results.Count(r => !r.Success && r.ErrorCode == "E4105");
+
+        Assert.Equal(1, successCount);
+        Assert.Equal(9, conflictCount);
+        // Slot capacity MUST restore exactly once (from 2 up to 3), never over-inflated!
+        Assert.Equal(3, slot.AvailableCapacity);
+    }
+
+    [Fact]
     public async Task GetQrAsync_ThrowsE4201_WhenReservationNotApproved()
     {
         var now = DateTime.UtcNow;
@@ -646,5 +882,131 @@ public class ReservationServiceTests
         Assert.Equal("RS-0001", response.NextReservation!.ReservationId);
         Assert.Single(response.RecentHistory);
         Assert.Equal("RS-0003", response.RecentHistory[0].ReservationId);
+    }
+
+    [Fact]
+    public async Task GetMineAsync_HistoryFilter_LazilyExpiresPastReservations_AndRestoresCapacityForApproved_ADR001()
+    {
+        var now = DateTime.UtcNow;
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-EXP-01",
+            NodeId = "ND-001",
+            TotalCapacity = 4,
+            AvailableCapacity = 2,
+            StartTime = now.AddHours(-4),
+            EndTime = now.AddHours(-2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-EXP-01",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-EXP-01",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 10,
+            Status = "Approved",
+            QrToken = "qr-token-123",
+            CreatedAt = now.AddDays(-2)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        // Fetch prosumer history
+        var response = await _service.GetMineAsync("199512345678", "history", 1, 10);
+
+        Assert.Single(response.Items);
+        var item = response.Items[0];
+        // Status must be lazily transitioned to Expired before returning
+        Assert.Equal("Expired", item.Status);
+        Assert.Null(item.QrToken);
+
+        // The persisted document must also be Expired
+        Assert.Equal("Expired", reservation.Status);
+        Assert.Null(reservation.QrToken);
+
+        // Approved reservation capacity must be restored (+1) on expiry per BR-15
+        Assert.Equal(3, slot.AvailableCapacity);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_LazilyExpiresPastReservation_BeforeReturning()
+    {
+        var now = DateTime.UtcNow;
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-EXP-02",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = now.AddHours(-3),
+            SlotEndTime = now.AddHours(-1),
+            RequestedKwh = 5,
+            Status = "Pending",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var response = await _service.GetByIdAsync("RS-EXP-02", "199512345678", "Prosumer");
+
+        Assert.Equal("Expired", response.Status);
+        Assert.Equal("Expired", reservation.Status);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ThrowsE4302_WhenProsumerIsDeactivated_BR17_EC8()
+    {
+        var now = DateTime.UtcNow;
+        var nic = "199512345678";
+
+        // Prosumer is deactivated
+        _prosumerRepo.Prosumers[nic] = new Prosumer
+        {
+            Nic = nic,
+            FullName = "John Doe",
+            Status = "Deactivated"
+        };
+
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-0001",
+            NodeId = "ND-001",
+            TotalCapacity = 4,
+            AvailableCapacity = 4,
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-UPD-01",
+            Nic = nic,
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 5,
+            Status = "Pending",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var updateRequest = new UpdateReservationRequest
+        {
+            SlotId = "SL-0001",
+            RequestedKwh = 8
+        };
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() =>
+            _service.UpdateAsync("RS-UPD-01", updateRequest, nic, "Prosumer"));
+
+        Assert.Equal("E4302", ex.Code);
     }
 }
