@@ -873,7 +873,7 @@ public class ReservationServiceTests
             }
         });
 
-        var dashboardService = new DashboardService(_reservationRepo);
+        var dashboardService = new DashboardService(null!, null!, _reservationRepo);
         var response = await dashboardService.GetProsumerDashboardAsync(nic);
 
         Assert.Equal(1, response.ActiveCount);
