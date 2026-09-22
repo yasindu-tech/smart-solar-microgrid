@@ -121,12 +121,17 @@ public class ReservationService
     }
 
     // Returns a paged list of reservations owned by the calling prosumer.
-    public async Task<PagedResponse<ReservationResponse>> GetMineAsync(
+    public Task<PagedResponse<ReservationResponse>> GetMineAsync(
         string callerNic, string? status, int page, int pageSize)
+        => GetMineAsync(callerNic, status, null, null, null, page, pageSize);
+
+    // Returns a paged list of reservations owned by the calling prosumer with date range and search filters.
+    public async Task<PagedResponse<ReservationResponse>> GetMineAsync(
+        string callerNic, string? status, DateTime? from = null, DateTime? to = null, string? search = null, int page = 1, int pageSize = 10)
     {
         // Query paginated reservations belonging to the calling prosumer.
         var now = DateTime.UtcNow;
-        var (items, total) = await _reservationRepo.GetMineAsync(callerNic, status, page, pageSize);
+        var (items, total) = await _reservationRepo.GetMineAsync(callerNic, status, from, to, search, page, pageSize);
         for (int i = 0; i < items.Count; i++)
         {
             items[i] = await ApplyLazyExpiryAsync(items[i], now);
@@ -198,6 +203,9 @@ public class ReservationService
             throw new DomainException("E4000", "Target slot must belong to the same microgrid node.", 400, "slotId");
 
         ReservationRules.AssertInFuture(now, targetSlot.StartTime);
+
+        // BR-06 / REQ-RESV EC-2: Changes require at least 12 hours' advance notice before the target slot start time as well.
+        ReservationRules.AssertCanUpdate(now, targetSlot.StartTime);
 
         // BR-05: Target slot start must remain within 7 days of the ORIGINAL booking creation timestamp.
         ReservationRules.AssertWithinBookingHorizon(reservation.CreatedAt, targetSlot.StartTime);

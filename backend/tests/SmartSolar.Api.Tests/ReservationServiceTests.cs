@@ -31,7 +31,7 @@ internal sealed class FakeReservationRepository : IReservationRepository
         => Task.FromResult(Reservations.FirstOrDefault(r => r.ReservationId == reservationId));
 
     public Task<(List<EnergyReservation> Items, int Total)> GetMineAsync(
-        string nic, string? status, int page, int pageSize)
+        string nic, string? status, DateTime? from, DateTime? to, string? search, int page, int pageSize)
     {
         var query = Reservations.Where(r => r.Nic == nic);
         if (!string.IsNullOrWhiteSpace(status))
@@ -45,6 +45,23 @@ internal sealed class FakeReservationRepository : IReservationRepository
             {
                 query = query.Where(r => r.Status == status.Trim());
             }
+        }
+
+        if (from.HasValue)
+        {
+            query = query.Where(r => r.SlotStartTime >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(r => r.SlotStartTime <= to.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            query = query.Where(r => r.ReservationId.Contains(s, StringComparison.OrdinalIgnoreCase)
+                                  || r.NodeId.Contains(s, StringComparison.OrdinalIgnoreCase));
         }
 
         var list = query.OrderByDescending(r => r.CreatedAt).ToList();
@@ -1008,5 +1025,155 @@ public class ReservationServiceTests
             _service.UpdateAsync("RS-UPD-01", updateRequest, nic, "Prosumer"));
 
         Assert.Equal("E4302", ex.Code);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Rejects_WhenTargetSlotNoticeLessThan12Hours_BR06_EC2()
+    {
+        var now = DateTime.UtcNow;
+        var currentSlot = new EnergyBookingSlot
+        {
+            SlotId = "SL-CURR",
+            NodeId = "ND-001",
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(currentSlot);
+
+        var targetSlotNear = new EnergyBookingSlot
+        {
+            SlotId = "SL-TARGET-NEAR",
+            NodeId = "ND-001",
+            StartTime = now.AddHours(6), // Less than 12h notice!
+            EndTime = now.AddHours(8),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(targetSlotNear);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-0020",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-CURR",
+            SlotStartTime = currentSlot.StartTime, // Current slot has 48h notice
+            SlotEndTime = currentSlot.EndTime,
+            RequestedKwh = 10,
+            Status = "Pending",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var request = new UpdateReservationRequest
+        {
+            SlotId = "SL-TARGET-NEAR",
+            RequestedKwh = 10
+        };
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() =>
+            _service.UpdateAsync("RS-0020", request, "199512345678", "Prosumer"));
+
+        Assert.Equal("E4103", ex.Code);
+    }
+
+    [Fact]
+    public async Task GetMineAsync_FiltersBySearchAndDateRange()
+    {
+        var now = DateTime.UtcNow;
+        var nic = "199512345678";
+
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-AAA",
+            Nic = nic,
+            NodeId = "ND-001",
+            SlotStartTime = now.AddDays(1),
+            CreatedAt = now.AddDays(-2)
+        });
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-BBB",
+            Nic = nic,
+            NodeId = "ND-002",
+            SlotStartTime = now.AddDays(3),
+            CreatedAt = now.AddDays(-1)
+        });
+
+        // Search by NodeId
+        var resNode = await _service.GetMineAsync(nic, null, search: "ND-002");
+        Assert.Single(resNode.Items);
+        Assert.Equal("RS-BBB", resNode.Items[0].ReservationId);
+
+        // Filter by Date Range (only RS-AAA within now to now.AddDays(2))
+        var resDate = await _service.GetMineAsync(nic, null, from: now, to: now.AddDays(2));
+        Assert.Single(resDate.Items);
+        Assert.Equal("RS-AAA", resDate.Items[0].ReservationId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AllowsBackofficeToUpdateAnyReservation()
+    {
+        var now = DateTime.UtcNow;
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-0001",
+            NodeId = "ND-001",
+            TotalCapacity = 4,
+            AvailableCapacity = 4,
+            StartTime = now.AddDays(2),
+            EndTime = now.AddDays(2).AddHours(2),
+            EnergyOfferedKwh = 20,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-BO-01",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = slot.StartTime,
+            SlotEndTime = slot.EndTime,
+            RequestedKwh = 5,
+            Status = "Pending",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var request = new UpdateReservationRequest
+        {
+            SlotId = "SL-0001",
+            RequestedKwh = 12
+        };
+
+        var response = await _service.UpdateAsync("RS-BO-01", request, "USR-BACKOFFICE-01", "Backoffice");
+        Assert.Equal(12, response.RequestedKwh);
+    }
+
+    [Fact]
+    public async Task CancelAsync_AllowsBackofficeToCancelAnyReservation()
+    {
+        var now = DateTime.UtcNow;
+        var reservation = new EnergyReservation
+        {
+            ReservationId = "RS-BO-02",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = now.AddDays(2),
+            SlotEndTime = now.AddDays(2).AddHours(2),
+            RequestedKwh = 5,
+            Status = "Pending",
+            CreatedAt = now.AddDays(-1)
+        };
+        _reservationRepo.Reservations.Add(reservation);
+
+        var response = await _service.CancelAsync("RS-BO-02", "USR-BACKOFFICE-01", "Backoffice");
+        Assert.Equal("Cancelled", response.Status);
+        Assert.Equal("USR-BACKOFFICE-01", response.CancelledBy);
     }
 }

@@ -67,12 +67,15 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "Prosumer")]
     public async Task<IActionResult> GetMine(
         [FromQuery] string? status,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
         // Query bookings belonging to the calling prosumer.
         var callerNic = GetCallerSubject();
-        var response = await _reservationService.GetMineAsync(callerNic, status, page, pageSize);
+        var response = await _reservationService.GetMineAsync(callerNic, status, from, to, search, page, pageSize);
         return Ok(response);
     }
 
@@ -94,7 +97,7 @@ public class ReservationsController : ControllerBase
     /// Modifies an existing reservation slot or kWh amount within the allowed notice window.
     /// </summary>
     [HttpPut("{reservationId}")]
-    [Authorize(Roles = "Prosumer,Operator")]
+    [Authorize(Roles = "Prosumer,Operator,Backoffice")]
     public async Task<IActionResult> Update(string reservationId, [FromBody] UpdateReservationRequest request)
     {
         // Modify reservation schedule and enforce 12-hour notice rule (BR-06).
@@ -120,7 +123,7 @@ public class ReservationsController : ControllerBase
     /// Cancels a reservation with at least 12 hours' notice and restores slot capacity.
     /// </summary>
     [HttpPatch("{reservationId}/cancel")]
-    [Authorize(Roles = "Prosumer,Operator")]
+    [Authorize(Roles = "Prosumer,Operator,Backoffice")]
     public async Task<IActionResult> Cancel(string reservationId)
     {
         // Cancel reservation and enforce 12-hour cancellation notice rule (BR-07).
