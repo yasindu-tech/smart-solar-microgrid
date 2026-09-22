@@ -25,7 +25,7 @@ Prosumer (presents QR) and Grid Operator (scans, finalises).
 | 7 | Operator app | Shows the verification card; operator confirms the person matches | — | — |
 | 8 | Operator app | Enters delivered kWh, taps **Finalise** | `POST /operator/finalize` | — |
 | 9 | API | Re-runs all checks, sets `Completed`, stamps `completedAt`, `completedByOperatorId`, `deliveredKwh`, invalidates token | — | BR-10, BR-18, state machine |
-| 10 | Prosumer app | On next refresh the booking appears in History as `Completed` | `GET /reservations/mine` | — |
+| 10 | Prosumer app | On next refresh the booking appears in History as `Completed` | `GET /reservations/me` | — |
 | 11 | Operator dashboard | Approved-future count drops by one | `GET /dashboard/operator` | BR-14 |
 
 ## Why verify and finalise are two calls

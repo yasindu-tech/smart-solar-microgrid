@@ -50,6 +50,7 @@ builder.Services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<UserR
 builder.Services.AddSingleton<ProsumerRepository>();
 builder.Services.AddSingleton<ISolarStationRepository, SolarStationRepository>();
 builder.Services.AddSingleton<IEnergyBookingSlotRepository, EnergyBookingSlotRepository>();
+builder.Services.AddSingleton<IReservationRepository, ReservationRepository>();
 
 // Register domain services
 builder.Services.AddSingleton<QrTokenService>();
@@ -59,6 +60,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProsumerService>();
 builder.Services.AddScoped<SolarStationService>();
 builder.Services.AddScoped<EnergyBookingSlotService>();
+builder.Services.AddScoped<ReservationService>();
+builder.Services.AddScoped<DashboardService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

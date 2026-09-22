@@ -104,7 +104,7 @@ SQLite: `node_cache`, `reservation_cache`, `profile_cache`.
 
 ## 7. API surface
 
-`api-contract.md` §8 (dashboards), §4 (`/nodes/nearby`), §6 (`/reservations/mine`, `/reservations`).
+`api-contract.md` §8 (dashboards), §4 (`/nodes/nearby`), §6 (`/reservations/me`, `/reservations`).
 
 ## 8. Out of scope
 
