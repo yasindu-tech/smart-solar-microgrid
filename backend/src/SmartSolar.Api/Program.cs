@@ -24,6 +24,7 @@ ConventionRegistry.Register("SmartSolarConventions", conventionPack, _ => true);
 // Bind MongoDB connection settings from configuration (never hard-coded).
 builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<QrSettings>(builder.Configuration.GetSection("Qr"));
 
 // Register single shared MongoClient and IMongoDatabase connection pool
 builder.Services.AddSingleton<IMongoClient>(sp =>
@@ -51,6 +52,7 @@ builder.Services.AddSingleton<ISolarStationRepository, SolarStationRepository>()
 builder.Services.AddSingleton<IEnergyBookingSlotRepository, EnergyBookingSlotRepository>();
 
 // Register domain services
+builder.Services.AddSingleton<QrTokenService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
