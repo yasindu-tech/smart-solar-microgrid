@@ -13,9 +13,9 @@ public interface IReservationRepository
     // Retrieves a single reservation by its unique reservation identifier.
     Task<EnergyReservation?> GetByIdAsync(string reservationId);
 
-    // Queries reservations for a specific prosumer with pagination and history filtering.
+    // Queries reservations for a specific prosumer with pagination, search, and date range filtering.
     Task<(List<EnergyReservation> Items, int Total)> GetMineAsync(
-        string nic, string? status, int page, int pageSize);
+        string nic, string? status, DateTime? from, DateTime? to, string? search, int page, int pageSize);
 
     // Queries reservations with staff filters (nodeId, status, date range, search).
     Task<(List<EnergyReservation> Items, int Total)> GetAllAsync(

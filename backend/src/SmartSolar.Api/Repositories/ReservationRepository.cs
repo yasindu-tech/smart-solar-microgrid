@@ -32,9 +32,9 @@ public class ReservationRepository : IReservationRepository
         return await _collection.Find(filter).FirstOrDefaultAsync();
     }
 
-    // Queries reservations for a specific prosumer with pagination and status/history filtering.
+    // Queries reservations for a specific prosumer with pagination, status/history, date range, and search filtering.
     public async Task<(List<EnergyReservation> Items, int Total)> GetMineAsync(
-        string nic, string? status, int page, int pageSize)
+        string nic, string? status, DateTime? from, DateTime? to, string? search, int page, int pageSize)
     {
         // Build query filters for caller's reservations.
         var filters = new List<FilterDefinition<EnergyReservation>>
@@ -55,6 +55,24 @@ public class ReservationRepository : IReservationRepository
             {
                 filters.Add(Builders<EnergyReservation>.Filter.Eq(r => r.Status, status.Trim()));
             }
+        }
+
+        if (from.HasValue)
+        {
+            filters.Add(Builders<EnergyReservation>.Filter.Gte(r => r.SlotStartTime, from.Value));
+        }
+
+        if (to.HasValue)
+        {
+            filters.Add(Builders<EnergyReservation>.Filter.Lte(r => r.SlotStartTime, to.Value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchRegex = new BsonRegularExpression(Regex.Escape(search.Trim()), "i");
+            filters.Add(Builders<EnergyReservation>.Filter.Or(
+                Builders<EnergyReservation>.Filter.Regex(r => r.ReservationId, searchRegex),
+                Builders<EnergyReservation>.Filter.Regex(r => r.NodeId, searchRegex)));
         }
 
         var combinedFilter = Builders<EnergyReservation>.Filter.And(filters);
