@@ -60,6 +60,21 @@ internal sealed class FakeEnergyBookingSlotRepository : IEnergyBookingSlotReposi
         if (index >= 0) Slots[index] = slot;
         return Task.CompletedTask;
     }
+
+    public Task<bool> TryDecrementCapacityAsync(string slotId)
+    {
+        var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
+        if (slot == null || slot.AvailableCapacity <= 0) return Task.FromResult(false);
+        slot.AvailableCapacity--;
+        return Task.FromResult(true);
+    }
+
+    public Task IncrementCapacityAsync(string slotId)
+    {
+        var slot = Slots.FirstOrDefault(s => s.SlotId == slotId);
+        if (slot != null) slot.AvailableCapacity++;
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>In-memory stand-in for the Mongo-backed user repository (ownership checks only).</summary>

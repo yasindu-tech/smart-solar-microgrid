@@ -1,3 +1,10 @@
+// ---------------------------------------------------------------------------
+//  File        : ProsumerRepository.cs
+//  Project     : Smart Solar Microgrid Trading System - Web API
+//  Description : MongoDB repository handling CRUD, pagination, status queries,
+//                and uniqueness checks for Prosumer documents.
+// ---------------------------------------------------------------------------
+
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartSolar.Api.Configuration;
@@ -9,14 +16,23 @@ public class ProsumerRepository
 {
     private readonly IMongoCollection<Prosumer> _collection;
 
+    // Protected parameterless constructor for testing fakes.
+    protected ProsumerRepository()
+    {
+        _collection = null!;
+    }
+
     // Resolve the collection once at construction.
     public ProsumerRepository(IMongoDatabase database)
     {
+        // Initializing the MongoDB collection for Prosumers.
         _collection = database.GetCollection<Prosumer>("Prosumers");
     }
 
-    public async Task<Prosumer?> GetByNicAsync(string nic)
+    // Retrieves a prosumer document by its National Identity Card (NIC).
+    public virtual async Task<Prosumer?> GetByNicAsync(string nic)
     {
+        // Query Prosumers collection by NIC using secondary collation for case insensitivity.
         var filter = Builders<Prosumer>.Filter.Eq(p => p.Nic, nic.Trim());
         var options = new FindOptions<Prosumer> { Collation = new Collation("en", strength: CollationStrength.Secondary) };
         var cursor = await _collection.FindAsync(filter, options);

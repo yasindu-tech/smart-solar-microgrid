@@ -26,4 +26,10 @@ public interface IEnergyBookingSlotRepository
 
     // Replace an existing slot document, matched on SlotId.
     Task UpdateAsync(EnergyBookingSlot slot);
+
+    // Atomically decrements availableCapacity if availableCapacity > 0. Returns true on success.
+    Task<bool> TryDecrementCapacityAsync(string slotId);
+
+    // Atomically restores availableCapacity by 1 upon cancellation of an approved booking.
+    Task IncrementCapacityAsync(string slotId);
 }
