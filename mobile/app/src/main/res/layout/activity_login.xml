@@ -1,15 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Layout      : activity_login.xml
+  Description : Login screen with SunGrid branding. Prosumers enter their NIC,
+                operators enter their email. Both use the same identifier field.
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens
+                per ui-design-system.md §22.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center_vertical">
+    android:background="@color/sg_bg"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/login_title"
-        android:textSize="24sp" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/sg_space_6">
 
-</LinearLayout>
+        <!-- Top spacer to vertically center the form visually -->
+        <android.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- SunGrid logo -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginBottom="@dimen/sg_space_4"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/logo" />
+
+        <!-- App title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_1"
+            android:text="@string/app_name"
+            android:textColor="@color/sg_text"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_8"
+            android:text="@string/login_subtitle"
+            android:textColor="@color/sg_text_secondary"
+            android:textSize="16sp" />
+
+        <!-- Login card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            app:cardBackgroundColor="@color/sg_surface"
+            app:cardCornerRadius="@dimen/sg_radius_lg"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/sg_border"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/sg_space_6">
+
+                <!-- Section title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_5"
+                    android:text="@string/login_title"
+                    android:textColor="@color/sg_text"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <!-- Identifier field (NIC or email) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilIdentifier"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/login_nic_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etIdentifier"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Password field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPassword"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/login_password_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Error message (hidden by default) -->
+                <TextView
+                    android:id="@+id/tvError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_danger"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <!-- Sign In button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="@string/login_btn"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/sg_primary"
+                    app:cornerRadius="@dimen/sg_radius_md" />
+
+                <!-- Loading indicator (hidden by default) -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="@dimen/sg_space_4"
+                    android:indeterminateTint="@color/sg_primary"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Bottom spacer -->
+        <android.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+</ScrollView>

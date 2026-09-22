@@ -17,8 +17,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        // Base URL of the Web API. 10.0.2.2 is the emulator's route to the host.
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5000/api/\"")
+        // Base URL of the Web API using the Mac's local network IP.
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.245:5001/api/\"")
     }
 
     buildFeatures {
@@ -33,6 +33,8 @@ android {
     }
 
     compileOptions {
+        // Enable desugaring so java.time.Instant works on API < 26 (minSdk = 24).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -51,6 +53,15 @@ dependencies {
     // Networking to the Web API - the only source of business decisions.
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    // Coroutines for async API calls on the IO dispatcher.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // Lifecycle — provides lifecycleScope for structured coroutine launching.
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+
+    // Core library desugaring — java.time.Instant support on API < 26.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     testImplementation("junit:junit:4.13.2")
 }

@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Smart Solar</string>
+
+    <!-- Login screen -->
     <string name="login_title">Sign in</string>
+    <string name="login_subtitle">Sign in to your account</string>
     <string name="login_nic_hint">NIC or email</string>
     <string name="login_password_hint">Password</string>
+    <string name="login_btn">Sign In</string>
+
+    <!-- Login validation errors -->
+    <string name="login_error_empty_identifier">Please enter your NIC or email</string>
+    <string name="login_error_empty_password">Please enter your password</string>
+    <string name="login_error_network">Unable to connect. Check your internet connection.</string>
+    <string name="login_error_invalid">Invalid credentials.</string>
+    <string name="login_error_inactive">Your account is not active.</string>
+    <string name="login_error_generic">Something went wrong. Please try again.</string>
+    <string name="login_error_web_only">Backoffice accounts can only sign in on the web application.</string>
+
+    <!-- Home screens -->
+    <string name="prosumer_home_title">Prosumer Home</string>
+    <string name="operator_home_title">Operator Home</string>
+    <string name="welcome_message">Welcome, %1$s</string>
+    <string name="role_prosumer">Prosumer Account</string>
+    <string name="role_operator">Grid Operator</string>
+    <string name="home_placeholder">Dashboard features are coming soon.</string>
+    <string name="logout_btn">Log out</string>
 </resources>
