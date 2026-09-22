@@ -5,7 +5,7 @@ using SmartSolar.Api.Models;
 
 namespace SmartSolar.Api.Repositories;
 
-public class UserRepository
+public class UserRepository : IUserRepository
 {
     private readonly IMongoCollection<User> _collection;
 
