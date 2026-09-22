@@ -1,3 +1,5 @@
+import type { ApiRequestError } from '../api/types'
+
 /** What every slot endpoint returns (api-contract.md section 5). */
 export interface Slot {
   slotId: string
@@ -37,4 +39,19 @@ export interface UpdateSlotAvailabilityRequest {
 export interface SlotListParams {
   from?: string
   to?: string
+}
+
+export interface UseCreateSlotOptions {
+  onSuccess?: (data: Slot) => void
+  onError?: (error: ApiRequestError) => void
+}
+
+export interface UpdateSlotAvailabilityVariables {
+  slotId: string
+  availableCapacity: number
+}
+
+export interface UseUpdateSlotAvailabilityOptions {
+  onSuccess?: (data: Slot) => void
+  onError?: (error: ApiRequestError) => void
 }

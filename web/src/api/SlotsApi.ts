@@ -14,6 +14,9 @@ import type {
   Slot,
   SlotListParams,
   UpdateSlotAvailabilityRequest,
+  UpdateSlotAvailabilityVariables,
+  UseCreateSlotOptions,
+  UseUpdateSlotAvailabilityOptions,
 } from '../types/SlotTypes'
 
 const fetchSlots = async (nodeId: string, params?: SlotListParams): Promise<Slot[]> => {
@@ -34,11 +37,6 @@ export const useSlots = (
 const createSlot = async (nodeId: string, request: CreateSlotRequest): Promise<Slot> => {
   const response = await apiClient.post(slotEndpoints.BY_NODE(nodeId), request)
   return response?.data
-}
-
-interface UseCreateSlotOptions {
-  onSuccess?: (data: Slot) => void
-  onError?: (error: ApiRequestError) => void
 }
 
 export const useCreateSlot = (
@@ -63,16 +61,6 @@ const updateSlotAvailability = async (
 ): Promise<Slot> => {
   const response = await apiClient.patch(slotEndpoints.AVAILABILITY(slotId), request)
   return response?.data
-}
-
-interface UpdateSlotAvailabilityVariables {
-  slotId: string
-  availableCapacity: number
-}
-
-interface UseUpdateSlotAvailabilityOptions {
-  onSuccess?: (data: Slot) => void
-  onError?: (error: ApiRequestError) => void
 }
 
 export const useUpdateSlotAvailability = (
