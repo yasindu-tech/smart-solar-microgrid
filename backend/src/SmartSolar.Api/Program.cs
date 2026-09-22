@@ -57,6 +57,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ProsumerService>();
 builder.Services.AddScoped<SolarStationService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<EnergyBookingSlotService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
