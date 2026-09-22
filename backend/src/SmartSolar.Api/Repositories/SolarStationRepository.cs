@@ -4,9 +4,7 @@
 //  Description : Mongo-backed implementation of ISolarStationRepository.
 // ---------------------------------------------------------------------------
 
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using SmartSolar.Api.Configuration;
 using SmartSolar.Api.Models;
 
 namespace SmartSolar.Api.Repositories;
@@ -15,19 +13,11 @@ public class SolarStationRepository : ISolarStationRepository
 {
     private readonly IMongoCollection<SolarStationInfo> _collection;
 
-    public SolarStationRepository(IOptions<MongoSettings> settings)
+    // Resolve the collection from the shared database singleton. Indexes are
+    // created centrally by MongoIndexInitializer, not per-repository.
+    public SolarStationRepository(IMongoDatabase database)
     {
-        // Resolve the collection once at construction, and guarantee the
-        // indexes the data model requires exist before any query runs.
-        var client = new MongoClient(settings.Value.ConnectionString);
-        var db = client.GetDatabase(settings.Value.DatabaseName);
-        _collection = db.GetCollection<SolarStationInfo>("SolarStationInfo");
-
-        var uniqueOptions = new CreateIndexOptions { Unique = true };
-        _collection.Indexes.CreateOne(new CreateIndexModel<SolarStationInfo>(
-            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.NodeId), uniqueOptions));
-        _collection.Indexes.CreateOne(new CreateIndexModel<SolarStationInfo>(
-            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.IsActive)));
+        _collection = database.GetCollection<SolarStationInfo>("SolarStationInfo");
     }
 
     public async Task<SolarStationInfo?> GetByNodeIdAsync(string nodeId)

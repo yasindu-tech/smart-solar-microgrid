@@ -31,6 +31,7 @@ public class MongoIndexInitializer : IHostedService
         {
             await InitializeUserIndexesAsync(cancellationToken);
             await InitializeProsumerIndexesAsync(cancellationToken);
+            await InitializeSolarStationIndexesAsync(cancellationToken);
             await InitializeEnergyBookingSlotsIndexesAsync(cancellationToken);
             await InitializeEnergyReservationIndexesAsync(cancellationToken);
             _logger.LogInformation("MongoDB indexes verified successfully.");
@@ -92,6 +93,20 @@ public class MongoIndexInitializer : IHostedService
         }
     }
 
+    // Ensures a unique index on nodeId and a lookup index on isActive for SolarStationInfo.
+    private async Task InitializeSolarStationIndexesAsync(CancellationToken cancellationToken)
+    {
+        var nodes = _database.GetCollection<SolarStationInfo>("SolarStationInfo");
+        var uniqueOptions = new CreateIndexOptions { Unique = true };
+
+        var nodeIdIndex = new CreateIndexModel<SolarStationInfo>(
+            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.NodeId), uniqueOptions);
+        var isActiveIndex = new CreateIndexModel<SolarStationInfo>(
+            Builders<SolarStationInfo>.IndexKeys.Ascending(n => n.IsActive));
+
+        await nodes.Indexes.CreateManyAsync(new[] { nodeIdIndex, isActiveIndex }, cancellationToken);
+    }
+    
     // Ensures unique and compound indexes on the EnergyBookingSlots collection for slotId and { nodeId: 1, startTime: 1 }.
     private async Task InitializeEnergyBookingSlotsIndexesAsync(CancellationToken cancellationToken)
     {
