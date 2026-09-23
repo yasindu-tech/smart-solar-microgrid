@@ -28,4 +28,10 @@ export const prosumerEndpoints = {
   BY_NIC: (nic: string) => `/prosumers/${nic}`,
 }
 
+export const dashboardEndpoints = {
+  BACKOFFICE: '/dashboard/backoffice',
+  PROSUMER: '/dashboard/prosumer',
+}
+
+
 
