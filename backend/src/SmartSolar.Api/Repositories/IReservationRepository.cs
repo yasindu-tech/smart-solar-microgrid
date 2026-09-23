@@ -42,4 +42,8 @@ public interface IReservationRepository
 
     // Atomically moves a past Pending or Approved reservation to Expired (ADR-001). Returns (true, previousStatus) on success.
     Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc);
+
+    // Aggregates total reservations count and grouped status counts for the backoffice dashboard.
+    Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync();
 }
+

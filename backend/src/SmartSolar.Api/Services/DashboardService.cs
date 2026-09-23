@@ -15,13 +15,43 @@ namespace SmartSolar.Api.Services;
 public class DashboardService
 {
     private readonly IReservationRepository _reservationRepo;
+    private readonly ProsumerRepository? _prosumerRepo;
+    private readonly ISolarStationRepository? _nodeRepo;
 
     // Injects the reservation repository for metric aggregations.
     public DashboardService(IReservationRepository reservationRepo)
     {
-        // Inject reservation repository.
         _reservationRepo = reservationRepo;
     }
+
+    // Full constructor injecting repositories for both prosumer and backoffice dashboards.
+    public DashboardService(
+        IReservationRepository reservationRepo,
+        ProsumerRepository prosumerRepo,
+        ISolarStationRepository nodeRepo)
+    {
+        _reservationRepo = reservationRepo;
+        _prosumerRepo = prosumerRepo;
+        _nodeRepo = nodeRepo;
+    }
+
+    // Computes system-wide aggregate metrics for the backoffice dashboard (REQ-VIEW §2.2).
+    public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
+    {
+        var totalProsumers = _prosumerRepo != null ? await _prosumerRepo.CountTotalAsync() : 0;
+        var pendingActivations = _prosumerRepo != null ? await _prosumerRepo.CountByStatusAsync("PendingActivation") : 0;
+        var activeNodes = _nodeRepo != null ? await _nodeRepo.CountActiveAsync() : 0;
+        var (totalReservations, byStatus) = await _reservationRepo.GetStatusCountsAsync();
+
+        return new BackofficeDashboardResponse(
+            totalProsumers,
+            pendingActivations,
+            activeNodes,
+            totalReservations,
+            byStatus
+        );
+    }
+
 
     // Computes dynamic active and pending reservation counts, next upcoming booking, and recent history.
     public async Task<ProsumerDashboardResponse> GetProsumerDashboardAsync(string nic)
