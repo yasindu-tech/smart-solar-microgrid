@@ -1176,4 +1176,48 @@ public class ReservationServiceTests
         Assert.Equal("Cancelled", response.Status);
         Assert.Equal("USR-BACKOFFICE-01", response.CancelledBy);
     }
+
+    [Fact]
+    public async Task CreateOnBehalf_SucceedsForActiveProsumer()
+    {
+        var now = DateTime.UtcNow;
+        _nodeRepo.Nodes.Add(new SolarStationInfo
+        {
+            NodeId = "ND-001",
+            Name = "Main Grid Station",
+            IsActive = true
+        });
+
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-BEHALF-01",
+            NodeId = "ND-001",
+            StartTime = now.AddDays(1),
+            EndTime = now.AddDays(1).AddHours(2),
+            TotalCapacity = 5,
+            AvailableCapacity = 3,
+            EnergyOfferedKwh = 30,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+
+        var request = new CreateReservationOnBehalfRequest
+        {
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-BEHALF-01",
+            RequestedKwh = 15.0
+        };
+
+        var response = await _service.CreateAsync(request.Nic, request);
+
+        Assert.NotNull(response);
+        Assert.Equal("199512345678", response.Nic);
+        Assert.Equal("ND-001", response.NodeId);
+        Assert.Equal("SL-BEHALF-01", response.SlotId);
+        Assert.Equal(15.0, response.RequestedKwh);
+        Assert.Equal("Pending", response.Status);
+    }
 }
+
