@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Battery, CalendarClock, Plus, Sparkles, Zap } from 'lucide-react'
+import { useCreateSlot, useSlots, useUpdateSlotAvailability } from '../../api/SlotsApi'
+import type { ApiRequestError } from '../../api/types'
+import SolarLoader from '../../components/SolarLoader/SolarLoader'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -14,16 +17,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet'
-
-interface DummySlot {
-  slotId: string
-  date: string
-  startTime: string
-  endTime: string
-  totalCapacity: number
-  availableCapacity: number
-  energyOfferedKwh: number
-}
+import { useToast } from '../../lib/useToast'
+import type { Slot } from '../../types/SlotTypes'
 
 function isoDateOffset(days: number): string {
   const d = new Date()
@@ -37,75 +32,78 @@ function isoDateOffset(days: number): string {
   return `${year}-${month}-${day}`
 }
 
-function formatSlotDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
+function toIsoDateTime(date: string, time: string): string {
+  return new Date(`${date}T${time}`).toISOString()
+}
+
+function formatSlotDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function formatSlotTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
 const EMPTY_FORM = { date: isoDateOffset(0), startTime: '', endTime: '', totalCapacity: '', energyOfferedKwh: '' }
 
-/**
- * Placeholder UI only - not wired to the real /api/nodes/{nodeId}/slots endpoints yet.
- * "Add slot" and "Generate for today" mutate local state so the screen is interactive.
- */
 export default function SlotManagement() {
   const { nodeId } = useParams<{ nodeId: string }>()
-  const [slots, setSlots] = useState<DummySlot[]>([])
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
+  const { showToast } = useToast()
 
-  const nextSlotId = () => `SL-${String(slots.length + 1).padStart(4, '0')}`
+  const { data: slots, isLoading, isError } = useSlots(nodeId ?? '')
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault()
-    const totalCapacity = Number(form.totalCapacity) || 0
-
-    setSlots((prev) => [
-      ...prev,
-      {
-        slotId: nextSlotId(),
-        date: form.date,
-        startTime: form.startTime,
-        endTime: form.endTime,
-        totalCapacity,
-        availableCapacity: totalCapacity,
-        energyOfferedKwh: Number(form.energyOfferedKwh) || 0,
-      },
-    ])
-
+  const handleCreateSuccess = (slot: Slot) => {
+    showToast({ variant: 'success', title: 'Slot created', message: `${slot.slotId} was added.` })
     setForm(EMPTY_FORM)
     setDialogOpen(false)
   }
 
-  const handleGenerateForToday = () => {
-    setSlots((prev) => [
-      ...prev,
-      {
-        slotId: nextSlotId(),
-        date: isoDateOffset(0),
-        startTime: '08:00',
-        endTime: '10:00',
-        totalCapacity: 4,
-        availableCapacity: 4,
-        energyOfferedKwh: 20,
-      },
-    ])
+  const handleCreateError = (error: ApiRequestError) => {
+    showToast({ variant: 'danger', title: 'Could not create slot', message: error.envelope.message })
   }
 
-  const updateAvailableCapacity = (slotId: string, value: number) => {
-    setSlots((prev) =>
-      prev.map((slot) =>
-        // The "max" attribute is only a UI hint - clamp here so a typed value
-        // can never exceed totalCapacity (which would show as e.g. "5 / 4").
-        slot.slotId === slotId
-          ? { ...slot, availableCapacity: Math.min(Math.max(value, 0), slot.totalCapacity) }
-          : slot,
-      ),
-    )
+  const { mutate: createSlot, isPending: isCreating } = useCreateSlot(nodeId ?? '', {
+    onSuccess: handleCreateSuccess,
+    onError: handleCreateError,
+  })
+
+  const { mutate: updateAvailability } = useUpdateSlotAvailability(nodeId ?? '', {
+    onError: (error) =>
+      showToast({ variant: 'danger', title: 'Could not update availability', message: error.envelope.message }),
+  })
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    if (!nodeId) return
+
+    createSlot({
+      startTime: toIsoDateTime(form.date, form.startTime),
+      endTime: toIsoDateTime(form.date, form.endTime),
+      totalCapacity: Number(form.totalCapacity) || 0,
+      energyOfferedKwh: Number(form.energyOfferedKwh) || 0,
+    })
   }
+
+  const handleGenerateForToday = () => {
+    if (!nodeId) return
+
+    createSlot({
+      startTime: toIsoDateTime(isoDateOffset(0), '08:00'),
+      endTime: toIsoDateTime(isoDateOffset(0), '10:00'),
+      totalCapacity: 4,
+      energyOfferedKwh: 20,
+    })
+  }
+
+  const handleAvailabilityBlur = (slot: Slot, value: number) => {
+    const clamped = Math.min(Math.max(value, 0), slot.totalCapacity)
+    if (clamped === slot.availableCapacity) return
+    updateAvailability({ slotId: slot.slotId, availableCapacity: clamped })
+  }
+
+  const sortedSlots = (slots ?? []).slice().sort((a, b) => a.startTime.localeCompare(b.startTime))
 
   return (
     <div className="flex flex-col gap-6">
@@ -120,13 +118,11 @@ export default function SlotManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="sg-h3">Slots for {nodeId}</h2>
-          <p className="sg-body-sm text-sg-text-secondary">
-            Bookable windows for the next 7 days. (Placeholder screen — not yet wired to the API.)
-          </p>
+          <p className="sg-body-sm text-sg-text-secondary">Bookable windows for this node.</p>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleGenerateForToday}>
+          <Button variant="outline" onClick={handleGenerateForToday} disabled={isCreating}>
             <Sparkles size={16} className="mr-2" />
             Generate for today
           </Button>
@@ -217,13 +213,23 @@ export default function SlotManagement() {
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create slot</Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Create slot'}
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>
       </Sheet>
 
-      {slots.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <SolarLoader showLabel label="Loading slots..." />
+        </div>
+      ) : isError ? (
+        <div className="sg-alert sg-alert-danger" role="alert">
+          Could not load slots. Please try again.
+        </div>
+      ) : sortedSlots.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-sg-border py-16 text-center">
           <CalendarClock size={28} className="text-sg-text-muted" />
           <p className="sg-h4">No slots yet</p>
@@ -231,77 +237,75 @@ export default function SlotManagement() {
         </div>
       ) : (
         <div className="flex flex-col divide-y divide-sg-border overflow-hidden rounded-lg border border-sg-border bg-sg-surface">
-          {slots
-            .slice()
-            .sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime))
-            .map((slot) => {
-              const pct = slot.totalCapacity > 0 ? Math.round((slot.availableCapacity / slot.totalCapacity) * 100) : 0
-              const isFull = slot.availableCapacity <= 0
+          {sortedSlots.map((slot) => {
+            const pct = slot.totalCapacity > 0 ? Math.round((slot.availableCapacity / slot.totalCapacity) * 100) : 0
+            const isFull = slot.availableCapacity <= 0
 
-              return (
-                <div
-                  key={slot.slotId}
-                  className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                >
-                  <div className="flex items-center gap-4 sm:w-48 sm:shrink-0">
-                    <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-sg-primary-soft text-sg-primary">
-                      <CalendarClock size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="sg-body font-semibold text-sg-text">{formatSlotDate(slot.date)}</p>
-                      <p className="sg-caption font-mono">
-                        {slot.startTime}–{slot.endTime}
-                      </p>
-                    </div>
+            return (
+              <div
+                key={slot.slotId}
+                className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+              >
+                <div className="flex items-center gap-4 sm:w-48 sm:shrink-0">
+                  <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-sg-primary-soft text-sg-primary">
+                    <CalendarClock size={18} />
                   </div>
-
-                  <div className="flex-1 sm:max-w-xs">
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="sg-caption flex items-center gap-1">
-                        <Battery size={12} />
-                        Capacity
-                      </span>
-                      <span className="sg-caption font-medium text-sg-text-secondary">
-                        {slot.availableCapacity} / {slot.totalCapacity}
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-sg-surface-muted">
-                      <div
-                        className={`h-full rounded-full transition-all ${isFull ? 'bg-sg-text-disabled' : 'bg-sg-primary'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-5 sm:shrink-0">
-                    <div className="flex flex-col gap-1">
-                      <Label htmlFor={`available-${slot.slotId}`} className="sg-caption">
-                        Available
-                      </Label>
-                      <Input
-                        id={`available-${slot.slotId}`}
-                        type="number"
-                        min={0}
-                        max={slot.totalCapacity}
-                        value={slot.availableCapacity}
-                        onChange={(e) => updateAvailableCapacity(slot.slotId, Number(e.target.value))}
-                        className="h-8 w-16 text-center"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-sg-text-secondary">
-                      <Zap size={14} />
-                      <span className="sg-body-sm font-medium">{slot.energyOfferedKwh} kWh</span>
-                    </div>
-
-                    <span className={`sg-badge ${isFull ? 'sg-badge-neutral' : 'sg-badge-success'}`}>
-                      <span className="sg-status-dot" />
-                      {isFull ? 'Full' : 'Bookable'}
-                    </span>
+                  <div className="min-w-0">
+                    <p className="sg-body font-semibold text-sg-text">{formatSlotDate(slot.startTime)}</p>
+                    <p className="sg-caption font-mono">
+                      {formatSlotTime(slot.startTime)}–{formatSlotTime(slot.endTime)}
+                    </p>
                   </div>
                 </div>
-              )
-            })}
+
+                <div className="flex-1 sm:max-w-xs">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="sg-caption flex items-center gap-1">
+                      <Battery size={12} />
+                      Capacity
+                    </span>
+                    <span className="sg-caption font-medium text-sg-text-secondary">
+                      {slot.availableCapacity} / {slot.totalCapacity}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-sg-surface-muted">
+                    <div
+                      className={`h-full rounded-full transition-all ${isFull ? 'bg-sg-text-disabled' : 'bg-sg-primary'}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-5 sm:shrink-0">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor={`available-${slot.slotId}`} className="sg-caption">
+                      Available
+                    </Label>
+                    <Input
+                      id={`available-${slot.slotId}`}
+                      type="number"
+                      min={0}
+                      max={slot.totalCapacity}
+                      defaultValue={slot.availableCapacity}
+                      key={`${slot.slotId}-${slot.availableCapacity}`}
+                      onBlur={(e) => handleAvailabilityBlur(slot, Number(e.target.value))}
+                      className="h-8 w-16 text-center"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-sg-text-secondary">
+                    <Zap size={14} />
+                    <span className="sg-body-sm font-medium">{slot.energyOfferedKwh} kWh</span>
+                  </div>
+
+                  <span className={`sg-badge ${isFull ? 'sg-badge-neutral' : 'sg-badge-success'}`}>
+                    <span className="sg-status-dot" />
+                    {isFull ? 'Full' : 'Bookable'}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
