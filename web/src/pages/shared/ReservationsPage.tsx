@@ -140,37 +140,6 @@ export default function ReservationsPage() {
   const reservations = reservationsData?.items ?? []
   const totalReservations = reservationsData?.total ?? 0
 
-  // Count queries that stay consistent regardless of statusFilter selection
-  const countFilterParams = {
-    nodeId: nodeFilter === 'ALL' ? undefined : nodeFilter,
-    from: dateFrom ? new Date(`${dateFrom}T00:00:00Z`).toISOString() : undefined,
-    to: dateTo ? new Date(`${dateTo}T23:59:59Z`).toISOString() : undefined,
-    search: searchTerm.trim() ? searchTerm.trim() : undefined,
-  }
-
-  const { data: allCountData } = useReservations({
-    ...countFilterParams,
-    page: 1,
-    pageSize: 1,
-  })
-
-  const { data: pendingCountData } = useReservations({
-    ...countFilterParams,
-    status: 'Pending',
-    page: 1,
-    pageSize: 1,
-  })
-
-  const { data: approvedCountData } = useReservations({
-    ...countFilterParams,
-    status: 'Approved',
-    page: 1,
-    pageSize: 1,
-  })
-
-  const totalAllCount = allCountData?.total ?? totalReservations
-  const pendingCount = pendingCountData?.total ?? 0
-  const approvedCount = approvedCountData?.total ?? 0
 
   // Modal / Drawer States
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -379,64 +348,6 @@ export default function ReservationsPage() {
         </Button>
       </div>
 
-      {/* Quick Summary Pill Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            setStatusFilter('ALL')
-            setPage(1)
-          }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-            statusFilter === 'ALL'
-              ? 'border-sg-primary bg-sg-primary-soft text-sg-primary shadow-xs'
-              : 'border-sg-border bg-sg-surface text-sg-text-secondary hover:border-sg-border/80 hover:text-sg-text'
-          }`}
-        >
-          <span>All Reservations</span>
-          <span className="rounded-md bg-sg-surface-muted px-1.5 py-0.2 font-mono text-[11px]">
-            {totalAllCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setStatusFilter('Pending')
-            setPage(1)
-          }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-            statusFilter === 'Pending'
-              ? 'border-amber-400 bg-amber-50 text-amber-900 shadow-xs dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
-              : 'border-sg-border bg-sg-surface text-sg-text-secondary hover:text-sg-text'
-          }`}
-        >
-          <span className="h-2 w-2 rounded-full bg-amber-600" />
-          <span>Pending</span>
-          <span className="rounded-md bg-amber-100 px-1.5 py-0.2 font-mono text-[11px] text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
-            {pendingCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setStatusFilter('Approved')
-            setPage(1)
-          }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-            statusFilter === 'Approved'
-              ? 'border-emerald-400 bg-emerald-50 text-emerald-900 shadow-xs dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
-              : 'border-sg-border bg-sg-surface text-sg-text-secondary hover:text-sg-text'
-          }`}
-        >
-          <span className="h-2 w-2 rounded-full bg-emerald-600" />
-          <span>Approved</span>
-          <span className="rounded-md bg-emerald-100 px-1.5 py-0.2 font-mono text-[11px] text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
-            {approvedCount}
-          </span>
-        </button>
-      </div>
 
       {/* Filter Card */}
       <Card className="overflow-hidden border border-sg-border bg-sg-surface shadow-xs">
