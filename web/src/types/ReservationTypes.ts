@@ -1,6 +1,7 @@
 import type { ApiRequestError } from '../api/types'
+import { RESERVATION_STATUSES, type ReservationAction, type ReservationStatus } from '../lib/constants'
 
-export type ReservationStatus = 'Pending' | 'Approved' | 'Cancelled' | 'Completed' | 'Expired'
+export { RESERVATION_STATUSES, type ReservationStatus }
 
 export interface Reservation {
   reservationId: string
@@ -20,13 +21,6 @@ export interface Reservation {
   completedAt?: string | null
   completedByOperatorId?: string | null
   deliveredKwh?: number | null
-}
-
-export interface PagedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
 }
 
 export interface ReservationListParams {
@@ -70,3 +64,33 @@ export interface UseCancelReservationOptions {
   onSuccess?: (data: Reservation) => void
   onError?: (error: ApiRequestError) => void
 }
+
+export interface ProsumerDetail {
+  nic: string
+  fullName: string
+  email: string
+  phone: string
+  address: string
+  solarCapacityKw: number
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ReservationDetailsDrawerProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  reservation: Reservation | null
+  onApprove: (res: Reservation) => void
+  onModify: (res: Reservation) => void
+  onCancel: (res: Reservation) => void
+  isApproving?: boolean
+}
+
+export interface ReservationSummaryDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  reservation: Reservation | null
+  action: ReservationAction
+}
+

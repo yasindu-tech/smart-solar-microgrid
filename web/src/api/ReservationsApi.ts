@@ -9,9 +9,9 @@ import apiClient from './client'
 import { ApiRequestError } from './types'
 import { reservationEndpoints } from './endpoints'
 import { reservationQueryKeys, slotQueryKeys } from './queryKeys'
+import type { PagedResponse } from '../types/CommonTypes'
 import type {
   CreateReservationOnBehalfRequest,
-  PagedResponse,
   Reservation,
   ReservationListParams,
   UpdateReservationRequest,

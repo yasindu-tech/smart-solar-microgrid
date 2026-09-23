@@ -2,17 +2,11 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import apiClient from './client'
 import { ApiRequestError } from './types'
 import { prosumerEndpoints } from './endpoints'
+import { prosumerQueryKeys } from './queryKeys'
+import type { ProsumerDetail } from '../types/ReservationTypes'
 
-export interface ProsumerDetail {
-  nic: string
-  fullName: string
-  email: string
-  phone: string
-  address: string
-  solarCapacityKw: number
-  status: string
-  createdAt: string
-  updatedAt: string
+export interface UseProsumerOptions {
+  enabled?: boolean
 }
 
 const fetchProsumerByNic = async (nic: string): Promise<ProsumerDetail> => {
@@ -20,9 +14,12 @@ const fetchProsumerByNic = async (nic: string): Promise<ProsumerDetail> => {
   return response?.data
 }
 
-export const useProsumer = (nic: string): UseQueryResult<ProsumerDetail, ApiRequestError> =>
+export const useProsumer = (
+  nic: string,
+  options?: UseProsumerOptions,
+): UseQueryResult<ProsumerDetail, ApiRequestError> =>
   useQuery({
-    queryKey: ['prosumers', 'detail', nic],
+    queryKey: prosumerQueryKeys.DETAIL(nic),
     queryFn: () => fetchProsumerByNic(nic),
-    enabled: Boolean(nic && nic.trim().length > 0),
+    enabled: (options?.enabled ?? true) && Boolean(nic && nic.trim().length > 0),
   })

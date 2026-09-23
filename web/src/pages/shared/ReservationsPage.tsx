@@ -1,5 +1,6 @@
-import { useState, useId } from 'react'
+import { useState, useId, useEffect } from 'react'
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Calendar,
   CalendarPlus,
@@ -65,41 +66,14 @@ import {
   TableRow,
 } from '../../components/ui/table'
 import { useToast } from '../../lib/useToast'
-import type { Reservation, ReservationStatus } from '../../types/ReservationTypes'
+import { getStatusBadgeClass, formatDate, formatTime } from '../../lib/utils'
+import { RESERVATION_STATUSES, type ReservationAction } from '../../lib/constants'
+import type { Reservation } from '../../types/ReservationTypes'
 import type { Slot } from '../../types/SlotTypes'
 import ReservationDetailsDrawer from './ReservationDetailsDrawer'
 import ReservationSummaryDialog from './ReservationSummaryDialog'
 
-function getStatusBadgeClass(status: ReservationStatus) {
-  switch (status) {
-    case 'Approved':
-      return 'sg-badge-success'
-    case 'Pending':
-      return 'sg-badge-warning'
-    case 'Cancelled':
-      return 'sg-badge-danger'
-    case 'Completed':
-      return 'sg-badge-info'
-    case 'Expired':
-    default:
-      return 'sg-badge-neutral'
-  }
-}
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 export default function ReservationsPage() {
   const { showToast } = useToast()
@@ -108,14 +82,32 @@ export default function ReservationsPage() {
   const modifySheetTitleId = useId()
   const modifySheetDescId = useId()
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusParam = searchParams.get('status')
+
   // Filter and pagination state
   const [page, setPage] = useState(1)
   const pageSize = 10
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    if (statusParam && (RESERVATION_STATUSES as readonly string[]).includes(statusParam)) {
+      return statusParam
+    }
+    return 'ALL'
+  })
   const [nodeFilter, setNodeFilter] = useState<string>('ALL')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    const status = searchParams.get('status')
+    if (status && (RESERVATION_STATUSES as readonly string[]).includes(status)) {
+      setStatusFilter(status)
+      setPage(1)
+    } else if (!status) {
+      setStatusFilter('ALL')
+    }
+  }, [searchParams])
 
   // Queries
   const { data: nodesData } = useNodes()
@@ -148,9 +140,7 @@ export default function ReservationsPage() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false)
   const [activeReservation, setActiveReservation] = useState<Reservation | null>(null)
-  const [summaryAction, setSummaryAction] = useState<
-    'Created' | 'Modified' | 'Cancelled' | 'Approved'
-  >('Created')
+  const [summaryAction, setSummaryAction] = useState<ReservationAction>('Created')
 
   // Create on Behalf Form State
   const [createNic, setCreateNic] = useState('')
@@ -281,6 +271,7 @@ export default function ReservationsPage() {
     setDateTo('')
     setSearchTerm('')
     setPage(1)
+    setSearchParams({}, { replace: true })
   }
 
   const handleOpenDrawer = (res: Reservation) => {
@@ -410,6 +401,13 @@ export default function ReservationsPage() {
                 onValueChange={(val) => {
                   setStatusFilter(val)
                   setPage(1)
+                  const next = new URLSearchParams(searchParams)
+                  if (val === 'ALL') {
+                    next.delete('status')
+                  } else {
+                    next.set('status', val)
+                  }
+                  setSearchParams(next, { replace: true })
                 }}
               >
                 <SelectTrigger id="status-filter">
@@ -417,11 +415,11 @@ export default function ReservationsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All Statuses</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Expired">Expired</SelectItem>
+                  {RESERVATION_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

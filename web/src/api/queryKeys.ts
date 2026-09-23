@@ -27,3 +27,16 @@ export const reservationQueryKeys = {
   DETAIL: (id: string) => [RESERVATIONS, 'detail', id],
 }
 
+const DASHBOARD = 'dashboard'
+const PROSUMERS = 'prosumers'
+
+export const dashboardQueryKeys = {
+  BACKOFFICE: [DASHBOARD, 'backoffice'],
+  PROSUMER: [DASHBOARD, 'prosumer'],
+}
+
+export const prosumerQueryKeys = {
+  DETAIL: (nic: string) => [PROSUMERS, 'detail', nic],
+}
+
+

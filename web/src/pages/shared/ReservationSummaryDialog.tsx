@@ -8,54 +8,8 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog'
 import { Button } from '../../components/ui/button'
-import type { Reservation, ReservationStatus } from '../../types/ReservationTypes'
-
-interface ReservationSummaryDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  reservation: Reservation | null
-  action: 'Created' | 'Modified' | 'Cancelled' | 'Approved'
-}
-
-function getStatusBadgeClass(status?: ReservationStatus) {
-  switch (status) {
-    case 'Approved':
-      return 'sg-badge-success'
-    case 'Pending':
-      return 'sg-badge-warning'
-    case 'Cancelled':
-      return 'sg-badge-danger'
-    case 'Completed':
-      return 'sg-badge-info'
-    case 'Expired':
-    default:
-      return 'sg-badge-neutral'
-  }
-}
-
-function formatSlotDateTime(iso?: string) {
-  if (!iso) return '-'
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function formatSlotTimeWindow(startIso?: string, endIso?: string) {
-  if (!startIso || !endIso) return '-'
-  const start = new Date(startIso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  const end = new Date(endIso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  return `${start} – ${end}`
-}
+import type { ReservationSummaryDialogProps } from '../../types/ReservationTypes'
+import { getStatusBadgeClass, formatSlotDateTime, formatTimeWindow } from '../../lib/utils'
 
 export default function ReservationSummaryDialog({
   open,
@@ -145,7 +99,7 @@ export default function ReservationSummaryDialog({
                 <span className="sg-caption">Window</span>
               </div>
               <span className="font-mono font-medium text-sg-text">
-                {formatSlotTimeWindow(reservation.slotStartTime, reservation.slotEndTime)}
+                {formatTimeWindow(reservation.slotStartTime, reservation.slotEndTime)}
               </span>
             </div>
           </div>

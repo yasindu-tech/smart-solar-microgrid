@@ -24,3 +24,12 @@ export const TOAST_ICON_COLOR_BY_VARIANT: Record<ToastVariant, string> = {
 export const TOAST_AUTO_DISMISS_MS = 5000
 
 export const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+export const MS_PER_HOUR = 1000 * 60 * 60
+
+export const RESERVATION_ACTIONS = ['Created', 'Modified', 'Cancelled', 'Approved'] as const
+export type ReservationAction = (typeof RESERVATION_ACTIONS)[number]
+
+export const RESERVATION_STATUSES = ['Pending', 'Approved', 'Cancelled', 'Completed', 'Expired'] as const
+export type ReservationStatus = (typeof RESERVATION_STATUSES)[number]
+

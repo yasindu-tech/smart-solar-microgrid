@@ -16,6 +16,13 @@ import {
 } from 'lucide-react'
 import { useProsumer } from '../../api/ProsumersApi'
 import { useNodes } from '../../api/NodesApi'
+import {
+  formatTimeWindow,
+  getStatusBadgeClass,
+  formatFullDate,
+  formatFullDateTime,
+  isWithinNoticeWindow,
+} from '../../lib/utils'
 import { Button } from '../../components/ui/button'
 import {
   Sheet,
@@ -26,75 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet'
-import type { Reservation, ReservationStatus } from '../../types/ReservationTypes'
-
-interface ReservationDetailsDrawerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  reservation: Reservation | null
-  onApprove: (res: Reservation) => void
-  onModify: (res: Reservation) => void
-  onCancel: (res: Reservation) => void
-  isApproving?: boolean
-}
-
-function getStatusBadgeClass(status?: ReservationStatus) {
-  switch (status) {
-    case 'Approved':
-      return 'sg-badge-success'
-    case 'Pending':
-      return 'sg-badge-warning'
-    case 'Cancelled':
-      return 'sg-badge-danger'
-    case 'Completed':
-      return 'sg-badge-info'
-    case 'Expired':
-    default:
-      return 'sg-badge-neutral'
-  }
-}
-
-function formatFullDate(iso?: string) {
-  if (!iso) return '-'
-  return new Date(iso).toLocaleDateString(undefined, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function formatFullDateTime(iso?: string) {
-  if (!iso) return '-'
-  return new Date(iso).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function formatTimeWindow(startIso?: string, endIso?: string) {
-  if (!startIso || !endIso) return '-'
-  const start = new Date(startIso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  const end = new Date(endIso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  return `${start} – ${end}`
-}
-
-function isWithinNoticeWindow(slotStartTimeIso?: string, minHours = 12): boolean {
-  if (!slotStartTimeIso) return false
-  const slotStart = new Date(slotStartTimeIso).getTime()
-  const now = Date.now()
-  const diffHours = (slotStart - now) / (1000 * 60 * 60)
-  return diffHours >= minHours
-}
+import type { ReservationDetailsDrawerProps } from '../../types/ReservationTypes'
 
 export default function ReservationDetailsDrawer({
   open,
@@ -107,7 +46,10 @@ export default function ReservationDetailsDrawer({
 }: ReservationDetailsDrawerProps) {
   const titleId = useId()
   const descId = useId()
-  const { data: prosumer, isLoading: isLoadingProsumer } = useProsumer(reservation?.nic ?? '')
+  const { data: prosumer, isLoading: isLoadingProsumer } = useProsumer(
+    reservation?.nic ?? '',
+    { enabled: open && Boolean(reservation?.nic?.trim()) },
+  )
   const { data: nodesData } = useNodes()
 
   if (!reservation) return null
