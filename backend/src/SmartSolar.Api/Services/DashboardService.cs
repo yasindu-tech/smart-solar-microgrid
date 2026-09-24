@@ -99,7 +99,7 @@ public class DashboardService
         var (pendingCount, approvedFutureCount, todaysReservations) =
             await _reservationRepo.GetOperatorDashboardMetricsAsync(scopedNodeIds, now, dayStart, dayEnd);
 
-        var todaysDtos = todaysReservations.Select(MapToResponse).ToList();
+        var todaysDtos = todaysReservations.Select(r => MapToResponse(r) with { QrToken = null }).ToList();
 
         return new OperatorDashboardResponse(pendingCount, approvedFutureCount, todaysDtos, scopedNodeIds);
     }

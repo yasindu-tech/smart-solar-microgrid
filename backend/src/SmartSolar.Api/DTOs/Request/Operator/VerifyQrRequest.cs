@@ -11,6 +11,5 @@ namespace SmartSolar.Api.DTOs.Request.Operator;
 
 public record VerifyQrRequest(
     // The scanned token exactly as read from the QR image. The device never parses it.
-    [Required(ErrorMessage = "A scanned QR token is required.")]
-    string QrToken
+    string? QrToken
 );

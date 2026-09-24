@@ -143,11 +143,11 @@ public class OperatorVerificationService
         if (reservation == null)
             throw new DomainException("E4404", "Reservation not found.", 404, "reservationId");
 
-        // BR-11: an operator may only act at a node in their own assignedNodeIds. Backoffice may verify anywhere.
-        await AssertOperatorOwnsNodeAsync(callerUserId, callerRole, reservation.NodeId);
-
         // BR-10, BR-18: stored-token and status checks decide between E4202 and E4203.
         AssertReservationIsClaimable(reservation, token);
+
+        // BR-11: an operator may only act at a node in their own assignedNodeIds. Backoffice may verify anywhere.
+        await AssertOperatorOwnsNodeAsync(callerUserId, callerRole, reservation.NodeId);
 
         return reservation;
     }
