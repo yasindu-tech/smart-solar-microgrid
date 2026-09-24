@@ -43,6 +43,19 @@
     <string name="register_btn">Register</string>
     <string name="register_back_to_login">Already have an account? Sign in</string>
 
+    <!-- Errors and validation -->
+    <string name="register_error_empty">This field is required</string>
+    <string name="register_error_nic">Invalid NIC format</string>
+    <string name="register_error_password_match">Passwords do not match</string>
+    <string name="login_error_network">Network error, please try again</string>
+    <string name="login_error_generic">An error occurred</string>
+    
+    <!-- Messages and dialogs -->
+    <string name="welcome_message">Welcome to Smart Solar, %1$s!</string>
+    <string name="deactivate_dialog_title">Deactivate Account</string>
+    <string name="deactivate_dialog_message">Are you sure you want to deactivate your account?</string>
+    <string name="deactivate_dialog_confirm">Deactivate</string>
+
     <!-- Shared actions -->
     <string name="profile_btn_save">Save Changes</string>
     <string name="cancel_btn">Cancel</string>

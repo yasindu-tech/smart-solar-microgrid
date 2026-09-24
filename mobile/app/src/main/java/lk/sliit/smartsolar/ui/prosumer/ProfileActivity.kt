@@ -137,7 +137,7 @@ class ProfileActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.deactivate_dialog_title)
             .setMessage(R.string.deactivate_dialog_message)
-            .setPositiveButton(R.string.deactivate_dialog_confirm) { _, _ ->
+            .setPositiveButton(R.string.deactivate_dialog_confirm) { dialog, which ->
                 performDeactivation()
             }
             .setNegativeButton(R.string.cancel_btn, null)
@@ -164,8 +164,12 @@ class ProfileActivity : AppCompatActivity() {
                 } else {
                     val errorBody = response.errorBody()?.string()
                     try {
-                        val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
-                        Toast.makeText(this@ProfileActivity, error.message, Toast.LENGTH_LONG).show()
+                        if (errorBody != null) {
+                            val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                            Toast.makeText(this@ProfileActivity, error.message, Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this@ProfileActivity, "Failed to deactivate account", Toast.LENGTH_LONG).show()
+                        }
                     } catch (_: Exception) {
                         Toast.makeText(this@ProfileActivity, "Failed to deactivate account", Toast.LENGTH_LONG).show()
                     }
