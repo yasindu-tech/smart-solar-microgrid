@@ -13,7 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import BackofficeLayout from './pages/backoffice/BackofficeLayout'
-import BackofficeDashboard from './pages/backoffice/BackofficeDashboard'
+import Dashboard from './pages/backoffice/Dashboard'
 import UsersPage from './pages/backoffice/UsersPage'
 import PendingApprovalsPage from './pages/backoffice/PendingApprovalsPage'
 import ProsumersPage from './pages/backoffice/ProsumersPage'
@@ -33,7 +33,7 @@ export default function App() {
             
             <Route element={<ProtectedRoute allowedRoles={['Backoffice']} />}>
               <Route path="/backoffice" element={<BackofficeLayout />}>
-                <Route index element={<BackofficeDashboard />} />
+                <Route index element={<Dashboard />} />
                 <Route path="nodes" element={<NodeManagement />} />
                 <Route path="nodes/:nodeId/slots" element={<SlotManagement />} />
                 <Route path="users" element={<UsersPage />} />
