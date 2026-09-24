@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useNodes } from '../../api/NodesApi'
+import { useProsumers } from '../../api/ProsumersApi'
 import { useSlots } from '../../api/SlotsApi'
 import {
   useApproveReservation,
@@ -147,6 +148,14 @@ export default function ReservationsPage() {
   const [createNodeId, setCreateNodeId] = useState('')
   const [createSlotId, setCreateSlotId] = useState('')
   const [createKwh, setCreateKwh] = useState('')
+
+  // Prosumers for Create Form
+  const { data: prosumersData, isLoading: isLoadingProsumers } = useProsumers(
+    { status: 'Active', pageSize: 100 },
+    { enabled: createSheetOpen }
+  )
+  const activeProsumers = prosumersData?.items ?? []
+  const selectedProsumer = activeProsumers.find((p) => p.nic === createNic)
 
   // Slots for Create Form
   const { data: createSlotsData } = useSlots(createNodeId)
@@ -680,23 +689,43 @@ export default function ReservationsPage() {
               {/* Prosumer NIC */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="create-nic">Prosumer NIC</Label>
-                <div className="relative">
-                  <User
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-sg-text-muted"
-                  />
-                  <Input
-                    id="create-nic"
-                    placeholder="e.g. 199012345678"
-                    value={createNic}
-                    onChange={(e) => setCreateNic(e.target.value)}
-                    className="pl-9 font-mono"
-                    required
-                  />
-                </div>
-                <p className="sg-caption text-sg-text-muted">
-                  Must belong to an active registered prosumer account.
-                </p>
+                <Select
+                  value={createNic}
+                  onValueChange={setCreateNic}
+                >
+                  <SelectTrigger id="create-nic">
+                    <SelectValue
+                      placeholder={
+                        isLoadingProsumers
+                          ? 'Loading prosumers...'
+                          : activeProsumers.length === 0
+                          ? 'No active prosumers found'
+                          : 'Select registered prosumer'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeProsumers.map((prosumer) => (
+                      <SelectItem key={prosumer.nic} value={prosumer.nic}>
+                        <div className="flex items-center gap-1.5">
+                          <User size={13} className="text-sg-text-muted" />
+                          <span className="font-mono text-xs font-medium text-sg-text">
+                            {prosumer.fullName} ({prosumer.nic})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedProsumer ? (
+                  <p className="sg-caption text-sg-primary font-medium">
+                    {selectedProsumer.fullName} • Solar: {selectedProsumer.solarCapacityKw} kW
+                  </p>
+                ) : (
+                  <p className="sg-caption text-sg-text-muted">
+                    Must belong to an active registered prosumer account.
+                  </p>
+                )}
               </div>
 
               {/* Target Node */}

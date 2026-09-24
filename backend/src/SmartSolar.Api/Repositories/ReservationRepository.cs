@@ -307,10 +307,11 @@ public class ReservationRepository : IReservationRepository
 
         foreach (var item in all)
         {
-            if (dict.ContainsKey(item.Status))
-                dict[item.Status]++;
+            var status = string.IsNullOrWhiteSpace(item.Status) ? "Pending" : item.Status;
+            if (dict.ContainsKey(status))
+                dict[status]++;
             else
-                dict[item.Status] = 1;
+                dict[status] = 1;
         }
 
         return (all.Count, dict);
