@@ -496,6 +496,17 @@ a:hover {
   border-color: var(--sg-primary-hover);
 }
 
+.sg-btn-primary-soft {
+  background: var(--sg-primary-soft);
+  color: var(--sg-primary-hover);
+  border-color: transparent;
+}
+
+.sg-btn-primary-soft:hover:not(:disabled) {
+  background: var(--sg-primary);
+  color: var(--sg-text-on-primary);
+}
+
 .sg-btn-secondary {
   background: var(--sg-surface);
   color: var(--sg-text);

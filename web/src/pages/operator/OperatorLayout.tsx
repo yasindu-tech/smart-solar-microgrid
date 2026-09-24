@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
 import { LogOut, Calendar, Activity } from 'lucide-react'
+import UserBadge from '../../components/UserBadge'
 
 export default function OperatorLayout() {
   const { user, logout } = useAuth()
@@ -21,8 +22,8 @@ export default function OperatorLayout() {
     <div className="sg-page flex h-screen overflow-hidden bg-sg-bg">
       {/* Sidebar */}
       <aside className="w-sidebar flex-shrink-0 border-r border-sg-border bg-sg-surface flex flex-col">
-        <div className="flex h-header items-center px-6 border-b border-sg-border">
-          <img src="/logo-navbar.png" alt="SunGrid" className="h-8 w-auto" />
+        <div className="flex h-header items-center justify-center px-6 border-b border-sg-border">
+          <img src="/logo-navbar.png" alt="SunGrid" className="h-10 w-auto" />
         </div>
         
         <div className="p-4 flex-1 overflow-y-auto">
@@ -48,13 +49,9 @@ export default function OperatorLayout() {
         </div>
 
         <div className="p-4 border-t border-sg-border">
-          <div className="mb-4">
-            <p className="text-sm font-medium text-sg-text truncate">{user?.displayName}</p>
-            <p className="text-xs text-sg-text-muted">{user?.role}</p>
-          </div>
-          <button 
+          <button
             onClick={handleLogout}
-            className="sg-btn sg-btn-ghost w-full justify-start text-sg-danger-text hover:bg-sg-danger-soft"
+            className="sg-btn sg-btn-primary-soft w-full"
           >
             <LogOut size={18} className="mr-2" />
             Sign out
@@ -64,8 +61,9 @@ export default function OperatorLayout() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="h-header border-b border-sg-border bg-sg-surface flex items-center px-8">
+        <header className="h-header border-b border-sg-border bg-sg-surface flex items-center justify-between px-8">
           <h1 className="sg-h3">Grid Operations</h1>
+          <UserBadge displayName={user?.displayName} role={user?.role} />
         </header>
         <div className="p-8">
           <Outlet />

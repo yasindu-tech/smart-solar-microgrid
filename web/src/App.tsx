@@ -20,6 +20,7 @@ import ProsumersPage from './pages/backoffice/ProsumersPage'
 import NodeManagement from './pages/backoffice/NodeManagement'
 import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
+import ReservationsPage from './pages/shared/ReservationsPage'
 
 export default function App() {
   return (
@@ -38,13 +39,14 @@ export default function App() {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="approvals" element={<PendingApprovalsPage />} />
                 <Route path="prosumers" element={<ProsumersPage />} />
+                <Route path="reservations" element={<ReservationsPage />} />
               </Route>
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
               <Route path="/operator" element={<OperatorLayout />}>
                 <Route index element={<div>Operator Dashboard Coming Soon</div>} />
-                <Route path="reservations" element={<div>Reservations Coming Soon</div>} />
+                <Route path="reservations" element={<ReservationsPage />} />
               </Route>
             </Route>
           </Routes>
@@ -53,3 +55,4 @@ export default function App() {
     </ToastProvider>
   )
 }
+

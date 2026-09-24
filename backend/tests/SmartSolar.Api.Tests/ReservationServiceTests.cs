@@ -182,7 +182,24 @@ internal sealed class FakeReservationRepository : IReservationRepository
             return Task.FromResult((true, (string?)prevStatus));
         }
     }
+
+    public Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync()
+    {
+        lock (Reservations)
+        {
+            var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Pending"] = Reservations.Count(r => r.Status == "Pending"),
+                ["Approved"] = Reservations.Count(r => r.Status == "Approved"),
+                ["Completed"] = Reservations.Count(r => r.Status == "Completed"),
+                ["Cancelled"] = Reservations.Count(r => r.Status == "Cancelled"),
+                ["Expired"] = Reservations.Count(r => r.Status == "Expired"),
+            };
+            return Task.FromResult((Reservations.Count, dict));
+        }
+    }
 }
+
 
 internal static class EnumerableExtensions
 {
@@ -1176,4 +1193,85 @@ public class ReservationServiceTests
         Assert.Equal("Cancelled", response.Status);
         Assert.Equal("USR-BACKOFFICE-01", response.CancelledBy);
     }
+
+    [Fact]
+    public async Task CreateOnBehalf_SucceedsForActiveProsumer()
+    {
+        var now = DateTime.UtcNow;
+        _nodeRepo.Nodes.Add(new SolarStationInfo
+        {
+            NodeId = "ND-001",
+            Name = "Main Grid Station",
+            IsActive = true
+        });
+
+        var slot = new EnergyBookingSlot
+        {
+            SlotId = "SL-BEHALF-01",
+            NodeId = "ND-001",
+            StartTime = now.AddDays(1),
+            EndTime = now.AddDays(1).AddHours(2),
+            TotalCapacity = 5,
+            AvailableCapacity = 3,
+            EnergyOfferedKwh = 30,
+            IsActive = true
+        };
+        _slotRepo.Slots.Add(slot);
+
+
+        var request = new CreateReservationOnBehalfRequest
+        {
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-BEHALF-01",
+            RequestedKwh = 15.0
+        };
+
+        var response = await _service.CreateAsync(request.Nic, request);
+
+        Assert.NotNull(response);
+        Assert.Equal("199512345678", response.Nic);
+        Assert.Equal("ND-001", response.NodeId);
+        Assert.Equal("SL-BEHALF-01", response.SlotId);
+        Assert.Equal(15.0, response.RequestedKwh);
+        Assert.Equal("Pending", response.Status);
+    }
+
+    [Fact]
+    public async Task GetBackofficeDashboardAsync_ReturnsAggregatedMetrics()
+    {
+        var now = DateTime.UtcNow;
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-TEST-01",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = now.AddDays(1),
+            SlotEndTime = now.AddDays(1).AddHours(2),
+            RequestedKwh = 10,
+            Status = "Pending"
+        });
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-TEST-02",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0002",
+            SlotStartTime = now.AddDays(2),
+            SlotEndTime = now.AddDays(2).AddHours(2),
+            RequestedKwh = 20,
+            Status = "Approved"
+        });
+
+        var dashboardService = new DashboardService(_reservationRepo);
+        var result = await dashboardService.GetBackofficeDashboardAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalReservations);
+        Assert.Equal(1, result.ReservationsByStatus["Pending"]);
+        Assert.Equal(1, result.ReservationsByStatus["Approved"]);
+    }
 }
+
+

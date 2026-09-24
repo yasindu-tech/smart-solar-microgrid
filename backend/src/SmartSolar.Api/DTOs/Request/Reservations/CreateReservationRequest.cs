@@ -21,4 +21,8 @@ public class CreateReservationRequest
     // Requested energy quantity in kilowatt-hours.
     [Range(0.01, 1000.0, ErrorMessage = "Requested kWh must be greater than 0.")]
     public double RequestedKwh { get; set; }
+
+    // Optional prosumer NIC when created on behalf by staff (Backoffice or Operator).
+    public string? Nic { get; set; }
 }
+

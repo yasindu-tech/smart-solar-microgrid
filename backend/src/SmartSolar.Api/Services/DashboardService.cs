@@ -18,48 +18,33 @@ public class DashboardService
     private readonly ISolarStationRepository _nodeRepo;
     private readonly IReservationRepository _reservationRepo;
 
-    // Inject repositories needed for the aggregation queries.
+    // Full constructor injecting repositories for both prosumer and backoffice dashboards.
     public DashboardService(
+        IReservationRepository reservationRepo,
         ProsumerRepository prosumerRepo,
-        ISolarStationRepository nodeRepo,
-        IReservationRepository reservationRepo)
+        ISolarStationRepository nodeRepo)
     {
+        _reservationRepo = reservationRepo;
         _prosumerRepo = prosumerRepo;
         _nodeRepo = nodeRepo;
-        _reservationRepo = reservationRepo;
     }
 
-    /// <summary>
-    /// Builds the Backoffice dashboard payload (REQ-VIEW §2.4).
-    /// Total prosumers, pending activations, active nodes, reservations by status.
-    /// </summary>
+    // Computes system-wide aggregate metrics for the backoffice dashboard (REQ-VIEW §2.2).
     public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
     {
-        // Fire all count queries in parallel for faster response.
-        var totalProsumersTask = _prosumerRepo.CountTotalAsync();
-        var pendingActivationsTask = _prosumerRepo.CountByStatusAsync("PendingActivation");
-        var activeNodesTask = _nodeRepo.CountActiveAsync();
-
-        await Task.WhenAll(totalProsumersTask, pendingActivationsTask, activeNodesTask);
-
-        // Reservation counts are stubbed until M3's ReservationRepository is available.
-        // TODO (M3): Replace with real counts from the EnergyReservation collection.
-        var reservationsByStatus = new ReservationsByStatusDto(
-            Pending: 0,
-            Approved: 0,
-            Completed: 0,
-            Cancelled: 0,
-            Expired: 0
-        );
+        var totalProsumers = _prosumerRepo != null ? await _prosumerRepo.CountTotalAsync() : 0;
+        var pendingActivations = _prosumerRepo != null ? await _prosumerRepo.CountByStatusAsync("PendingActivation") : 0;
+        var activeNodes = _nodeRepo != null ? await _nodeRepo.CountActiveAsync() : 0;
+        var (totalReservations, byStatus) = await _reservationRepo.GetStatusCountsAsync();
 
         return new BackofficeDashboardResponse(
-            TotalProsumers: totalProsumersTask.Result,
-            PendingActivations: pendingActivationsTask.Result,
-            ActiveNodes: activeNodesTask.Result,
-            ReservationsByStatus: reservationsByStatus
+            totalProsumers,
+            pendingActivations,
+            activeNodes,
+            totalReservations,
+            byStatus
         );
     }
-
     // Computes dynamic active and pending reservation counts, next upcoming booking, and recent history.
     public async Task<ProsumerDashboardResponse> GetProsumerDashboardAsync(string nic)
     {
