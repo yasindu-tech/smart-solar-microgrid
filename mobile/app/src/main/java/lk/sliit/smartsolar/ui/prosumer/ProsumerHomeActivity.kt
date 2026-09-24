@@ -45,6 +45,19 @@ class ProsumerHomeActivity : AppCompatActivity() {
             ?: ""
         binding.tvWelcome.text = getString(R.string.welcome_message, displayName)
 
+        // Wire navigation buttons.
+        binding.btnProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+        binding.btnBookings.setOnClickListener {
+            // TODO: Navigate to BookingsActivity (D3)
+        }
+
+        binding.btnMap.setOnClickListener {
+            // TODO: Navigate to MapActivity (D3)
+        }
+
         // Wire the logout button.
         binding.btnLogout.setOnClickListener { performLogout() }
     }

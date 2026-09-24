@@ -45,15 +45,47 @@ class LoginActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
+        // Wire the login button click handler.
+        binding.btnLogin.setOnClickListener { attemptLogin() }
+
+        // Wire the register link.
+        binding.tvRegisterLink.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
         // AC-8: If a non-expired session exists in SQLite, skip login entirely.
         val existingSession = sessionManager.getValidSession()
         if (existingSession != null) {
-            navigateToHome(existingSession.role, existingSession.fullName)
-            return
+            verifySessionAndNavigate(existingSession)
         }
+    }
 
-        // Wire the login button click handler.
-        binding.btnLogin.setOnClickListener { attemptLogin() }
+    private fun verifySessionAndNavigate(session: lk.sliit.smartsolar.data.local.SessionRow) {
+        setLoading(true)
+        lifecycleScope.launch {
+            try {
+                val token = "Bearer " + session.jwt
+                val response = withContext(Dispatchers.IO) {
+                    ApiClient.authApi.me(token)
+                }
+
+                if (response.isSuccessful && response.body() != null) {
+                    // Token is valid and account is active
+                    navigateToHome(session.role, session.fullName)
+                } else if (response.code() == 401 || response.code() == 403) {
+                    // EC-6: Account deactivated while token is still valid locally
+                    sessionManager.clearSession()
+                    showError(getString(R.string.login_error_inactive))
+                    setLoading(false)
+                } else {
+                    // API error (500 etc), let them in anyway based on cache
+                    navigateToHome(session.role, session.fullName)
+                }
+            } catch (e: Exception) {
+                // Network error, let them in anyway based on cache (offline mode)
+                navigateToHome(session.role, session.fullName)
+            }
+        }
     }
 
     // Validate inputs client-side and call the login API.
@@ -87,10 +119,16 @@ class LoginActivity : AppCompatActivity() {
                 }
 
                 if (response.isSuccessful && response.body() != null) {
-                    // Save session to SQLite and navigate to the role home.
                     val loginResponse = response.body()!!
-                    sessionManager.saveSession(loginResponse)
-                    navigateToHome(loginResponse.role, loginResponse.displayName)
+                    
+                    if (loginResponse.role == "Backoffice") {
+                        // Backoffice users cannot use the mobile app.
+                        showError(getString(R.string.login_error_web_only))
+                    } else {
+                        // Save session to SQLite and navigate to the role home.
+                        sessionManager.saveSession(loginResponse)
+                        navigateToHome(loginResponse.role, loginResponse.displayName)
+                    }
                 } else {
                     // Parse the error envelope from the API response.
                     handleApiError(response.errorBody()?.string())

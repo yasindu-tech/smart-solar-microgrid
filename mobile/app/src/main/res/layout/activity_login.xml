@@ -153,6 +153,33 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Register link -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/login_register_prompt"
+                android:textColor="@color/sg_text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvRegisterLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/sg_space_1"
+                android:padding="@dimen/sg_space_2"
+                android:text="@string/login_register_link"
+                android:textColor="@color/sg_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- Bottom spacer -->
         <android.widget.Space
             android:layout_width="match_parent"

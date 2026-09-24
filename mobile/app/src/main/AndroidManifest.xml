@@ -38,6 +38,19 @@
             android:name=".ui.operator.OperatorHomeActivity"
             android:exported="false" />
 
+        <!-- Prosumer Registration screen -->
+        <activity
+            android:name=".ui.auth.RegisterActivity"
+            android:exported="false" />
+
+        <!-- Prosumer Profile screens -->
+        <activity
+            android:name=".ui.prosumer.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.prosumer.ProfileEditActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

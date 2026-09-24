@@ -17,8 +17,12 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        // Base URL of the Web API using the Mac's local network IP.
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.245:5001/api/\"")
+        // Base URL of the Web API. Read from local.properties (not committed) so
+        // each developer and CI can point at their own instance. Default is the
+        // Android emulator loopback to the host machine on port 5001.
+        val apiUrl = project.findProperty("API_BASE_URL") as String?
+            ?: "http://10.0.2.2:5001/api/"
+        buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
     }
 
     buildFeatures {

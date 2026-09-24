@@ -36,13 +36,14 @@ class SmartSolarDatabase(context: Context) :
         db.execSQL(
             """
             CREATE TABLE profile_cache (
-                nic       TEXT PRIMARY KEY,
-                full_name TEXT,
-                email     TEXT,
-                phone     TEXT,
-                address   TEXT,
-                status    TEXT,
-                synced_at INTEGER
+                nic                TEXT PRIMARY KEY,
+                full_name          TEXT,
+                email              TEXT,
+                phone              TEXT,
+                address            TEXT,
+                solar_capacity_kw  REAL,
+                status             TEXT,
+                synced_at          INTEGER
             )
             """.trimIndent()
         )
@@ -95,6 +96,6 @@ class SmartSolarDatabase(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "smartsolar.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
     }
 }
