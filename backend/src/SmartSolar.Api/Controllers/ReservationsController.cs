@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using SmartSolar.Api.DTOs.Request.Reservations;
 using SmartSolar.Api.DTOs.Response.Common;
 using SmartSolar.Api.DTOs.Response.Reservations;
+using SmartSolar.Api.Middleware;
 using SmartSolar.Api.Services;
 
 namespace SmartSolar.Api.Controllers;
@@ -29,17 +30,45 @@ public class ReservationsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new energy transfer reservation for the authenticated prosumer.
+    /// Creates a new energy transfer reservation for the authenticated prosumer,
+    /// or on behalf of a prosumer if called by Backoffice or Operator.
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Prosumer")]
+    [Authorize(Roles = "Prosumer,Backoffice,Operator")]
     public async Task<IActionResult> Create([FromBody] CreateReservationRequest request)
     {
-        // Extract caller's authenticated NIC from the JWT token claims.
-        var callerNic = GetCallerSubject();
-        var response = await _reservationService.CreateAsync(callerNic, request);
+        var callerRole = GetCallerRole();
+        string targetNic;
+
+        if (string.Equals(callerRole, "Backoffice", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(callerRole, "Operator", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(request.Nic))
+            {
+                throw new DomainException("E4001", "Prosumer NIC is required when creating a reservation on behalf.", 400, "nic");
+            }
+            targetNic = request.Nic;
+        }
+        else
+        {
+            targetNic = GetCallerSubject();
+        }
+
+        var response = await _reservationService.CreateAsync(targetNic, request);
         return CreatedAtAction(nameof(GetById), new { reservationId = response.ReservationId }, response);
     }
+
+    /// <summary>
+    /// Creates a new energy transfer reservation on behalf of a prosumer (Backoffice or Operator).
+    /// </summary>
+    [HttpPost("on-behalf")]
+    [Authorize(Roles = "Backoffice,Operator")]
+    public async Task<IActionResult> CreateOnBehalf([FromBody] CreateReservationOnBehalfRequest request)
+    {
+        var response = await _reservationService.CreateAsync(request.Nic, request);
+        return CreatedAtAction(nameof(GetById), new { reservationId = response.ReservationId }, response);
+    }
+
 
     /// <summary>
     /// Gets a paginated list of reservations matching staff filter criteria.

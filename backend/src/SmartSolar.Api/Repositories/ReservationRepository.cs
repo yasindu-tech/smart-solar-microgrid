@@ -288,4 +288,32 @@ public class ReservationRepository : IReservationRepository
 
         return (true, prev.Status);
     }
+
+    // Aggregates total reservations count and grouped status counts for the backoffice dashboard.
+    public async Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync()
+    {
+        var all = await _collection.Find(Builders<EnergyReservation>.Filter.Empty)
+            .Project(r => new { r.Status })
+            .ToListAsync();
+
+        var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Pending"] = 0,
+            ["Approved"] = 0,
+            ["Completed"] = 0,
+            ["Cancelled"] = 0,
+            ["Expired"] = 0
+        };
+
+        foreach (var item in all)
+        {
+            if (dict.ContainsKey(item.Status))
+                dict[item.Status]++;
+            else
+                dict[item.Status] = 1;
+        }
+
+        return (all.Count, dict);
+    }
 }
+
