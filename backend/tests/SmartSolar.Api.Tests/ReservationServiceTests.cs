@@ -219,7 +219,24 @@ internal sealed class FakeReservationRepository : IReservationRepository
             return Task.FromResult((true, (string?)prevStatus));
         }
     }
+
+    public Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync()
+    {
+        lock (Reservations)
+        {
+            var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Pending"] = Reservations.Count(r => r.Status == "Pending"),
+                ["Approved"] = Reservations.Count(r => r.Status == "Approved"),
+                ["Completed"] = Reservations.Count(r => r.Status == "Completed"),
+                ["Cancelled"] = Reservations.Count(r => r.Status == "Cancelled"),
+                ["Expired"] = Reservations.Count(r => r.Status == "Expired"),
+            };
+            return Task.FromResult((Reservations.Count, dict));
+        }
+    }
 }
+
 
 internal static class EnumerableExtensions
 {
@@ -1256,5 +1273,42 @@ public class ReservationServiceTests
         Assert.Equal(15.0, response.RequestedKwh);
         Assert.Equal("Pending", response.Status);
     }
+
+    [Fact]
+    public async Task GetBackofficeDashboardAsync_ReturnsAggregatedMetrics()
+    {
+        var now = DateTime.UtcNow;
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-TEST-01",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0001",
+            SlotStartTime = now.AddDays(1),
+            SlotEndTime = now.AddDays(1).AddHours(2),
+            RequestedKwh = 10,
+            Status = "Pending"
+        });
+        _reservationRepo.Reservations.Add(new EnergyReservation
+        {
+            ReservationId = "RS-TEST-02",
+            Nic = "199512345678",
+            NodeId = "ND-001",
+            SlotId = "SL-0002",
+            SlotStartTime = now.AddDays(2),
+            SlotEndTime = now.AddDays(2).AddHours(2),
+            RequestedKwh = 20,
+            Status = "Approved"
+        });
+
+        var dashboardService = new DashboardService(_reservationRepo);
+        var result = await dashboardService.GetBackofficeDashboardAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.TotalReservations);
+        Assert.Equal(1, result.ReservationsByStatus["Pending"]);
+        Assert.Equal(1, result.ReservationsByStatus["Approved"]);
+    }
 }
+
 
