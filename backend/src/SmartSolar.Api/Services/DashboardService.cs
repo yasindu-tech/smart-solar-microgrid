@@ -18,35 +18,29 @@ namespace SmartSolar.Api.Services;
 public class DashboardService
 {
     private readonly IReservationRepository _reservationRepo;
-    private readonly ProsumerRepository? _prosumerRepo;
-    private readonly ISolarStationRepository? _nodeRepo;
+    private readonly ProsumerRepository _prosumerRepo;
+    private readonly ISolarStationRepository _nodeRepo;
     private readonly IUserRepository _userRepo;
 
-    // Injects the reservation and user repositories for metric aggregations.
-    public DashboardService(IReservationRepository reservationRepo, IUserRepository userRepo)
-    {
-        // Inject reservation and user repositories.
-        _reservationRepo = reservationRepo;
-        _userRepo = userRepo;
-    }
-
-    // Full constructor injecting repositories for both prosumer and backoffice dashboards.
+    // Injects the repositories needed across the prosumer, backoffice and operator dashboards.
     public DashboardService(
         IReservationRepository reservationRepo,
         ProsumerRepository prosumerRepo,
-        ISolarStationRepository nodeRepo)
+        ISolarStationRepository nodeRepo,
+        IUserRepository userRepo)
     {
         _reservationRepo = reservationRepo;
         _prosumerRepo = prosumerRepo;
         _nodeRepo = nodeRepo;
+        _userRepo = userRepo;
     }
 
     // Computes system-wide aggregate metrics for the backoffice dashboard (REQ-VIEW §2.2).
     public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
     {
-        var totalProsumers = _prosumerRepo != null ? await _prosumerRepo.CountTotalAsync() : 0;
-        var pendingActivations = _prosumerRepo != null ? await _prosumerRepo.CountByStatusAsync("PendingActivation") : 0;
-        var activeNodes = _nodeRepo != null ? await _nodeRepo.CountActiveAsync() : 0;
+        var totalProsumers = await _prosumerRepo.CountTotalAsync();
+        var pendingActivations = await _prosumerRepo.CountByStatusAsync("PendingActivation");
+        var activeNodes = await _nodeRepo.CountActiveAsync();
         var (totalReservations, byStatus) = await _reservationRepo.GetStatusCountsAsync();
 
         return new BackofficeDashboardResponse(

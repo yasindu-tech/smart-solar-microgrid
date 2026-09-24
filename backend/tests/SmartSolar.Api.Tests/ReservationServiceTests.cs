@@ -331,6 +331,16 @@ internal sealed class FakeProsumerRepository : ProsumerRepository
         Prosumers.TryGetValue(nic, out var prosumer);
         return Task.FromResult(prosumer);
     }
+
+    public override Task<int> CountTotalAsync()
+    {
+        return Task.FromResult(Prosumers.Count);
+    }
+
+    public override Task<int> CountByStatusAsync(string status)
+    {
+        return Task.FromResult(Prosumers.Values.Count(p => p.Status == status));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -944,7 +954,7 @@ public class ReservationServiceTests
             }
         });
 
-        var dashboardService = new DashboardService(_reservationRepo, new FakeUserRepository());
+        var dashboardService = new DashboardService(_reservationRepo, new FakeProsumerRepository(), new FakeSolarStationRepository(), new FakeUserRepository());
         var response = await dashboardService.GetProsumerDashboardAsync(nic);
 
         Assert.Equal(1, response.ActiveCount);
@@ -1301,7 +1311,7 @@ public class ReservationServiceTests
             Status = "Approved"
         });
 
-        var dashboardService = new DashboardService(_reservationRepo);
+        var dashboardService = new DashboardService(_reservationRepo, new FakeProsumerRepository(), new FakeSolarStationRepository(), new FakeUserRepository());
         var result = await dashboardService.GetBackofficeDashboardAsync();
 
         Assert.NotNull(result);

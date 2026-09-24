@@ -437,7 +437,7 @@ public class OperatorDashboardTests
         _users.Users.Add(new User { UserId = OperatorA, Role = "Operator", AssignedNodeIds = new List<string> { NodeA } });
         _users.Users.Add(new User { UserId = OperatorB, Role = "Operator", AssignedNodeIds = new List<string> { NodeB } });
 
-        _service = new DashboardService(_reservations, _users);
+        _service = new DashboardService(_reservations, new FakeProsumerRepository(), new FakeSolarStationRepository(), _users);
     }
 
     // Adds one reservation to the in-memory store.
