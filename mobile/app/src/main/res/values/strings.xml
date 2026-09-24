@@ -2,8 +2,10 @@
 <resources>
     <string name="app_name">Smart Solar</string>
     <string name="login_title">Sign in</string>
+    <string name="login_subtitle">Welcome back</string>
     <string name="login_nic_hint">NIC or email</string>
     <string name="login_password_hint">Password</string>
+    <string name="login_btn">Sign In</string>
 
     <!-- Operator home screen -->
     <string name="operator_home_title">Operator Dashboard</string>
