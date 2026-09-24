@@ -103,14 +103,14 @@ public class ProsumerRepository
     }
 
     // Count prosumers by status. Used for the Backoffice dashboard.
-    public async Task<int> CountByStatusAsync(string status)
+    public virtual async Task<int> CountByStatusAsync(string status)
     {
         var filter = Builders<Prosumer>.Filter.Eq(p => p.Status, status);
         return (int)await _collection.CountDocumentsAsync(filter);
     }
 
     // Total prosumer count across all statuses. Used for the dashboard.
-    public async Task<int> CountTotalAsync()
+    public virtual async Task<int> CountTotalAsync()
     {
         return (int)await _collection.CountDocumentsAsync(Builders<Prosumer>.Filter.Empty);
     }
