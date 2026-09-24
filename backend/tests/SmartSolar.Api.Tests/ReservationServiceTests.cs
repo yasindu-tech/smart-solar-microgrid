@@ -294,6 +294,12 @@ internal sealed class FakeProsumerRepository : ProsumerRepository
         Prosumers.TryGetValue(nic, out var prosumer);
         return Task.FromResult(prosumer);
     }
+
+    public override Task<int> CountTotalAsync()
+        => Task.FromResult(Prosumers.Count);
+
+    public override Task<int> CountByStatusAsync(string status)
+        => Task.FromResult(Prosumers.Values.Count(p => p.Status == status));
 }
 
 // ---------------------------------------------------------------------------

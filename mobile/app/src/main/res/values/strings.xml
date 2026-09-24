@@ -4,4 +4,30 @@
     <string name="login_title">Sign in</string>
     <string name="login_nic_hint">NIC or email</string>
     <string name="login_password_hint">Password</string>
+
+    <!-- Operator home screen -->
+    <string name="operator_home_title">Operator Dashboard</string>
+    <string name="role_operator">Operator</string>
+    <string name="home_placeholder">Content goes here...</string>
+    <string name="logout_btn">Logout</string>
+
+    <!-- Profile screen -->
+    <string name="offline_banner_text">You are currently offline</string>
+    <string name="profile_title">My Profile</string>
+    <string name="profile_label_nic">NIC Number</string>
+    <string name="profile_label_name">Full Name</string>
+    <string name="profile_label_email">Email Address</string>
+    <string name="profile_label_phone">Phone Number</string>
+    <string name="profile_label_address">Address</string>
+    <string name="profile_label_solar">Solar Details</string>
+    <string name="profile_btn_edit">Edit Profile</string>
+    <string name="profile_btn_deactivate">Deactivate Account</string>
+
+    <!-- Profile edit screen -->
+    <string name="profile_edit_title">Edit Profile</string>
+    <string name="register_name_hint">Full Name</string>
+    <string name="register_email_hint">Email</string>
+    <string name="register_phone_hint">Phone Number</string>
+    <string name="register_address_hint">Home Address</string>
+    <string name="register_solar_hint">Solar System Specifications</string>
 </resources>
