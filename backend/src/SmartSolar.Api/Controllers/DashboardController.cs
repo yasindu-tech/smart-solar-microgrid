@@ -58,16 +58,4 @@ public class DashboardController : ControllerBase
         var response = await _dashboardService.GetOperatorDashboardAsync(callerUserId, nodeId);
         return Ok(response);
     }
-
-    /// <summary>
-    /// Gets aggregated system-wide metrics for the backoffice dashboard (REQ-VIEW §2.2).
-    /// </summary>
-    [HttpGet("backoffice")]
-    [Authorize(Roles = "Backoffice,Operator")]
-    public async Task<IActionResult> GetBackofficeDashboard()
-    {
-        var response = await _dashboardService.GetBackofficeDashboardAsync();
-        return Ok(response);
-    }
 }
-

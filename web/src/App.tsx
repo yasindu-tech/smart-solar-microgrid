@@ -16,7 +16,6 @@ import Dashboard from './pages/backoffice/Dashboard'
 import NodeManagement from './pages/backoffice/NodeManagement'
 import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
-import ReservationsPage from './pages/shared/ReservationsPage'
 
 export default function App() {
   return (
@@ -32,7 +31,6 @@ export default function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="nodes" element={<NodeManagement />} />
                 <Route path="nodes/:nodeId/slots" element={<SlotManagement />} />
-                <Route path="reservations" element={<ReservationsPage />} />
                 <Route path="users" element={<div>Users Management Coming Soon</div>} />
                 <Route path="approvals" element={<div>Pending Approvals Coming Soon</div>} />
               </Route>
@@ -41,7 +39,7 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
               <Route path="/operator" element={<OperatorLayout />}>
                 <Route index element={<div>Operator Dashboard Coming Soon</div>} />
-                <Route path="reservations" element={<ReservationsPage />} />
+                <Route path="reservations" element={<div>Reservations Coming Soon</div>} />
               </Route>
             </Route>
           </Routes>
@@ -50,4 +48,3 @@ export default function App() {
     </ToastProvider>
   )
 }
-

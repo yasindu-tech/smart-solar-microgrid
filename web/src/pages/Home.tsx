@@ -1,6 +1,5 @@
-import { ArrowRight, BatteryCharging, CalendarCheck, LogIn, QrCode } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { BatteryCharging, CalendarCheck, QrCode } from 'lucide-react'
 
 const FEATURES = [
   {
@@ -21,16 +20,13 @@ const FEATURES = [
 ] as const
 
 export default function Home() {
-  const navigate = useNavigate()
-
   return (
     <div className="sg-page">
       <header className="sticky top-0 z-sticky flex items-center justify-between gap-4 border-b border-sg-border bg-sg-surface px-6 py-4">
         <img src="/logo-navbar.png" alt="SunGrid" className="h-8 w-auto" />
-        <Button onClick={() => navigate('/login')}>
-          <LogIn size={13} />
+        <Link to="/login" className="sg-btn sg-btn-primary">
           Sign in
-        </Button>
+        </Link>
       </header>
 
       <main className="sg-page-content">
@@ -45,10 +41,9 @@ export default function Home() {
                 Trading System — sign in to manage nodes, review reservations, and verify energy
                 transfers.
               </p>
-              <Button onClick={() => navigate('/login')} className="mt-6" size="lg">
-                Sign in to Continue
-                <ArrowRight size={13} />
-              </Button>
+              <Link to="/login" className="sg-btn sg-btn-primary sg-btn-lg mt-6 inline-flex">
+                Sign in to continue
+              </Link>
             </div>
 
             <img
@@ -62,7 +57,7 @@ export default function Home() {
             {FEATURES.map(({ icon: Icon, title, body }) => (
               <div key={title} className="sg-card">
                 <div className="sg-card-body sg-stack-sm">
-                  <div className="grid h-10 w-10 place-items-center rounded-md bg-sg-primary-soft text-sg-primary-hover mb-2">
+                  <div className="grid h-10 w-10 place-items-center rounded-md bg-sg-primary-soft text-sg-primary-hover">
                     <Icon size={20} aria-hidden="true" />
                   </div>
                   <h3 className="sg-h4 mt-2">{title}</h3>
@@ -75,7 +70,7 @@ export default function Home() {
       </main>
 
       <footer className="sg-container border-t border-sg-border py-6">
-        <p className="sg-caption">SE4040 Enterprise Application Development | SunGrid Pvt Ltd (2026)</p>
+        <p className="sg-caption">SE4040 Enterprise Application Development &middot; SunGrid</p>
       </footer>
     </div>
   )
