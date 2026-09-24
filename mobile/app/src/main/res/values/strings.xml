@@ -30,4 +30,20 @@
     <string name="register_phone_hint">Phone Number</string>
     <string name="register_address_hint">Home Address</string>
     <string name="register_solar_hint">Solar System Specifications</string>
+
+    <!-- Prosumer home screen -->
+    <string name="prosumer_home_title">Prosumer Dashboard</string>
+    <string name="role_prosumer">Prosumer</string>
+
+    <!-- Register screen -->
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Join the Smart Solar network</string>
+    <string name="register_nic_hint">NIC Number</string>
+    <string name="register_confirm_password_hint">Confirm Password</string>
+    <string name="register_btn">Register</string>
+    <string name="register_back_to_login">Already have an account? Sign in</string>
+
+    <!-- Shared actions -->
+    <string name="profile_btn_save">Save Changes</string>
+    <string name="cancel_btn">Cancel</string>
 </resources>
