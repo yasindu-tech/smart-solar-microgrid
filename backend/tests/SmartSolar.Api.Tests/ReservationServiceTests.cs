@@ -907,7 +907,7 @@ public class ReservationServiceTests
             }
         });
 
-        var dashboardService = new DashboardService(null!, null!, _reservationRepo);
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo);
         var response = await dashboardService.GetProsumerDashboardAsync(nic);
 
         Assert.Equal(1, response.ActiveCount);
@@ -1264,7 +1264,7 @@ public class ReservationServiceTests
             Status = "Approved"
         });
 
-        var dashboardService = new DashboardService(_reservationRepo);
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo);
         var result = await dashboardService.GetBackofficeDashboardAsync();
 
         Assert.NotNull(result);

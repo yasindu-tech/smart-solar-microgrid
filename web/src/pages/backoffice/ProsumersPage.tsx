@@ -4,7 +4,7 @@ import {
   fetchProsumers,
   activateProsumer,
   deactivateProsumer,
-} from '../../api/prosumersApi'
+} from '../../api/ProsumersApi'
 import type { Prosumer } from '../../types/ProsumerTypes'
 import type { PagedResponse } from '../../types/PagedResponse'
 import { getErrorMessage } from '../../api/errors'

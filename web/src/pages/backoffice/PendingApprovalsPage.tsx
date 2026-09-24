@@ -1,34 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import { UserCheck, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
-import { fetchPendingProsumers, activateProsumer } from '../../api/prosumersApi'
-import type { Prosumer } from '../../types/ProsumerTypes'
-import type { PagedResponse } from '../../types/PagedResponse'
+import { useState } from 'react'
+import { UserCheck, Clock, Download } from 'lucide-react'
+import { activateProsumer, usePendingProsumersInfinite } from '../../api/ProsumersApi'
 import { getErrorMessage } from '../../api/errors'
-
+import { DEFAULT_PAGE_SIZE } from '../../lib/constants'
+import type { Prosumer } from '../../types/ProsumerTypes'
 export default function PendingApprovalsPage() {
-  const [data, setData] = useState<PagedResponse<Prosumer> | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch
+  } = usePendingProsumersInfinite(DEFAULT_PAGE_SIZE)
+
   const [actionError, setActionError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const pageSize = 10
-
-  const loadPending = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const result = await fetchPendingProsumers({ page, pageSize })
-      setData(result)
-    } catch (err) {
-      setError(getErrorMessage(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [page])
-
-  useEffect(() => {
-    loadPending()
-  }, [loadPending])
 
   const handleApprove = async (nic: string, name: string) => {
     if (!confirm(`Approve prosumer ${name} (${nic})? They will be able to log in immediately.`))
@@ -37,13 +25,15 @@ export default function PendingApprovalsPage() {
     try {
       setActionError(null)
       await activateProsumer(nic)
-      await loadPending()
+      await refetch()
     } catch (err) {
       setActionError(getErrorMessage(err))
     }
   }
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 0
+  // Get total count from the first page if it exists
+  const totalCount = data?.pages[0]?.total ?? 0
+  const allItems = data?.pages.flatMap((page) => page.items) ?? []
 
   return (
     <div className="sg-stack-lg">
@@ -54,14 +44,14 @@ export default function PendingApprovalsPage() {
             Prosumers waiting for Backoffice approval
           </p>
         </div>
-        {data && (
+        {totalCount > 0 && (
           <span className="sg-badge sg-badge-warning" style={{ fontSize: 'var(--sg-text-md)' }}>
-            <Clock size={14} /> {data.total} pending
+            <Clock size={14} /> {totalCount} pending
           </span>
         )}
       </div>
 
-      {error && <div className="sg-alert sg-alert-danger"><span>{error}</span></div>}
+      {isError && <div className="sg-alert sg-alert-danger"><span>{error?.message || 'Failed to load pending prosumers'}</span></div>}
       {actionError && <div className="sg-alert sg-alert-danger"><span>{actionError}</span></div>}
 
       {/* Table */}
@@ -86,7 +76,7 @@ export default function PendingApprovalsPage() {
                     <span className="sg-body-sm text-sg-text-muted">Loading…</span>
                   </td>
                 </tr>
-              ) : !data?.items.length ? (
+              ) : allItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3rem' }}>
                     <div className="sg-stack items-center">
@@ -98,7 +88,7 @@ export default function PendingApprovalsPage() {
                   </td>
                 </tr>
               ) : (
-                data.items.map((p) => (
+                allItems.map((p: Prosumer) => (
                   <tr key={p.nic}>
                     <td className="sg-caption" style={{ fontFamily: 'var(--sg-font-mono)' }}>
                       {p.nic}
@@ -125,29 +115,16 @@ export default function PendingApprovalsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {data && data.total > pageSize && (
-          <div className="sg-card-footer">
-            <span className="sg-caption">
-              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, data.total)} of{' '}
-              {data.total}
-            </span>
-            <div className="sg-row gap-2">
-              <button
-                className="sg-btn sg-btn-secondary sg-btn-sm sg-btn-icon"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                className="sg-btn sg-btn-secondary sg-btn-sm sg-btn-icon"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+        {/* Load More Pagination */}
+        {hasNextPage && (
+          <div className="sg-card-footer justify-center">
+            <button
+              className="sg-btn sg-btn-secondary sg-btn-sm"
+              disabled={isFetchingNextPage}
+              onClick={() => fetchNextPage()}
+            >
+              {isFetchingNextPage ? 'Loading more...' : <><Download size={14} className="mr-2"/> Load more</>}
+            </button>
           </div>
         )}
       </div>

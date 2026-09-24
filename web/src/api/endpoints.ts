@@ -25,7 +25,10 @@ export const reservationEndpoints = {
 
 export const prosumerEndpoints = {
   BASE: '/prosumers',
+  PENDING: '/prosumers/pending',
   BY_NIC: (nic: string) => `/prosumers/${nic}`,
+  ACTIVATE: (nic: string) => `/prosumers/${nic}/activate`,
+  DEACTIVATE: (nic: string) => `/prosumers/${nic}/deactivate`,
 }
 
 export const dashboardEndpoints = {

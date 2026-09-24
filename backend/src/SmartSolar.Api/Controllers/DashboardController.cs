@@ -26,14 +26,6 @@ public class DashboardController : ControllerBase
         _dashboardService = dashboardService;
     }
 
-    [HttpGet("backoffice")]
-    [Authorize(Roles = "Backoffice")]
-    public async Task<IActionResult> GetBackofficeDashboard()
-    {
-        var response = await _dashboardService.GetBackofficeDashboardAsync();
-        return Ok(response);
-    }
-
     /// <summary>
     /// Gets the home dashboard summary metrics and next upcoming reservation for the prosumer.
     /// </summary>

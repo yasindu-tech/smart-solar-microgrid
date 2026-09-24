@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-namespace SmartSolar.Api.DTOs.Response.Dashboard;
-
-/// <summary>
-/// GET /dashboard/backoffice 200 response (api-contract.md §8).
-/// </summary>
-=======
 // ---------------------------------------------------------------------------
 //  File        : BackofficeDashboardResponse.cs
 //  Project     : Smart Solar Microgrid Trading System - Web API
@@ -14,7 +7,9 @@ namespace SmartSolar.Api.DTOs.Response.Dashboard;
 
 namespace SmartSolar.Api.DTOs.Response.Dashboard;
 
->>>>>>> develop
+/// <summary>
+/// GET /dashboard/backoffice 200 response (api-contract.md §8).
+/// </summary>
 public record BackofficeDashboardResponse(
     int TotalProsumers,
     int PendingActivations,
