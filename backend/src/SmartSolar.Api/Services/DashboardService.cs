@@ -32,15 +32,20 @@ public class DashboardService
     // Computes system-wide aggregate metrics for the backoffice dashboard (REQ-VIEW §2.2).
     public async Task<BackofficeDashboardResponse> GetBackofficeDashboardAsync()
     {
-        var totalProsumers = _prosumerRepo != null ? await _prosumerRepo.CountTotalAsync() : 0;
-        var pendingActivations = _prosumerRepo != null ? await _prosumerRepo.CountByStatusAsync("PendingActivation") : 0;
-        var activeNodes = _nodeRepo != null ? await _nodeRepo.CountActiveAsync() : 0;
-        var (totalReservations, byStatus) = await _reservationRepo.GetStatusCountsAsync();
+        // Fire all count queries in parallel for faster response.
+        var totalProsumersTask = _prosumerRepo != null ? _prosumerRepo.CountTotalAsync() : Task.FromResult(0);
+        var pendingActivationsTask = _prosumerRepo != null ? _prosumerRepo.CountByStatusAsync("PendingActivation") : Task.FromResult(0);
+        var activeNodesTask = _nodeRepo != null ? _nodeRepo.CountActiveAsync() : Task.FromResult(0);
+        var reservationMetricsTask = _reservationRepo != null ? _reservationRepo.GetStatusCountsAsync() : Task.FromResult((0, new Dictionary<string, int>()));
+
+        await Task.WhenAll(totalProsumersTask, pendingActivationsTask, activeNodesTask, reservationMetricsTask);
+
+        var (totalReservations, byStatus) = reservationMetricsTask.Result;
 
         return new BackofficeDashboardResponse(
-            totalProsumers,
-            pendingActivations,
-            activeNodes,
+            totalProsumersTask.Result,
+            pendingActivationsTask.Result,
+            activeNodesTask.Result,
             totalReservations,
             byStatus
         );
