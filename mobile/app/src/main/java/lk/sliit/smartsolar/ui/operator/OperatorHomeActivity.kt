@@ -8,7 +8,7 @@
  *               point, assigned node, nearby map) once REQ-QRV and REQ-VIEW
  *               are implemented. Logout follows the same pattern as
  *               ProsumerHomeActivity.
- * Author      : <member name - M1>
+ * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.ui.operator
@@ -54,11 +54,8 @@ class OperatorHomeActivity : AppCompatActivity() {
         lifecycleScope.launch {
             // Best-effort API call — even if it fails, we clear the local session.
             try {
-                val token = sessionManager.getToken()
-                if (token != null) {
-                    withContext(Dispatchers.IO) {
-                        ApiClient.authApi.logout(token)
-                    }
+                withContext(Dispatchers.IO) {
+                    ApiClient.authApi.logout()
                 }
             } catch (_: Exception) {
                 // Network failure is fine — we still clear the local session.
