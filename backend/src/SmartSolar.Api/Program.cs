@@ -63,6 +63,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<EnergyBookingSlotService>();
 builder.Services.AddScoped<ReservationService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<OperatorVerificationService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

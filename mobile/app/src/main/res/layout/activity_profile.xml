@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!--
+  Layout      : activity_profile.xml
+  Description : Prosumer profile view screen. Displays the signed-in prosumer's
+                own data read from the API (with profile_cache as instant-render
+                source). NIC is always read-only per BR-12. Provides buttons to
+                navigate to Edit Profile and to request Deactivation.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

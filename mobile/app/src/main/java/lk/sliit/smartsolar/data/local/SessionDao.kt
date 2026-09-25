@@ -1,3 +1,14 @@
+/**
+ * File        : SessionDao.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : data.local
+ * Description : Data access object for the SQLite `session` table defined in
+ *               ADR-004. The table holds exactly one row (id = 1) containing the
+ *               signed-in user's JWT, role, and display name so the app survives
+ *               a restart without requiring re-authentication (REQ-AUTH AC-8).
+ * Author      : <member name - M1>
+ */
+
 package lk.sliit.smartsolar.data.local
 
 import android.content.ContentValues

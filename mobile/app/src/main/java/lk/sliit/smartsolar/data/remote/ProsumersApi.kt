@@ -1,3 +1,13 @@
+/**
+ * File        : ProsumersApi.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : data.remote
+ * Description : Retrofit service interface for the /prosumers endpoints defined
+ *               in api-contract.md §3. Registration is anonymous; all other
+ *               endpoints require a valid Bearer token.
+ * Author      : Ricky Perera (M1)
+ */
+
 package lk.sliit.smartsolar.data.remote
 
 import lk.sliit.smartsolar.data.remote.dto.ProsumerProfileResponse

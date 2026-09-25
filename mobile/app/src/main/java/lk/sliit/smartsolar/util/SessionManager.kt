@@ -1,3 +1,16 @@
+/**
+ * File        : SessionManager.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : util
+ * Description : High-level session helper that wraps SessionDao and adds token
+ *               expiry awareness. On app launch, getValidSession() checks the
+ *               stored expiry against the device clock and silently clears stale
+ *               sessions (REQ-AUTH AC-9). On logout, clearSession() wipes all
+ *               four SQLite tables so a second account never sees cached data
+ *               from the first (ADR-004, REQ-VIEW EC-7).
+ * Author      : <member name - M1>
+ */
+
 package lk.sliit.smartsolar.util
 
 import android.content.Context

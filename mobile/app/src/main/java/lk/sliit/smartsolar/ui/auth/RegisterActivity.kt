@@ -1,3 +1,14 @@
+/**
+ * File        : RegisterActivity.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : ui.auth
+ * Description : Registration form for Prosumers. Collects profile data and NIC,
+ *               validates inputs client-side, and calls POST /prosumers/register.
+ *               Upon success, shows a message that the account is pending backoffice
+ *               approval (REQ-PROS AC-1).
+ * Author      : Ricky Perera (M1)
+ */
+
 package lk.sliit.smartsolar.ui.auth
 
 import android.os.Bundle

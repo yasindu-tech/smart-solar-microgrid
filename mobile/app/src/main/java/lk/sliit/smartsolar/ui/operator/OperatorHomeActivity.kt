@@ -1,3 +1,16 @@
+/**
+ * File        : OperatorHomeActivity.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : ui.operator
+ * Description : Placeholder Operator home screen. Shows a welcome message with
+ *               the signed-in operator's name and a logout button. Will be
+ *               replaced with the full Operator dashboard (QR scanner entry
+ *               point, assigned node, nearby map) once REQ-QRV and REQ-VIEW
+ *               are implemented. Logout follows the same pattern as
+ *               ProsumerHomeActivity.
+ * Author      : <member name - M1>
+ */
+
 package lk.sliit.smartsolar.ui.operator
 
 import android.content.Intent

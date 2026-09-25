@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!--
+  Layout      : activity_profile_edit.xml
+  Description : Editable prosumer profile form. NIC is excluded because it
+                cannot be changed (BR-12). Status cannot be changed by the user.
+                All other fields are populated from the current profile_cache
+                and can be modified.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"

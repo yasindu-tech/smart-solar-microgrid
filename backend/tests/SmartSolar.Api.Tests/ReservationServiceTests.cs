@@ -166,6 +166,43 @@ internal sealed class FakeReservationRepository : IReservationRepository
         }
     }
 
+    public Task<(int PendingCount, int ApprovedFutureCount, List<EnergyReservation> TodaysReservations)>
+        GetOperatorDashboardMetricsAsync(IEnumerable<string> nodeIds, DateTime nowUtc, DateTime dayStartUtc, DateTime dayEndUtc)
+    {
+        var scope = nodeIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (scope.Count == 0) return Task.FromResult((0, 0, new List<EnergyReservation>()));
+
+        var pending = Reservations.Count(r => scope.Contains(r.NodeId) && r.Status == ReservationStateMachine.Pending);
+        var approvedFuture = Reservations.Count(r => scope.Contains(r.NodeId)
+            && r.Status == ReservationStateMachine.Approved && r.SlotStartTime >= nowUtc);
+        var today = Reservations
+            .Where(r => scope.Contains(r.NodeId) && r.SlotStartTime >= dayStartUtc && r.SlotStartTime < dayEndUtc)
+            .OrderBy(r => r.SlotStartTime)
+            .ToList();
+
+        return Task.FromResult((pending, approvedFuture, today));
+    }
+
+    public Task<bool> TryCompleteAsync(
+        string reservationId, string presentedToken, string operatorUserId, double deliveredKwh, DateTime completedAt)
+    {
+        lock (Reservations)
+        {
+            var res = Reservations.FirstOrDefault(r => r.ReservationId == reservationId
+                && r.Status == ReservationStateMachine.Approved
+                && r.QrToken == presentedToken);
+            if (res == null) return Task.FromResult(false);
+
+            res.Status = ReservationStateMachine.Completed;
+            res.CompletedAt = completedAt;
+            res.CompletedByOperatorId = operatorUserId;
+            res.DeliveredKwh = deliveredKwh;
+            res.QrToken = null;
+            res.UpdatedAt = completedAt;
+            return Task.FromResult(true);
+        }
+    }
+
     public Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc)
     {
         lock (Reservations)
@@ -296,10 +333,14 @@ internal sealed class FakeProsumerRepository : ProsumerRepository
     }
 
     public override Task<int> CountTotalAsync()
-        => Task.FromResult(Prosumers.Count);
+    {
+        return Task.FromResult(Prosumers.Count);
+    }
 
     public override Task<int> CountByStatusAsync(string status)
-        => Task.FromResult(Prosumers.Values.Count(p => p.Status == status));
+    {
+        return Task.FromResult(Prosumers.Values.Count(p => p.Status == status));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -913,7 +954,7 @@ public class ReservationServiceTests
             }
         });
 
-        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo);
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo, new FakeUserRepository());
         var response = await dashboardService.GetProsumerDashboardAsync(nic);
 
         Assert.Equal(1, response.ActiveCount);
@@ -1270,7 +1311,7 @@ public class ReservationServiceTests
             Status = "Approved"
         });
 
-        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo);
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo, new FakeUserRepository());
         var result = await dashboardService.GetBackofficeDashboardAsync();
 
         Assert.NotNull(result);

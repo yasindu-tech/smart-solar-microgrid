@@ -1,3 +1,14 @@
+/**
+ * File        : ProfileEditActivity.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : ui.prosumer
+ * Description : Allows a Prosumer to edit their profile (REQ-PROS §4.3).
+ *               NIC is immutable (BR-12) and not included in the request payload.
+ *               Upon success, the local SQLite cache is updated so the previous
+ *               screen instantly shows the new data on resume.
+ * Author      : Ricky Perera (M1)
+ */
+
 package lk.sliit.smartsolar.ui.prosumer
 
 import android.os.Bundle

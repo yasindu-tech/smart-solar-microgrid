@@ -1,3 +1,13 @@
+/**
+ * File        : AuthApi.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : data.remote
+ * Description : Retrofit service interface for the /auth endpoints defined in
+ *               api-contract.md §1. Login is anonymous; logout and me require a
+ *               valid Bearer token passed via the Authorization header.
+ * Author      : <member name - M1>
+ */
+
 package lk.sliit.smartsolar.data.remote
 
 import lk.sliit.smartsolar.data.remote.dto.CurrentUserResponse

@@ -1,3 +1,14 @@
+/**
+ * File        : ProfileCacheDao.kt
+ * Project     : Smart Solar Microgrid Trading System - Android client
+ * Module      : data.local
+ * Description : Data access object for the SQLite `profile_cache` table (ADR-004).
+ *               Stores the signed-in prosumer's own profile for display-only purposes.
+ *               The cache is read-only for decisions (BR-14) — all mutations go
+ *               through the API. Cleared on logout (ADR-004, REQ-VIEW EC-7).
+ * Author      : Ricky Perera (M1)
+ */
+
 package lk.sliit.smartsolar.data.local
 
 import android.content.ContentValues

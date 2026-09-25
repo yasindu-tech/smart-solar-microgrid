@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : activity_login.xml
+  Description : Login screen with SunGrid branding. Prosumers enter their NIC,
+                operators enter their email. Both use the same identifier field.
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens
+                per ui-design-system.md §22.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -145,6 +152,33 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- Register link -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/login_register_prompt"
+                android:textColor="@color/sg_text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvRegisterLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/sg_space_1"
+                android:padding="@dimen/sg_space_2"
+                android:text="@string/login_register_link"
+                android:textColor="@color/sg_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <!-- Bottom spacer -->
         <android.widget.Space
