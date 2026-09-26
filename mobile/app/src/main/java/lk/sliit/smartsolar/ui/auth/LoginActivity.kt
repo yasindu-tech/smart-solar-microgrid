@@ -54,9 +54,11 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // AC-8: If a non-expired session exists in SQLite, skip login entirely.
-        val existingSession = sessionManager.getValidSession()
-        if (existingSession != null) {
-            verifySessionAndNavigate(existingSession)
+        lifecycleScope.launch {
+            val existingSession = sessionManager.getValidSession()
+            if (existingSession != null) {
+                verifySessionAndNavigate(existingSession)
+            }
         }
     }
 

@@ -41,9 +41,14 @@ class ProsumerHomeActivity : AppCompatActivity() {
 
         // Display the user's name from the intent extra or SQLite session.
         val displayName = intent.getStringExtra("DISPLAY_NAME")
-            ?: sessionManager.getValidSession()?.fullName
-            ?: ""
-        binding.tvWelcome.text = getString(R.string.welcome_message, displayName)
+        if (!displayName.isNullOrBlank()) {
+            binding.tvWelcome.text = getString(R.string.welcome_message, displayName)
+        } else {
+            lifecycleScope.launch {
+                val sessionName = sessionManager.getValidSession()?.fullName ?: ""
+                binding.tvWelcome.text = getString(R.string.welcome_message, sessionName)
+            }
+        }
 
         // Wire navigation buttons.
         binding.btnProfile.setOnClickListener {

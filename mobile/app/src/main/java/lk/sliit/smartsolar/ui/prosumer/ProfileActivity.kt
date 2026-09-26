@@ -44,7 +44,7 @@ class ProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
-        val db = SmartSolarDatabase(this)
+        val db = SmartSolarDatabase.getInstance(this)
         profileCacheDao = ProfileCacheDao(db)
 
         binding.btnEditProfile.setOnClickListener {
@@ -62,29 +62,29 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun loadProfileData() {
-        val session = sessionManager.getValidSession()
-        if (session == null) {
-            forceLogout()
-            return
-        }
-
-        val nic = session.nicOrUserId
-        
-        // 1. Instant render from cache
-        val cachedProfile = profileCacheDao.get(nic)
-        if (cachedProfile != null) {
-            renderProfile(cachedProfile)
-            if (profileCacheDao.isStale(nic)) {
-                binding.cardOfflineBanner.visibility = View.VISIBLE
-            }
-        }
-
-        // 2. Fetch fresh data from API
-        binding.progressBar.visibility = View.VISIBLE
-        binding.btnEditProfile.isEnabled = false
-        binding.btnDeactivate.isEnabled = false
-
         lifecycleScope.launch {
+            val session = sessionManager.getValidSession()
+            if (session == null) {
+                forceLogout()
+                return@launch
+            }
+
+            val nic = session.nicOrUserId
+
+            // 1. Instant render from cache (runs on Dispatchers.IO inside DAO)
+            val cachedProfile = profileCacheDao.get(nic)
+            if (cachedProfile != null) {
+                renderProfile(cachedProfile)
+                if (profileCacheDao.isStale(nic)) {
+                    binding.cardOfflineBanner.visibility = View.VISIBLE
+                }
+            }
+
+            // 2. Fetch fresh data from API
+            binding.progressBar.visibility = View.VISIBLE
+            binding.btnEditProfile.isEnabled = false
+            binding.btnDeactivate.isEnabled = false
+
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.prosumersApi.getProfile(nic)
@@ -92,8 +92,8 @@ class ProfileActivity : AppCompatActivity() {
 
                 if (response.isSuccessful && response.body() != null) {
                     val profile = response.body()!!
-                    
-                    // Update cache
+
+                    // Update cache on Dispatchers.IO
                     val cacheRow = ProfileCacheRow(
                         nic = profile.nic,
                         fullName = profile.fullName,
@@ -105,7 +105,7 @@ class ProfileActivity : AppCompatActivity() {
                         syncedAt = Instant.now().epochSecond
                     )
                     profileCacheDao.save(cacheRow)
-                    
+
                     // Render fresh data and hide offline banner
                     renderProfile(cacheRow)
                     binding.cardOfflineBanner.visibility = View.GONE
@@ -154,13 +154,17 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun performDeactivation() {
-        val session = sessionManager.getValidSession() ?: return
-        val nic = session.nicOrUserId
-        
         binding.progressBar.visibility = View.VISIBLE
         binding.btnDeactivate.isEnabled = false
 
         lifecycleScope.launch {
+            val session = sessionManager.getValidSession()
+            if (session == null) {
+                forceLogout()
+                return@launch
+            }
+            val nic = session.nicOrUserId
+
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.prosumersApi.deactivate(nic)
@@ -189,11 +193,13 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun forceLogout() {
-        sessionManager.clearSession()
-        val intent = Intent(this, LoginActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        lifecycleScope.launch {
+            sessionManager.clearSession()
+            val intent = Intent(this@ProfileActivity, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            finish()
         }
-        startActivity(intent)
-        finish()
     }
 }

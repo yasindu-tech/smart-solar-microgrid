@@ -43,7 +43,7 @@ class ProfileEditActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
-        val db = SmartSolarDatabase(this)
+        val db = SmartSolarDatabase.getInstance(this)
         profileCacheDao = ProfileCacheDao(db)
 
         populateFormFromCache()
@@ -53,15 +53,17 @@ class ProfileEditActivity : AppCompatActivity() {
     }
 
     private fun populateFormFromCache() {
-        val session = sessionManager.getValidSession() ?: return
-        val cachedProfile = profileCacheDao.get(session.nicOrUserId) ?: return
+        lifecycleScope.launch {
+            val session = sessionManager.getValidSession() ?: return@launch
+            val cachedProfile = profileCacheDao.get(session.nicOrUserId) ?: return@launch
 
-        binding.etFullName.setText(cachedProfile.fullName)
-        binding.etEmail.setText(cachedProfile.email)
-        binding.etPhone.setText(cachedProfile.phone)
-        binding.etAddress.setText(cachedProfile.address)
-        if (cachedProfile.solarCapacityKw != null) {
-            binding.etSolarCapacity.setText(cachedProfile.solarCapacityKw.toString())
+            binding.etFullName.setText(cachedProfile.fullName)
+            binding.etEmail.setText(cachedProfile.email)
+            binding.etPhone.setText(cachedProfile.phone)
+            binding.etAddress.setText(cachedProfile.address)
+            if (cachedProfile.solarCapacityKw != null) {
+                binding.etSolarCapacity.setText(cachedProfile.solarCapacityKw.toString())
+            }
         }
     }
 
@@ -102,13 +104,13 @@ class ProfileEditActivity : AppCompatActivity() {
             solarCapacityKw = capacity!!
         )
 
-        val session = sessionManager.getValidSession() ?: run {
-            showError("Session expired. Please sign in again.")
-            return
-        }
-        setLoading(true)
-
         lifecycleScope.launch {
+            val session = sessionManager.getValidSession() ?: run {
+                showError("Session expired. Please sign in again.")
+                return@launch
+            }
+            setLoading(true)
+
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.prosumersApi.updateProfile(session.nicOrUserId, request)
@@ -116,8 +118,8 @@ class ProfileEditActivity : AppCompatActivity() {
 
                 if (response.isSuccessful && response.body() != null) {
                     val profile = response.body()!!
-                    
-                    // Update SQLite cache with the new data
+
+                    // Update SQLite cache with the new data on IO dispatcher
                     val cacheRow = ProfileCacheRow(
                         nic = profile.nic,
                         fullName = profile.fullName,

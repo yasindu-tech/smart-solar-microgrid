@@ -12,6 +12,8 @@
 package lk.sliit.smartsolar.data.local
 
 import android.content.ContentValues
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
 
 /**
@@ -31,8 +33,8 @@ data class ProfileCacheRow(
 
 class ProfileCacheDao(private val db: SmartSolarDatabase) {
 
-    // Write or replace the signed-in prosumer's profile row.
-    fun save(row: ProfileCacheRow) {
+    // Write or replace the signed-in prosumer's profile row on IO dispatcher.
+    suspend fun save(row: ProfileCacheRow) = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {
             put("nic", row.nic)
             put("full_name", row.fullName)
@@ -49,13 +51,13 @@ class ProfileCacheDao(private val db: SmartSolarDatabase) {
         )
     }
 
-    // Read the cached profile for the given NIC, or null if not cached.
-    fun get(nic: String): ProfileCacheRow? {
+    // Read the cached profile for the given NIC on IO dispatcher, or null if not cached.
+    suspend fun get(nic: String): ProfileCacheRow? = withContext(Dispatchers.IO) {
         val cursor = db.readableDatabase.rawQuery(
             "SELECT nic, full_name, email, phone, address, solar_capacity_kw, status, synced_at FROM profile_cache WHERE nic = ?",
             arrayOf(nic)
         )
-        return cursor.use {
+        cursor.use {
             if (it.moveToFirst()) {
                 ProfileCacheRow(
                     nic = it.getString(0),
@@ -73,15 +75,15 @@ class ProfileCacheDao(private val db: SmartSolarDatabase) {
         }
     }
 
-    // Check if the cached data is stale (older than 24 hours, per REQ-VIEW EC-6).
-    fun isStale(nic: String): Boolean {
-        val cached = get(nic) ?: return true
+    // Check if the cached data is stale on IO dispatcher (older than 24 hours, per REQ-VIEW EC-6).
+    suspend fun isStale(nic: String): Boolean = withContext(Dispatchers.IO) {
+        val cached = get(nic) ?: return@withContext true
         val threshold = Instant.now().epochSecond - (24 * 3600)
-        return cached.syncedAt < threshold
+        cached.syncedAt < threshold
     }
 
-    // Clear the cache for the given NIC. Called as part of clearAll() on logout.
-    fun clear(nic: String) {
+    // Clear the cache for the given NIC on IO dispatcher. Called as part of clearAll() on logout.
+    suspend fun clear(nic: String) = withContext(Dispatchers.IO) {
         db.writableDatabase.delete("profile_cache", "nic = ?", arrayOf(nic))
     }
 }
