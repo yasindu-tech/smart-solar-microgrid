@@ -9,7 +9,6 @@
  *
  *               The API's ReservationResponse carries nic and nodeId but no display
  *               names, so the rows label those ids rather than inventing a lookup.
- * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.ui.operator

@@ -8,7 +8,6 @@
  *               The AC-8/AC-9 session-restore logic stays entirely in
  *               LoginActivity.onCreate and still runs every time that screen is reached,
  *               whether via this screen's "Get Started" button or a direct relaunch.
- * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.ui.auth

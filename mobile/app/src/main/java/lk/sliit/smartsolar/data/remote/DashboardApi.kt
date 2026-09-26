@@ -3,10 +3,10 @@
  * Project     : Smart Solar Microgrid Trading System - Android client
  * Module      : data.remote
  * Description : Retrofit service interface for the /dashboard endpoints defined in
- *               api-contract.md §8. Only the prosumer dashboard is bound here; the
- *               operator and backoffice dashboards are separate requirement slices.
- *               Every metric on the screen comes from this response (REQ-VIEW AC-13).
- * Author      : Ricky Perera (M1)
+ *               api-contract.md §8. Binds the prosumer and operator dashboards; the
+ *               backoffice dashboard is a web-only slice and is not bound here.
+ *               Every metric on both screens comes from these responses, never from
+ *               a client-side count over a cached list (REQ-VIEW AC-13).
  */
 
 package lk.sliit.smartsolar.data.remote

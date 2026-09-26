@@ -19,7 +19,6 @@
  *
  *               todaysReservations reuses DashboardReservation because the API returns
  *               the same ReservationResponse record here as on the prosumer dashboard.
- * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.data.remote.dto

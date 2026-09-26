@@ -9,7 +9,6 @@
  *               The status strings are the ones the API returns (Pending, Approved,
  *               Cancelled, Completed, Expired); anything unrecognised falls back to a
  *               neutral surface so an added status never renders as an invisible chip.
- * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.util

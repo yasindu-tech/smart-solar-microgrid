@@ -12,7 +12,6 @@
  *               Field names mirror the server records exactly (ProsumerDashboardResponse
  *               -> ReservationResponse on the API side); ASP.NET Core serialises them
  *               camelCase, which is what Gson binds to here.
- * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.data.remote.dto
