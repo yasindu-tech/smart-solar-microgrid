@@ -398,21 +398,43 @@ pulls jobs, so nothing new is exposed and no password leaves the machine.
 In GitHub: **Settings → Actions → Runners → New self-hosted runner → Windows**. It shows a download
 block and a `config.cmd` line with a registration token. Run those, then when prompted:
 
-- **labels** — add `smartsolar` (the workflow targets `[self-hosted, windows, smartsolar]`)
-- **work folder** — accept the default
+- **runner group**, **runner name**, **labels**, **work folder** — press Enter at each, the defaults
+  are fine. The workflow targets `[self-hosted, windows]`, which every Windows runner gets
+  automatically, so no custom label is needed.
 
-Then install it as a service so it survives reboots and runs without anyone logged in:
+Note that GitHub's page shows each command with a leading `$`. That is a prompt marker, not part of
+the command — delete it, or PowerShell fails with "The term '$' is not recognized".
+
+### Running the runner: on demand, or as a service
+
+Deploys are manual (`workflow_dispatch`) and you have to start the VM in the Azure portal first
+anyway, so the simplest option is to start the runner by hand when you deploy:
 
 ```powershell
 cd C:\actions-runner
-./svc.sh install    # on Windows this is: .\svc install
-.\svc start
+.\run.cmd
 ```
 
-The service account needs to stop and start app pools, so run it as an account in the local
-**Administrators** group. That is a real trade-off — a compromised runner is a compromised VM — and it
-is acceptable here because the repo is private and the VM is disposable. Worth one line in the
-report's challenges section.
+It prints `Listening for Jobs`. Leave the window open, trigger the workflow, then Ctrl+C. Nothing is
+running on the VM between deploys, which is the safer posture.
+
+If you would rather it run unattended, install it as a **service**. On Windows there is no `svc.cmd`
+— the service option is part of `config.cmd`, so a runner configured without it must be removed and
+re-registered:
+
+```powershell
+.\config.cmd remove --token <fresh-token>
+.\config.cmd --url <repo-url> --token <fresh-token>
+```
+
+and this time answer **Y** to *"Would you like to run the runner as service?"*, then enter
+`NT AUTHORITY\SYSTEM` as the service account. The default (`NT AUTHORITY\NETWORK SERVICE`) cannot
+stop and start IIS app pools, so `deploy-to-iis.ps1` fails under it. `SYSTEM` can, and needs no
+password.
+
+Either way the runner has enough local privilege to rewrite the site folders, so a compromised runner
+is a compromised VM. That is acceptable here only because the repo is private and the VM is
+disposable — worth one line in the report's challenges section.
 
 ### One-time repo settings
 
