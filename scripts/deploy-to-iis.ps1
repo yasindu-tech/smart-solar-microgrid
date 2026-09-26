@@ -77,3 +77,8 @@ if ($state -ne "Started") {
 }
 
 Say "Deployed. Smoke-test with: curl http://localhost/api/health"
+
+# robocopy uses exit codes 0-7 to mean success (1 = "files were copied"), and it
+# leaves $LASTEXITCODE set. A CI shell that appends `exit $LASTEXITCODE` would
+# then fail a deploy that actually worked, so end on an explicit success.
+exit 0

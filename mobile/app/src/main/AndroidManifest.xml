@@ -6,18 +6,24 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Map of nearby microgrid nodes (REQ-VIEW section 2.5). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Operator QR scanning (REQ-QRV). -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
+        android:name=".SmartSolarApp"
         android:allowBackup="false"
-        android:label="Smart Solar"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="SunGrid"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.SmartSolar">
 
+        <!-- Login is the launcher activity — always the entry point. -->
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="true">
@@ -26,6 +32,29 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Prosumer home screen — navigated to after a Prosumer login. -->
+        <activity
+            android:name=".ui.prosumer.ProsumerHomeActivity"
+            android:exported="false" />
+
+        <!-- Operator home screen — navigated to after an Operator login. -->
+        <activity
+            android:name=".ui.operator.OperatorHomeActivity"
+            android:exported="false" />
+
+        <!-- Prosumer Registration screen -->
+        <activity
+            android:name=".ui.auth.RegisterActivity"
+            android:exported="false" />
+
+        <!-- Prosumer Profile screens -->
+        <activity
+            android:name=".ui.prosumer.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.prosumer.ProfileEditActivity"
+            android:exported="false" />
 
     </application>
 

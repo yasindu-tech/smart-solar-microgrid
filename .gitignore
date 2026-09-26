@@ -3,7 +3,9 @@ appsettings.Development.json
 appsettings.Production.json
 .env
 .env.local
+.env.*
 web/.env
+web/.env.*
 mobile/local.properties
 **/google-services.json
 secrets.json
@@ -38,9 +40,16 @@ captures/
 
 # --- Editors and OS ---------------------------------------------------------
 .idea/
+.vscode/
 .DS_Store
 Thumbs.db
 *.swp
 
 # --- Misc -------------------------------------------------------------------
 *.log
+
+# --- Deploy artifacts (built locally, copied to the VM, never committed) -----
+publish-output/
+publish-output.zip
+web-dist.zip
+deploy-staging/
