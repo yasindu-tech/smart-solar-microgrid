@@ -24,3 +24,14 @@ export interface UpdateProsumerRequest {
   address: string
   solarCapacityKw: number
 }
+
+export interface UseProsumerOptions {
+  enabled?: boolean
+}
+
+export interface ProsumerListParams {
+  status?: string
+  search?: string
+  page?: number
+  pageSize?: number
+}

@@ -6,7 +6,7 @@ import {
   deactivateProsumer,
 } from '../../api/ProsumersApi'
 import type { Prosumer } from '../../types/ProsumerTypes'
-import type { PagedResponse } from '../../types/PagedResponse'
+import type { PagedResponse } from '../../types/CommonTypes'
 import { getErrorMessage } from '../../api/errors'
 
 export default function ProsumersPage() {

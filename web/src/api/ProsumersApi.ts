@@ -7,20 +7,9 @@ import apiClient from './client'
 import { ApiRequestError } from './types'
 import { prosumerEndpoints } from './endpoints'
 import { prosumerQueryKeys } from './queryKeys'
-import type { PagedResponse } from '../types/PagedResponse'
-import type { Prosumer, UpdateProsumerRequest } from '../types/ProsumerTypes'
+import type { PagedResponse } from '../types/CommonTypes'
+import type { Prosumer, UpdateProsumerRequest, UseProsumerOptions, ProsumerListParams} from '../types/ProsumerTypes'
 import type { ProsumerDetail } from '../types/ReservationTypes'
-
-export interface UseProsumerOptions {
-  enabled?: boolean
-}
-
-export interface ProsumerListParams {
-  status?: string
-  search?: string
-  page?: number
-  pageSize?: number
-}
 
 export const fetchProsumerByNic = async (nic: string): Promise<ProsumerDetail> => {
   const response = await apiClient.get(prosumerEndpoints.BY_NIC(nic))
