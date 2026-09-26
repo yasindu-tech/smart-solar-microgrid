@@ -954,7 +954,7 @@ public class ReservationServiceTests
             }
         });
 
-        var dashboardService = new DashboardService(_reservationRepo, new FakeProsumerRepository(), new FakeSolarStationRepository(), new FakeUserRepository());
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo, new FakeUserRepository());
         var response = await dashboardService.GetProsumerDashboardAsync(nic);
 
         Assert.Equal(1, response.ActiveCount);
@@ -1311,7 +1311,7 @@ public class ReservationServiceTests
             Status = "Approved"
         });
 
-        var dashboardService = new DashboardService(_reservationRepo, new FakeProsumerRepository(), new FakeSolarStationRepository(), new FakeUserRepository());
+        var dashboardService = new DashboardService(_reservationRepo, _prosumerRepo, _nodeRepo, new FakeUserRepository());
         var result = await dashboardService.GetBackofficeDashboardAsync();
 
         Assert.NotNull(result);

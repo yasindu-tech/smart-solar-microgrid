@@ -33,3 +33,4 @@ export type ReservationAction = (typeof RESERVATION_ACTIONS)[number]
 export const RESERVATION_STATUSES = ['Pending', 'Approved', 'Cancelled', 'Completed', 'Expired'] as const
 export type ReservationStatus = (typeof RESERVATION_STATUSES)[number]
 
+export const DEFAULT_PAGE_SIZE = 10

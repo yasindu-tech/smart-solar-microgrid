@@ -294,10 +294,14 @@ a:hover {
 }
 
 .sg-stack-sm {
+  display: flex;
+  flex-direction: column;
   gap: var(--sg-space-2);
 }
 
 .sg-stack-lg {
+  display: flex;
+  flex-direction: column;
   gap: var(--sg-space-6);
 }
 
@@ -1311,5 +1315,56 @@ a:hover {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   MODAL OVERLAY (inline usage via React portals)
+   ========================================================= */
+
+.sg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sg-z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--sg-space-4);
+  background: rgba(15, 23, 42, 0.45);
+  animation: sg-fade-in var(--sg-duration-normal) var(--sg-ease);
+}
+
+.sg-modal-overlay .sg-modal-content {
+  animation: sg-slide-up var(--sg-duration-normal) var(--sg-ease);
+}
+
+@keyframes sg-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes sg-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   EXTRA GRID VARIANTS
+   ========================================================= */
+
+.sg-grid-5-custom {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sg-space-4);
+}
+
+@media (max-width: 1024px) {
+  .sg-grid-5-custom {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .sg-grid-5-custom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

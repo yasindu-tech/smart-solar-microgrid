@@ -15,14 +15,14 @@ namespace SmartSolar.Api.Controllers;
 
 [ApiController]
 [Route("api/dashboard")]
+[Authorize]
 public class DashboardController : ControllerBase
 {
     private readonly DashboardService _dashboardService;
 
-    // Injects the dashboard aggregation service.
+    // Inject the dashboard service.
     public DashboardController(DashboardService dashboardService)
     {
-        // Inject the dashboard aggregation service.
         _dashboardService = dashboardService;
     }
 
@@ -63,11 +63,10 @@ public class DashboardController : ControllerBase
     /// Gets aggregated system-wide metrics for the backoffice dashboard (REQ-VIEW §2.2).
     /// </summary>
     [HttpGet("backoffice")]
-    [Authorize(Roles = "Backoffice,Operator")]
+    [Authorize(Roles = "Backoffice")]
     public async Task<IActionResult> GetBackofficeDashboard()
     {
         var response = await _dashboardService.GetBackofficeDashboardAsync();
         return Ok(response);
     }
 }
-

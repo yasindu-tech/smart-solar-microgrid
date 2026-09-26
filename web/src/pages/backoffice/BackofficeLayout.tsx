@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../lib/AuthContext'
-import { LogOut, Users, Battery, CheckCircle, Zap, Calendar } from 'lucide-react'
+import { LogOut, Users, Battery, CheckCircle, Zap, UserCog, Calendar } from 'lucide-react'
 import UserBadge from '../../components/UserBadge'
 
 export default function BackofficeLayout() {
@@ -18,6 +18,7 @@ export default function BackofficeLayout() {
     { name: 'Nodes', path: '/backoffice/nodes', icon: Zap },
     { name: 'Reservations', path: '/backoffice/reservations', icon: Calendar },
     { name: 'Users', path: '/backoffice/users', icon: Users },
+    { name: 'Prosumers', path: '/backoffice/prosumers', icon: UserCog },
     { name: 'Approvals', path: '/backoffice/approvals', icon: CheckCircle },
   ]
 
