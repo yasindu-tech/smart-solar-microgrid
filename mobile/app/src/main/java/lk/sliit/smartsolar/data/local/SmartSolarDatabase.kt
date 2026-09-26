@@ -6,7 +6,7 @@
  *               docs/decisions/ADR-004-sqlite-scope-on-android.md: session,
  *               profile_cache, node_cache, reservation_cache. The cache may be
  *               rendered from, but never decided from (BR-14).
- * Author      : <member name - M4>
+ * Author      : Smart Solar Team (M1/M4)
  */
 
 package lk.sliit.smartsolar.data.local
@@ -15,7 +15,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class SmartSolarDatabase(context: Context) :
+class SmartSolarDatabase private constructor(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     // Create the four local tables on first launch.
@@ -97,5 +97,13 @@ class SmartSolarDatabase(context: Context) :
     companion object {
         private const val DATABASE_NAME = "smartsolar.db"
         private const val DATABASE_VERSION = 2
+
+        @Volatile
+        private var INSTANCE: SmartSolarDatabase? = null
+
+        fun getInstance(context: Context): SmartSolarDatabase =
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: SmartSolarDatabase(context.applicationContext).also { INSTANCE = it }
+            }
     }
 }

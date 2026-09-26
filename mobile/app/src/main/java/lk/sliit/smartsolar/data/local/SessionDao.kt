@@ -3,16 +3,19 @@
  * Project     : Smart Solar Microgrid Trading System - Android client
  * Module      : data.local
  * Description : Data access object for the SQLite `session` table defined in
- *               ADR-004. The table holds exactly one row (id = 1) containing the
- *               signed-in user's JWT, role, and display name so the app survives
- *               a restart without requiring re-authentication (REQ-AUTH AC-8).
- * Author      : <member name - M1>
+ *               ADR-004. Operations run on Dispatchers.IO to prevent main-thread
+ *               disk I/O. Holds exactly one row (id = 1) containing the signed-in
+ *               user's JWT, role, and display name so the app survives a restart
+ *               without requiring re-authentication (REQ-AUTH AC-8).
+ * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.data.local
 
 import android.content.ContentValues
 import android.database.Cursor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Thin row representation of the session table. Not a domain model — just the
@@ -28,30 +31,35 @@ data class SessionRow(
 
 class SessionDao(private val db: SmartSolarDatabase) {
 
-    // Persist or replace the single session row after a successful login.
-    fun save(nicOrUserId: String, role: String, jwt: String, expiresAt: Long, fullName: String?) {
-        val values = ContentValues().apply {
-            put("id", 1)
-            put("nic_or_user_id", nicOrUserId)
-            put("role", role)
-            put("jwt", jwt)
-            put("expires_at", expiresAt)
-            put("full_name", fullName)
+    // Persist or replace the single session row after a successful login on IO dispatcher.
+    suspend fun save(nicOrUserId: String, role: String, jwt: String, expiresAt: Long, fullName: String?) =
+        withContext(Dispatchers.IO) {
+            val values = ContentValues().apply {
+                put("id", 1)
+                put("nic_or_user_id", nicOrUserId)
+                put("role", role)
+                put("jwt", jwt)
+                put("expires_at", expiresAt)
+                put("full_name", fullName)
+            }
+            // INSERT OR REPLACE — the CHECK (id = 1) constraint ensures only one row.
+            db.writableDatabase.insertWithOnConflict(
+                "session", null, values,
+                android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+            )
         }
-        // INSERT OR REPLACE — the CHECK (id = 1) constraint ensures only one row.
-        db.writableDatabase.insertWithOnConflict(
-            "session", null, values,
-            android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
-        )
+
+    // Read the current session, or null if no user is logged in, on IO dispatcher.
+    suspend fun get(): SessionRow? = withContext(Dispatchers.IO) {
+        getSync()
     }
 
-    // Read the current session, or null if no user is logged in.
-    fun get(): SessionRow? {
+    // Synchronous read for non-coroutine contexts (e.g. cold-start AuthInterceptor).
+    fun getSync(): SessionRow? {
         val cursor: Cursor = db.readableDatabase.rawQuery(
             "SELECT nic_or_user_id, role, jwt, expires_at, full_name FROM session WHERE id = 1",
             null
         )
-        // Map the single row to a SessionRow, or return null if the table is empty.
         return cursor.use {
             if (it.moveToFirst()) {
                 SessionRow(
@@ -67,8 +75,13 @@ class SessionDao(private val db: SmartSolarDatabase) {
         }
     }
 
-    // Remove the session row. Called on logout and on expired-session detection.
-    fun clear() {
+    // Remove the session row on IO dispatcher.
+    suspend fun clear() = withContext(Dispatchers.IO) {
+        clearSync()
+    }
+
+    // Synchronous clear for database resets.
+    fun clearSync() {
         db.writableDatabase.delete("session", null, null)
     }
 }

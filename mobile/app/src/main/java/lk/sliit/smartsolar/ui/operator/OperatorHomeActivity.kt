@@ -41,9 +41,14 @@ class OperatorHomeActivity : AppCompatActivity() {
 
         // Display the operator's name from the intent extra or SQLite session.
         val displayName = intent.getStringExtra("DISPLAY_NAME")
-            ?: sessionManager.getValidSession()?.fullName
-            ?: ""
-        binding.tvWelcome.text = getString(R.string.welcome_message, displayName)
+        if (!displayName.isNullOrBlank()) {
+            binding.tvWelcome.text = getString(R.string.welcome_message, displayName)
+        } else {
+            lifecycleScope.launch {
+                val sessionName = sessionManager.getValidSession()?.fullName ?: ""
+                binding.tvWelcome.text = getString(R.string.welcome_message, sessionName)
+            }
+        }
 
         // Wire the logout button.
         binding.btnLogout.setOnClickListener { performLogout() }
