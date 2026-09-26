@@ -4,13 +4,15 @@
   Description : Login screen with SunGrid branding. Prosumers enter their NIC,
                 operators enter their email. Both use the same identifier field.
                 All spacing uses sg_space_* tokens and all colors use sg_* tokens
-                per ui-design-system.md §22.
+                per ui-design-system.md §22. The background is a soft brand wash
+                (login_bg_wash.xml) and the card fades/slides in via a declarative
+                layoutAnimation, so LoginActivity.kt drives none of the presentation.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sg_bg"
+    android:background="@drawable/login_bg_wash"
     android:fillViewport="true">
 
     <LinearLayout
@@ -53,11 +55,20 @@
             android:textColor="@color/sg_text_secondary"
             android:textSize="16sp" />
 
+        <!-- Card container — carries the entrance animation so the card itself keeps its
+             existing radius/elevation/stroke untouched -->
+        <FrameLayout
+            android:id="@+id/cardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:animateLayoutChanges="true"
+            android:layoutAnimation="@anim/card_enter_layout">
+
         <!-- Login card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_6"
             app:cardBackgroundColor="@color/sg_surface"
             app:cardCornerRadius="@dimen/sg_radius_lg"
             app:cardElevation="2dp"
@@ -86,7 +97,7 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:layout_marginBottom="@dimen/sg_space_2"
                     android:hint="@string/login_nic_hint"
                     app:boxStrokeColor="@color/sg_primary"
                     app:hintTextColor="@color/sg_text_muted">
@@ -98,6 +109,16 @@
                         android:inputType="text"
                         android:textColor="@color/sg_text" />
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Clarifies which identifier each role uses — the field itself accepts both -->
+                <TextView
+                    android:id="@+id/tvIdentifierCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:text="@string/login_identifier_caption"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
 
                 <!-- Password field -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -152,6 +173,8 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        </FrameLayout>
 
         <!-- Register link -->
         <LinearLayout
