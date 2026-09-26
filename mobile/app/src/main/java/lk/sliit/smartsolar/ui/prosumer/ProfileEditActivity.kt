@@ -102,14 +102,16 @@ class ProfileEditActivity : AppCompatActivity() {
             solarCapacityKw = capacity!!
         )
 
+        val session = sessionManager.getValidSession() ?: run {
+            showError("Session expired. Please sign in again.")
+            return
+        }
         setLoading(true)
-        val session = sessionManager.getValidSession() ?: return
 
         lifecycleScope.launch {
             try {
-                val token = sessionManager.getToken() ?: return@launch
                 val response = withContext(Dispatchers.IO) {
-                    ApiClient.prosumersApi.updateProfile(token, session.nicOrUserId, request)
+                    ApiClient.prosumersApi.updateProfile(session.nicOrUserId, request)
                 }
 
                 if (response.isSuccessful && response.body() != null) {

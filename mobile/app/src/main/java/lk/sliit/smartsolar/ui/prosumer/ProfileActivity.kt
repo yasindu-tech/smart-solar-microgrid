@@ -86,9 +86,8 @@ class ProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val token = sessionManager.getToken() ?: return@launch
                 val response = withContext(Dispatchers.IO) {
-                    ApiClient.prosumersApi.getProfile(token, nic)
+                    ApiClient.prosumersApi.getProfile(nic)
                 }
 
                 if (response.isSuccessful && response.body() != null) {
@@ -163,9 +162,8 @@ class ProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val token = sessionManager.getToken() ?: return@launch
                 val response = withContext(Dispatchers.IO) {
-                    ApiClient.prosumersApi.deactivate(token, nic)
+                    ApiClient.prosumersApi.deactivate(nic)
                 }
 
                 if (response.isSuccessful) {

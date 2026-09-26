@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SmartSolar" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.SmartSolar" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- SunGrid Primary & Brand Colors -->
+        <item name="colorPrimary">@color/sg_primary</item>
+        <item name="colorPrimaryVariant">@color/sg_primary_hover</item>
+        <item name="colorOnPrimary">@color/sg_text_on_primary</item>
+        <item name="colorSecondary">@color/sg_secondary</item>
+        <item name="colorOnSecondary">@color/sg_white</item>
+        <item name="android:colorBackground">@color/sg_bg</item>
+
+        <!-- Status Bar Styling -->
+        <item name="android:statusBarColor">@color/sg_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

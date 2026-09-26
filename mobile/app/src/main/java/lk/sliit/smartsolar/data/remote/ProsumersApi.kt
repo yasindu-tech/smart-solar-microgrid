@@ -3,8 +3,8 @@
  * Project     : Smart Solar Microgrid Trading System - Android client
  * Module      : data.remote
  * Description : Retrofit service interface for the /prosumers endpoints defined
- *               in api-contract.md §3. Registration is anonymous; all other
- *               endpoints require a valid Bearer token.
+ *               in api-contract.md §3. Registration is anonymous; authenticated
+ *               endpoints receive the Bearer token via AuthInterceptor.
  * Author      : Ricky Perera (M1)
  */
 
@@ -16,7 +16,6 @@ import lk.sliit.smartsolar.data.remote.dto.UpdateProsumerRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.POST
@@ -31,14 +30,12 @@ interface ProsumersApi {
     // Get the signed-in prosumer's own profile. BR-02 enforced server-side.
     @GET("prosumers/{nic}")
     suspend fun getProfile(
-        @Header("Authorization") bearerToken: String,
         @Path("nic") nic: String
     ): Response<ProsumerProfileResponse>
 
     // Update the prosumer's own profile. NIC is in the path — never in the body (BR-12).
     @PUT("prosumers/{nic}")
     suspend fun updateProfile(
-        @Header("Authorization") bearerToken: String,
         @Path("nic") nic: String,
         @Body request: UpdateProsumerRequest
     ): Response<ProsumerProfileResponse>
@@ -46,7 +43,6 @@ interface ProsumersApi {
     // Request deactivation of the prosumer's own account (REQ-PROS §4.4).
     @PATCH("prosumers/{nic}/deactivate")
     suspend fun deactivate(
-        @Header("Authorization") bearerToken: String,
         @Path("nic") nic: String
     ): Response<Unit>
 }

@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 // App module. Pure native Android with Kotlin - no cross-platform framework is
 // permitted (see docs/project-config.md section 2). SQLite is used for local
 // persistence only, per docs/decisions/ADR-004-sqlite-scope-on-android.md.
@@ -20,7 +23,14 @@ android {
         // Base URL of the Web API. Read from local.properties (not committed) so
         // each developer and CI can point at their own instance. Default is the
         // Android emulator loopback to the host machine on port 5001.
-        val apiUrl = project.findProperty("API_BASE_URL") as String?
+        val localProperties = Properties().apply {
+            val localFile = rootProject.file("local.properties")
+            if (localFile.exists()) {
+                FileInputStream(localFile).use { load(it) }
+            }
+        }
+        val apiUrl = localProperties.getProperty("API_BASE_URL")
+            ?: (project.findProperty("API_BASE_URL") as String?)
             ?: "http://10.0.2.2:5001/api/"
         buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
     }
@@ -57,6 +67,7 @@ dependencies {
     // Networking to the Web API - the only source of business decisions.
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // Coroutines for async API calls on the IO dispatcher.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")

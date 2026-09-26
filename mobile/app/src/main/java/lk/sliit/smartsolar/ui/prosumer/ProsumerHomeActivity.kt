@@ -8,7 +8,7 @@
  *               (active/pending counts, next booking, map) once REQ-VIEW is
  *               implemented. Logout clears all four SQLite tables (ADR-004)
  *               and navigates back to LoginActivity with a cleared back stack.
- * Author      : <member name - M1>
+ * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.ui.prosumer
@@ -67,11 +67,8 @@ class ProsumerHomeActivity : AppCompatActivity() {
         lifecycleScope.launch {
             // Best-effort API call — even if it fails, we clear the local session.
             try {
-                val token = sessionManager.getToken()
-                if (token != null) {
-                    withContext(Dispatchers.IO) {
-                        ApiClient.authApi.logout(token)
-                    }
+                withContext(Dispatchers.IO) {
+                    ApiClient.authApi.logout()
                 }
             } catch (_: Exception) {
                 // Network failure is fine — we still clear the local session.

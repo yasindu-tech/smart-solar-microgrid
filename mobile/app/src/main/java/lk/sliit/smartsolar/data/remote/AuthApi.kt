@@ -3,9 +3,9 @@
  * Project     : Smart Solar Microgrid Trading System - Android client
  * Module      : data.remote
  * Description : Retrofit service interface for the /auth endpoints defined in
- *               api-contract.md §1. Login is anonymous; logout and me require a
- *               valid Bearer token passed via the Authorization header.
- * Author      : <member name - M1>
+ *               api-contract.md §1. Login is anonymous; logout and me automatically
+ *               receive the Bearer token via AuthInterceptor.
+ * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.data.remote
@@ -16,7 +16,6 @@ import lk.sliit.smartsolar.data.remote.dto.LoginResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface AuthApi {
@@ -25,11 +24,11 @@ interface AuthApi {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    // Invalidate the current session. Requires a valid Bearer token.
+    // Invalidate the current session. Bearer token attached by AuthInterceptor.
     @POST("auth/logout")
-    suspend fun logout(@Header("Authorization") bearerToken: String): Response<Unit>
+    suspend fun logout(): Response<Unit>
 
-    // Retrieve the authenticated user's profile from JWT claims. Requires a valid Bearer token.
+    // Retrieve the authenticated user's profile from JWT claims. Bearer token attached by AuthInterceptor.
     @GET("auth/me")
-    suspend fun me(@Header("Authorization") bearerToken: String): Response<CurrentUserResponse>
+    suspend fun me(): Response<CurrentUserResponse>
 }

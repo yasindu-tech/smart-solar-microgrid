@@ -11,15 +11,45 @@
 package lk.sliit.smartsolar.data.remote
 
 import lk.sliit.smartsolar.BuildConfig
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    // Build Retrofit once using the base URL configured in build.gradle.kts.
+    private var tokenProvider: (() -> String?)? = null
+
+    // Called during app initialisation to supply the token provider.
+    fun init(provider: () -> String?) {
+        tokenProvider = provider
+    }
+
+    // OkHttpClient configured with authentication and logging interceptors.
+    private val okHttpClient: OkHttpClient by lazy {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+
+        OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor { tokenProvider?.invoke() })
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
+
+    // Build Retrofit once using the base URL and OkHttpClient.
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

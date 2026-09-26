@@ -9,7 +9,7 @@
  *               returned token decides which home screen is shown (AC-3, AC-4).
  *               No business rule is evaluated here — all decisions come from
  *               the API response.
- * Author      : <member name - M1>
+ * Author      : Ricky Perera (M1)
  */
 
 package lk.sliit.smartsolar.ui.auth
@@ -64,9 +64,8 @@ class LoginActivity : AppCompatActivity() {
         setLoading(true)
         lifecycleScope.launch {
             try {
-                val token = "Bearer " + session.jwt
                 val response = withContext(Dispatchers.IO) {
-                    ApiClient.authApi.me(token)
+                    ApiClient.authApi.me()
                 }
 
                 if (response.isSuccessful && response.body() != null) {
