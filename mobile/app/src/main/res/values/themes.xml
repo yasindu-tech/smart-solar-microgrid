@@ -13,4 +13,22 @@
         <item name="android:statusBarColor">@color/sg_bg</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Dashboard theme: the prosumer home draws a full-bleed sg_primary hero behind the
+         status bar area, so the bar itself has to match and switch to light icons. Inherits
+         Theme.SmartSolar, which means it also picks up the values-night pins automatically. -->
+    <style name="Theme.SmartSolar.Dashboard" parent="Theme.SmartSolar">
+        <item name="android:statusBarColor">@color/sg_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Splash theme for WelcomeActivity only (see AndroidManifest.xml). Backed by
+         androidx.core:core-splashscreen so the same brand flash renders on API 24+, not just the
+         native Android 12+ SplashScreen API. postSplashScreenTheme hands control back to
+         Theme.SmartSolar once the icon animation finishes. -->
+    <style name="Theme.SmartSolar.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/sg_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.SmartSolar</item>
+    </style>
 </resources>

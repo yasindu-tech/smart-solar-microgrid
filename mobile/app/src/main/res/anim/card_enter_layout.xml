@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Anim        : card_enter_layout.xml
+  Description : layoutAnimation wrapper that runs card_enter.xml on the child of the login
+                card's container the first time it is laid out. Using a layoutAnimation
+                keeps the entrance animation entirely declarative - LoginActivity.kt does
+                not start it and needs no change.
+-->
+<layoutAnimation xmlns:android="http://schemas.android.com/apk/res/android"
+    android:animation="@anim/card_enter"
+    android:animationOrder="normal"
+    android:delay="0" />

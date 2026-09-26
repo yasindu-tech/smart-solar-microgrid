@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Anim        : card_enter.xml
+  Description : Entrance animation for the login card - fade in while sliding up a short
+                distance. Applied via android:layoutAnimation in activity_login.xml so no
+                Kotlin change is needed to trigger it.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="250"
+    android:interpolator="@android:interpolator/decelerate_quad">
+
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0" />
+
+    <translate
+        android:fromYDelta="4%p"
+        android:toYDelta="0" />
+</set>
