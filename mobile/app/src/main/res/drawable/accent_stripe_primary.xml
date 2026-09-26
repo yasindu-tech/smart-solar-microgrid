@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Drawable    : accent_stripe_primary.xml
+  Description : Thin rounded accent bar used down the left edge of the next-reservation
+                card, so the card has a point of colour without a filled background.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/sg_primary" />
+    <corners android:radius="@dimen/sg_radius_full" />
+</shape>

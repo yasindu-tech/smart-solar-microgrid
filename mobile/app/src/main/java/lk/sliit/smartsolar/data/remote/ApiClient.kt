@@ -4,7 +4,8 @@
  * Module      : data.remote
  * Description : Singleton Retrofit client configured with the API base URL from
  *               BuildConfig and Gson for JSON serialisation. Provides lazily
- *               initialised service instances for each API group (Auth, Prosumers).
+ *               initialised service instances for each API group (Auth, Prosumers,
+ *               Dashboard).
  * Author      : Ricky Perera (M1)
  */
 
@@ -62,5 +63,10 @@ object ApiClient {
     // Lazily create the prosumers API service (register, profile, deactivate).
     val prosumersApi: ProsumersApi by lazy {
         retrofit.create(ProsumersApi::class.java)
+    }
+
+    // Lazily create the dashboard API service (prosumer dashboard metrics).
+    val dashboardApi: DashboardApi by lazy {
+        retrofit.create(DashboardApi::class.java)
     }
 }
