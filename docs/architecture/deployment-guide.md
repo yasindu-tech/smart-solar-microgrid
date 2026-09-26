@@ -199,7 +199,126 @@ rule alone isn't enough, Windows has its own firewall too), the app pool is `Sta
 Record the real base URL in `project-config.md` §9 (add it — see the stub below) so nobody hard-codes
 a stale IP into a branch.
 
-## 11. HTTPS — do this if you have a spare hour, skip it if you don't
+## 11. Host the React web app on the same IIS box
+
+The marking scheme only requires the **API** on IIS (Table 1, "Hosting the Web API / Service on IIS
+— 4 marks"). The web app is assessed as a UI layer, so it could live anywhere. Put it on the same VM
+anyway: one machine to start before the demo, one IP to remember, and the report's "Hosting and
+deployment steps" section covers both in one story.
+
+Keep the API on port 80 and give the web app **port 8080**. Do not try to serve both from one site
+under different paths — path-based routing means rewriting the API base URL and re-testing every
+client, for no benefit.
+
+### 11.1 Install the URL Rewrite module (one time, on the VM)
+
+This is **not** part of the IIS role and is the single most common reason a deployed React app
+half-works. Without it, `http://<ip>:8080/` loads but `http://<ip>:8080/backoffice/nodes` returns
+404 — IIS looks for a folder called `backoffice` on disk and doesn't find one.
+
+```powershell
+Invoke-WebRequest -Uri "https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi" -OutFile "$env:TEMP\rewrite.msi"
+Start-Process msiexec.exe -ArgumentList "/i $env:TEMP\rewrite.msi /quiet /norestart" -Wait
+iisreset
+```
+
+If that URL 404s, search "IIS URL Rewrite module download" and take the current x64 installer.
+
+### 11.2 Add a web.config to the repo
+
+React Router owns the routing, so every URL that isn't a real file must be served `index.html` and
+let the app sort it out. Create **`web/public/web.config`** — Vite copies everything in `public/`
+into `dist/` verbatim, so this ships with every build and stays in version control:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="SPA fallback" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+    <staticContent>
+      <remove fileExtension=".woff2" />
+      <mimeMap fileExtension=".woff2" mimeType="font/woff2" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+```
+
+Read the conditions as: *if the request is not an existing file and not an existing directory, serve
+index.html instead.* Real assets still resolve normally.
+
+### 11.3 Build with the production API URL baked in
+
+**Vite substitutes `import.meta.env.VITE_*` at build time, not at runtime.** There is no config file
+to edit on the server afterwards — if you build with `localhost`, the deployed site calls
+`localhost` from the visitor's browser and every request fails. Rebuild whenever the API URL changes.
+
+Create `web/.env.production` (gitignored, same as `.env`):
+
+```
+VITE_API_BASE_URL=http://<vm-public-ip>/api
+```
+
+Then, on your own machine:
+
+```bash
+cd web
+npm ci
+npm run build          # outputs to web/dist/, including web.config
+```
+
+Confirm the URL actually landed in the bundle before you upload anything:
+
+```bash
+grep -r "<vm-public-ip>" dist/assets/*.js | head -1
+```
+
+No output means the env file was not picked up — fix that now rather than debugging it on the VM.
+
+### 11.4 Create the site and copy the build up
+
+```powershell
+New-Item "IIS:\AppPools\SmartSolarWeb" -Force
+Set-ItemProperty "IIS:\AppPools\SmartSolarWeb" -Name managedRuntimeVersion -Value ""
+
+New-Item "C:\inetpub\smartsolar-web" -ItemType Directory -Force
+
+New-Website -Name "SmartSolarWeb" -PhysicalPath "C:\inetpub\smartsolar-web" `
+  -ApplicationPool "SmartSolarWeb" -Port 8080 -Force
+```
+
+Copy the contents of `web/dist/` into `C:\inetpub\smartsolar-web\`, the same way you move the API
+build up.
+
+Then open port 8080 in **both** firewalls — the Azure NSG and Windows:
+
+```powershell
+New-NetFirewallRule -DisplayName "SmartSolarWeb 8080" -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow
+```
+
+In the Azure portal: the VM's Network security group → Inbound port rules → add TCP 8080.
+
+### 11.5 Check it
+
+Browse to `http://<vm-public-ip>:8080` from your own machine. Then navigate to a deep route and
+**hard-refresh** (Ctrl+Shift+R) — if that 404s, URL Rewrite or `web.config` is missing.
+
+The browser is now calling `http://<ip>/api` from a page served at `http://<ip>:8080`. Different
+port means different origin, so this is a cross-origin request. `Program.cs` currently registers
+`AllowAnyOrigin()`, so it works as-is. If anyone tightens that CORS policy later, `http://<ip>:8080`
+must be in the allowed list or the whole web app goes blank with CORS errors in the console.
+
+## 12. HTTPS — do this if you have a spare hour, skip it if you don't
 
 The assignment does not require HTTPS, and `usesCleartextTraffic="true"` is already set in the Android
 manifest for exactly this reason. If you want it anyway (it's a legitimate line for the report's
@@ -217,7 +336,7 @@ C:\win-acme\wacs.exe   # interactive - point it at the SmartSolarApi site
 If you skip this, use `http://` consistently everywhere (clients, CORS origins, the URL you demo from)
 — a mix of `http://` and `https://` is a more common source of a broken demo than no HTTPS at all.
 
-## 12. Redeploying after a code change — the loop you'll repeat
+## 13. Redeploying after a code change — the loop you'll repeat
 
 ```bash
 # on your machine
@@ -229,10 +348,17 @@ dotnet publish backend/src/SmartSolar.Api/SmartSolar.Api.csproj -c Release -o ./
 ./scripts/deploy-to-iis.ps1
 ```
 
+Web app, whenever `web/` changes **or the API URL changes**:
+
+```bash
+cd web && npm run build      # re-bakes VITE_API_BASE_URL into the bundle
+# copy web/dist/* to C:\inetpub\smartsolar-web on the VM
+```
+
 Do this after every merge to `develop` that touches `backend/`, not just once at the end — an API that
 has drifted from what both clients were tested against for a week is how integration breaks on Day 28.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
@@ -241,6 +367,101 @@ has drifted from what both clients were tested against for a week is how integra
 | API starts but every request 500s | `appsettings.Production.json` missing, malformed, or the Mongo connection string wrong |
 | Mongo connection times out | Atlas Network Access doesn't have the VM's current public IP (it changed after a deallocate/start without a static IP) |
 | Android emulator can't reach it, physical device can | You're still using `10.0.2.2` — that only works for a locally-hosted API, not the VM |
+| Web app home page loads, but refreshing any other route 404s | URL Rewrite module not installed, or `web.config` missing from `dist/` |
+| Web app loads but every API call fails, console shows `localhost` | Built without `.env.production` — Vite bakes the URL in at build time, rebuild |
+| Web app loads but console shows CORS errors | The API's allowed origins don't include `http://<ip>:8080` |
+| `http://<ip>:8080` times out from your machine but works on the VM | Port 8080 open in only one of the two firewalls (Azure NSG *and* Windows) |
+
+## 15. Automated deploys with GitHub Actions
+
+Once the manual loop in §13 works, `.github/workflows/deploy.yml` automates it: one click builds,
+tests, and deploys both sites, then smoke-tests them.
+
+**It is manual on purpose.** The workflow has only a `workflow_dispatch` trigger — it never fires on
+a push. §3 tells you to deallocate the VM between work sessions to save credit, and a deploy queued
+against a stopped VM sits there until it times out. Deploying on your say-so, after you have started
+the VM, avoids a whole class of confusing red builds. Run it from
+**Actions → Deploy to Azure IIS → Run workflow**, choosing the branch in the dropdown (normally
+`develop`).
+
+### Why a self-hosted runner
+
+The VM has no inbound deployment port — no Web Deploy on 8172, no SSH. Rather than open one and store
+VM credentials in GitHub, install a **GitHub Actions runner on the VM**. It polls GitHub outbound and
+pulls jobs, so nothing new is exposed and no password leaves the machine.
+
+> **Only safe because this repo is private.** A self-hosted runner on a public repo will execute code
+> from anyone's fork pull request, on your VM. If the repo is ever made public, delete the runner first.
+
+### One-time install (on the VM, elevated PowerShell)
+
+In GitHub: **Settings → Actions → Runners → New self-hosted runner → Windows**. It shows a download
+block and a `config.cmd` line with a registration token. Run those, then when prompted:
+
+- **labels** — add `smartsolar` (the workflow targets `[self-hosted, windows, smartsolar]`)
+- **work folder** — accept the default
+
+Then install it as a service so it survives reboots and runs without anyone logged in:
+
+```powershell
+cd C:\actions-runner
+./svc.sh install    # on Windows this is: .\svc install
+.\svc start
+```
+
+The service account needs to stop and start app pools, so run it as an account in the local
+**Administrators** group. That is a real trade-off — a compromised runner is a compromised VM — and it
+is acceptable here because the repo is private and the VM is disposable. Worth one line in the
+report's challenges section.
+
+### One-time repo settings
+
+**Settings → Secrets and variables → Actions → Variables**, add:
+
+| Variable | Value |
+|---|---|
+| `VITE_API_BASE_URL` | `http://<vm-public-ip>/api` |
+
+A public IP is not a secret, so a variable (visible in logs) is correct here. The workflow fails
+early with a clear message if it is missing, and fails again if the value doesn't appear in the built
+bundle — the Vite build-time trap from §11.3, caught in CI instead of in the browser.
+
+Nothing else is stored in GitHub. `appsettings.Production.json` stays on the VM, and
+`deploy-to-iis.ps1` preserves it across every redeploy.
+
+### What the workflow does
+
+```mermaid
+flowchart LR
+  A[you click<br/>Run workflow] --> B[build job<br/>GitHub runner]
+  B --> C[dotnet test<br/>+ publish]
+  B --> D[npm ci<br/>+ vite build]
+  C --> E[deploy job<br/>runner on the VM]
+  D --> E
+  E --> F[deploy-to-iis.ps1<br/>API then web]
+  F --> G[smoke test<br/>/api/health + :8080]
+```
+
+Building on GitHub's runners rather than the VM keeps the B2s free for serving the demo, and a failing
+test means nothing is deployed at all.
+
+### The catch: start the VM first
+
+The `deploy` job runs on the runner installed *on the VM*, so the VM has to be started and the runner
+service running before you trigger the workflow. Check **Settings → Actions → Runners** shows it as
+**Idle** (green), not **Offline**, before clicking Run workflow. If you trigger it against a stopped
+VM, the build job succeeds and the deploy job queues indefinitely — cancel it, start the VM, and run
+it again.
+
+The habit that works: merge PRs into `develop` freely all week, then start the VM and run the
+workflow once before a demo or an integration test.
+
+### Before you trust it
+
+Run it once manually against a VM you have already deployed to by hand, and confirm
+`appsettings.Production.json` is still on disk afterwards. `robocopy /MIR` deletes anything in the
+destination that isn't in the source, and the secrets-preservation logic in `deploy-to-iis.ps1` is the
+only thing standing between an automated deploy and a wiped config.
 
 ---
 
@@ -252,4 +473,6 @@ has drifted from what both clients were tested against for a week is how integra
 - [ ] MongoDB Atlas cluster created, VM's IP allow-listed, seed data loaded
 - [ ] `GET /api/health` reachable from a machine that is not the VM itself
 - [ ] Web app and Android both rebuilt against the hosted base URL
+- [ ] URL Rewrite installed; a deep route survives a hard refresh at `http://<ip>:8080`
+- [ ] `web/public/web.config` committed, so every future build ships the SPA fallback
 - [ ] At least one full redeploy has been done using `scripts/deploy-to-iis.ps1`, so the process is proven before you need it under time pressure
