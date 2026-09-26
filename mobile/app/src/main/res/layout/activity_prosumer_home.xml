@@ -22,7 +22,7 @@
             android:visibility="gone"
             app:cardBackgroundColor="@color/sg_warning_soft"
             app:cardCornerRadius="@dimen/sg_radius_md"
-            app:cardElevation="0dp">
+            app:cardElevation="@dimen/sg_card_elevation_none">
 
             <TextView
                 android:layout_width="match_parent"
@@ -36,8 +36,8 @@
 
         <!-- SunGrid logo -->
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="@dimen/sg_logo_size_md"
+            android:layout_height="@dimen/sg_logo_size_md"
             android:layout_marginBottom="@dimen/sg_space_6"
             android:contentDescription="@string/app_name"
             android:src="@drawable/logo" />
@@ -77,7 +77,7 @@
             android:layout_marginBottom="@dimen/sg_space_4"
             app:cardBackgroundColor="@color/sg_primary_soft"
             app:cardCornerRadius="@dimen/sg_radius_md"
-            app:cardElevation="0dp">
+            app:cardElevation="@dimen/sg_card_elevation_none">
 
             <TextView
                 android:layout_width="match_parent"
@@ -93,7 +93,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnProfile"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="@dimen/sg_btn_height"
             android:layout_marginBottom="@dimen/sg_space_4"
             android:text="@string/nav_profile"
             android:textAllCaps="false"
@@ -101,13 +101,13 @@
             app:backgroundTint="@color/sg_surface"
             app:cornerRadius="@dimen/sg_radius_md"
             app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
+            app:strokeWidth="@dimen/sg_card_stroke"
             android:textColor="@color/sg_text" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBookings"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="@dimen/sg_btn_height"
             android:layout_marginBottom="@dimen/sg_space_4"
             android:text="@string/nav_bookings"
             android:textAllCaps="false"
@@ -115,13 +115,13 @@
             app:backgroundTint="@color/sg_surface"
             app:cornerRadius="@dimen/sg_radius_md"
             app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
+            app:strokeWidth="@dimen/sg_card_stroke"
             android:textColor="@color/sg_text" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnMap"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="@dimen/sg_btn_height"
             android:layout_marginBottom="@dimen/sg_space_8"
             android:text="@string/nav_map"
             android:textAllCaps="false"
@@ -129,7 +129,7 @@
             app:backgroundTint="@color/sg_surface"
             app:cornerRadius="@dimen/sg_radius_md"
             app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
+            app:strokeWidth="@dimen/sg_card_stroke"
             android:textColor="@color/sg_text" />
 
         <!-- Logout button -->
@@ -137,7 +137,7 @@
             android:id="@+id/btnLogout"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="@dimen/sg_btn_height_sm"
             android:layout_marginBottom="@dimen/sg_space_4"
             android:text="@string/logout_btn"
             android:textAllCaps="false"

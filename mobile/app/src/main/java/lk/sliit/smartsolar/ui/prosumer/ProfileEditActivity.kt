@@ -106,7 +106,7 @@ class ProfileEditActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val session = sessionManager.getValidSession() ?: run {
-                showError("Session expired. Please sign in again.")
+                showError(getString(R.string.login_error_session_expired))
                 return@launch
             }
             setLoading(true)
@@ -132,8 +132,11 @@ class ProfileEditActivity : AppCompatActivity() {
                     )
                     profileCacheDao.save(cacheRow)
 
-                    Toast.makeText(this@ProfileEditActivity, "Profile updated", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ProfileEditActivity, R.string.profile_success_updated, Toast.LENGTH_SHORT).show()
                     finish() // Return to Profile view
+                } else if (response.code() == 401) {
+                    sessionManager.clearSession()
+                    showError(getString(R.string.login_error_session_expired))
                 } else {
                     handleApiError(response.errorBody()?.string())
                 }
@@ -153,7 +156,15 @@ class ProfileEditActivity : AppCompatActivity() {
 
         try {
             val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
-            showError(error.message ?: getString(R.string.login_error_generic))
+            val field = error?.field?.lowercase()
+            when (field) {
+                "fullname", "name" -> binding.tilFullName.error = error.message
+                "email" -> binding.tilEmail.error = error.message
+                "phone" -> binding.tilPhone.error = error.message
+                "address" -> binding.tilAddress.error = error.message
+                "solarcapacitykw", "solarcapacity" -> binding.tilSolarCapacity.error = error.message
+                else -> showError(error?.message ?: getString(R.string.login_error_generic))
+            }
         } catch (_: Exception) {
             showError(getString(R.string.login_error_generic))
         }

@@ -17,8 +17,8 @@
 
     <!-- SunGrid logo -->
     <ImageView
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="@dimen/sg_logo_size_md"
+        android:layout_height="@dimen/sg_logo_size_md"
         android:layout_marginBottom="@dimen/sg_space_6"
         android:contentDescription="@string/app_name"
         android:src="@drawable/logo" />
@@ -58,7 +58,7 @@
         android:layout_marginBottom="@dimen/sg_space_8"
         app:cardBackgroundColor="@color/sg_secondary_soft"
         app:cardCornerRadius="@dimen/sg_radius_md"
-        app:cardElevation="0dp">
+        app:cardElevation="@dimen/sg_card_elevation_none">
 
         <TextView
             android:layout_width="match_parent"
@@ -75,7 +75,7 @@
         android:id="@+id/btnLogout"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="@dimen/sg_btn_height_sm"
         android:text="@string/logout_btn"
         android:textAllCaps="false"
         android:textColor="@color/sg_danger"

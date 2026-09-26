@@ -22,8 +22,8 @@
 
         <!-- Header -->
         <ImageView
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="@dimen/sg_logo_size_sm"
+            android:layout_height="@dimen/sg_logo_size_sm"
             android:layout_marginTop="@dimen/sg_space_6"
             android:layout_marginBottom="@dimen/sg_space_4"
             android:contentDescription="@string/app_name"
@@ -53,9 +53,9 @@
             android:layout_marginBottom="@dimen/sg_space_4"
             app:cardBackgroundColor="@color/sg_surface"
             app:cardCornerRadius="@dimen/sg_radius_lg"
-            app:cardElevation="2dp"
+            app:cardElevation="@dimen/sg_card_elevation"
             app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp">
+            app:strokeWidth="@dimen/sg_card_stroke">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -234,7 +234,7 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRegister"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
+                    android:layout_height="@dimen/sg_btn_height"
                     android:text="@string/register_btn"
                     android:textAllCaps="false"
                     android:textSize="16sp"
