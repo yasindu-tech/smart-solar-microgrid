@@ -1,85 +1,311 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Layout      : activity_operator_home.xml
-  Description : Placeholder Operator home screen. Displays a welcome message with
-                the user's name and a logout button. Will be replaced with the full
-                Operator dashboard (QR scanner, assigned node, nearby map) once
-                REQ-QRV and REQ-VIEW are implemented.
+  Description : Operator dashboard (REQ-VIEW §2.3). Renders the pending and
+                approved-future counts, today's schedule and the QR scan entry point.
+                Both counts are bound straight from the GET /dashboard/operator
+                response — nothing here is derived from the list (AC-13), and the
+                server scopes them to this operator's assigned nodes (AC-6).
+
+                Visual language matches activity_prosumer_home.xml: brand hero,
+                tinted stat tiles, then a padded content column inside a
+                SwipeRefreshLayout > NestedScrollView for pull-to-refresh.
+
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens per
+                ui-design-system.md §22.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sg_bg"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="@dimen/sg_space_6">
+    android:background="@color/sg_bg">
 
-    <!-- SunGrid logo -->
-    <ImageView
-        android:layout_width="@dimen/sg_logo_size_md"
-        android:layout_height="@dimen/sg_logo_size_md"
-        android:layout_marginBottom="@dimen/sg_space_6"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/logo" />
-
-    <!-- Home title -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/sg_space_2"
-        android:text="@string/operator_home_title"
-        android:textColor="@color/sg_secondary"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-
-    <!-- Welcome message -->
-    <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/sg_space_2"
-        android:textColor="@color/sg_text"
-        android:textSize="18sp" />
-
-    <!-- Role badge -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/sg_space_8"
-        android:text="@string/role_operator"
-        android:textColor="@color/sg_text_secondary"
-        android:textSize="14sp" />
-
-    <!-- Placeholder message -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- NestedScrollView, not ScrollView: a RecyclerView with wrap_content height inside a
+         plain ScrollView only lays out enough rows to fill the first viewport, silently dropping
+         the rest of the day's schedule. NestedScrollView measures it fully. -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/sg_space_8"
-        app:cardBackgroundColor="@color/sg_secondary_soft"
-        app:cardCornerRadius="@dimen/sg_radius_md"
-        app:cardElevation="@dimen/sg_card_elevation_none">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/sg_space_4"
-            android:text="@string/home_placeholder"
-            android:textAlignment="center"
-            android:textColor="@color/sg_secondary"
-            android:textSize="14sp" />
-    </com.google.android.material.card.MaterialCardView>
+            android:orientation="vertical">
 
-    <!-- Logout button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogout"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/sg_btn_height_sm"
-        android:text="@string/logout_btn"
-        android:textAllCaps="false"
-        android:textColor="@color/sg_danger"
-        app:cornerRadius="@dimen/sg_radius_md"
-        app:strokeColor="@color/sg_danger" />
+            <!-- ===== Brand hero ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dashboard_header_bg"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/sg_space_6"
+                android:paddingTop="@dimen/sg_space_6"
+                android:paddingEnd="@dimen/sg_space_6"
+                android:paddingBottom="@dimen/sg_space_8">
 
-</LinearLayout>
+                <!-- Top navbar row: brand lockup left, account avatar right -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_5"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@string/app_name"
+                        android:src="@drawable/logo" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        android:text="@string/app_name"
+                        android:textColor="@color/sg_text_on_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <!-- Opens the account dropdown (details + Log out) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnProfileMenu"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="@string/profile_menu_cd"
+                        android:insetBottom="0dp"
+                        android:insetLeft="0dp"
+                        android:insetRight="0dp"
+                        android:insetTop="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        app:backgroundTint="@color/sg_primary_soft"
+                        app:cornerRadius="@dimen/sg_radius_full"
+                        app:icon="@drawable/ic_profile"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconTint="@color/sg_primary" />
+                </LinearLayout>
+
+                <!-- Greeting -->
+                <TextView
+                    android:id="@+id/tvWelcome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/sg_text_on_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <!-- Role line -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sg_space_1"
+                    android:alpha="0.85"
+                    android:text="@string/role_operator"
+                    android:textColor="@color/sg_text_on_primary"
+                    android:textSize="14sp" />
+
+                <!-- Which nodes the counts below are scoped to (AC-6). Comes from the
+                     response's scopedNodeIds, not from anything the client guessed. -->
+                <TextView
+                    android:id="@+id/tvScopedNodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sg_space_2"
+                    android:alpha="0.85"
+                    android:textColor="@color/sg_text_on_primary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- ===== Content column ===== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/sg_space_6"
+                android:paddingTop="@dimen/sg_space_6"
+                android:paddingEnd="@dimen/sg_space_6"
+                android:paddingBottom="@dimen/sg_space_6">
+
+                <!-- Offline banner (hidden when online) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardOfflineBanner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/sg_warning_soft"
+                    app:cardCornerRadius="@dimen/sg_radius_md"
+                    app:cardElevation="0dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/sg_space_3"
+                        android:text="@string/offline_banner_text"
+                        android:textAlignment="center"
+                        android:textColor="@color/sg_warning_text"
+                        android:textSize="13sp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ===== Stat tiles: Pending / Approved-future (AC-6, AC-7, AC-13) ===== -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardPending"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@color/sg_warning_soft"
+                        app:cardCornerRadius="@dimen/sg_radius_lg"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="@dimen/sg_space_4">
+
+                            <TextView
+                                android:id="@+id/tvPendingCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_count_unavailable"
+                                android:textColor="@color/sg_warning_text"
+                                android:textSize="34sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/operator_pending_label"
+                                android:textColor="@color/sg_warning_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardApproved"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@color/sg_primary_soft"
+                        app:cardCornerRadius="@dimen/sg_radius_lg"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="@dimen/sg_space_4">
+
+                            <TextView
+                                android:id="@+id/tvApprovedCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_count_unavailable"
+                                android:textColor="@color/sg_primary"
+                                android:textSize="34sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/operator_approved_label"
+                                android:textColor="@color/sg_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- ===== Scan QR entry point (REQ-VIEW §2.3, REQ-QRV) ===== -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnScanQr"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="@dimen/sg_space_6"
+                    android:text="@string/operator_scan_qr"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/sg_primary"
+                    app:cornerRadius="@dimen/sg_radius_md"
+                    app:icon="@drawable/ic_qr_scan"
+                    app:iconGravity="textStart"
+                    app:iconPadding="@dimen/sg_space_2"
+                    app:iconTint="@color/sg_text_on_primary" />
+
+                <!-- ===== Today's reservations ===== -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/sg_surface"
+                    app:cardCornerRadius="@dimen/sg_radius_lg"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/sg_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/sg_space_4">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/sg_space_2"
+                            android:text="@string/operator_today_title"
+                            android:textColor="@color/sg_text_muted"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvTodaysReservations"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:visibility="gone" />
+
+                        <!-- Empty state when the day has no reservations -->
+                        <TextView
+                            android:id="@+id/tvTodayEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingTop="@dimen/sg_space_4"
+                            android:paddingBottom="@dimen/sg_space_4"
+                            android:text="@string/operator_today_empty"
+                            android:textAlignment="center"
+                            android:textColor="@color/sg_text_muted"
+                            android:textSize="14sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Loading indicator for the initial fetch (pull-to-refresh has its own spinner) -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="@dimen/sg_space_4"
+                    android:indeterminateTint="@color/sg_primary"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -2,10 +2,16 @@
 <resources>
     <string name="app_name">SunGrid</string>
 
+    <!-- Welcome (launcher) screen -->
+    <string name="welcome_title">SunGrid</string>
+    <string name="welcome_tagline">Book solar energy slots at your nearest microgrid node</string>
+    <string name="welcome_cta">Get Started</string>
+
     <!-- Login screen -->
     <string name="login_title">Sign in</string>
     <string name="login_subtitle">Sign in to your account</string>
     <string name="login_nic_hint">NIC or email</string>
+    <string name="login_identifier_caption">Prosumers sign in with their NIC · Operators sign in with their email</string>
     <string name="login_password_hint">Password</string>
     <string name="login_btn">Sign In</string>
     <string name="login_register_prompt">Don\'t have an account?</string>
@@ -75,4 +81,27 @@
     <string name="nav_map">Nearby Nodes Map</string>
 
     <string name="offline_banner_text">Offline — showing last synced data.</string>
+
+    <!-- Prosumer dashboard (REQ-VIEW §2.1) -->
+    <string name="dashboard_active_label">Active</string>
+    <string name="dashboard_pending_label">Pending</string>
+    <string name="dashboard_count_unavailable">—</string>
+    <string name="dashboard_next_title">Next reservation</string>
+    <string name="dashboard_next_empty">No upcoming reservations</string>
+    <string name="dashboard_book_now">Book Now</string>
+    <string name="dashboard_quick_actions">Quick actions</string>
+    <string name="dashboard_node_label">Node %1$s</string>
+    <string name="dashboard_refresh_failed">Couldn\'t refresh dashboard.</string>
+    <string name="profile_menu_cd">Account menu</string>
+    <string name="profile_menu_nic">NIC %1$s</string>
+
+    <!-- Operator dashboard (REQ-VIEW §2.3) -->
+    <string name="operator_pending_label">Pending approval</string>
+    <string name="operator_approved_label">Approved upcoming</string>
+    <string name="operator_today_title">Today\'s reservations</string>
+    <string name="operator_today_empty">No reservations scheduled today</string>
+    <string name="operator_row_prosumer">Prosumer %1$s</string>
+    <string name="operator_scan_qr">Scan QR</string>
+    <string name="operator_scope_nodes">Your nodes: %1$s</string>
+    <string name="operator_scope_none">No nodes assigned to your account</string>
 </resources>

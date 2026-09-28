@@ -23,26 +23,37 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.SmartSolar">
 
-        <!-- Login is the launcher activity — always the entry point. -->
+        <!-- Welcome is the launcher activity — branded landing screen, entry point. -->
         <activity
-            android:name=".ui.auth.LoginActivity"
+            android:name=".ui.auth.WelcomeActivity"
             android:exported="true"
-            android:theme="@style/Theme.App.Starting">
+            android:theme="@style/Theme.SmartSolar.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Prosumer home screen — navigated to after a Prosumer login. -->
+        <!-- Login screen — reached via the Welcome screen's "Get Started" button.
+             adjustResize so the soft keyboard shrinks the ScrollView instead of covering
+             the identifier/password fields and the inline error message. -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Prosumer home screen — navigated to after a Prosumer login. Uses the dashboard
+             theme so the status bar matches the brand hero at the top of the screen. -->
         <activity
             android:name=".ui.prosumer.ProsumerHomeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
 
         <!-- Operator home screen — navigated to after an Operator login. -->
         <activity
             android:name=".ui.operator.OperatorHomeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
 
         <!-- Prosumer Registration screen -->
         <activity

@@ -31,11 +31,17 @@ const sheetVariants = cva(
     variants: {
       side: {
         right:
-          "inset-y-0 right-0 h-full w-full max-w-md border-l border-sg-border data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg",
+          "inset-y-0 right-0 h-full w-full border-l border-sg-border data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+      },
+      // Panels holding a map or a wide form need more room than a plain form.
+      size: {
+        default: "max-w-md sm:max-w-lg",
+        lg: "max-w-md sm:max-w-xl lg:max-w-2xl",
       },
     },
     defaultVariants: {
       side: "right",
+      size: "default",
     },
   }
 )
@@ -45,10 +51,10 @@ interface SheetContentProps
     VariantProps<typeof sheetVariants> {}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, SheetContentProps>(
-  ({ side, className, children, ...props }, ref) => (
+  ({ side, size, className, children, ...props }, ref) => (
     <SheetPortal>
       <SheetOverlay />
-      <DialogPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+      <DialogPrimitive.Content ref={ref} className={cn(sheetVariants({ side, size }), className)} {...props}>
         {children}
         <DialogPrimitive.Close className="absolute right-5 top-5 rounded-md p-1.5 text-sg-text-muted transition hover:bg-sg-surface-muted hover:text-sg-text focus:outline-none focus:ring-2 focus:ring-sg-border-focus focus:ring-offset-2 disabled:pointer-events-none">
           <X className="h-4 w-4" />

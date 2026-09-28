@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : activity_welcome.xml
+  Description : Branded landing screen shown once per cold start, after the native splash
+                flash and before LoginActivity. Purely presentational — logo, app name,
+                tagline and a single "Get Started" CTA. No form, so the MaterialCardView
+                used on the login screen is skipped in favour of a full-bleed layout.
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens per
+                ui-design-system.md §22.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sg_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/sg_space_6">
+
+        <!-- Top spacer to vertically center the content -->
+        <android.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Soft radial wash + logo -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6">
+
+            <View
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_gravity="center"
+                android:background="@drawable/welcome_glow_bg" />
+
+            <ImageView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/logo" />
+        </FrameLayout>
+
+        <!-- App title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_1"
+            android:text="@string/welcome_title"
+            android:textColor="@color/sg_text"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <!-- Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/welcome_tagline"
+            android:textColor="@color/sg_text_secondary"
+            android:textSize="16sp" />
+
+        <!-- Bottom spacer -->
+        <android.widget.Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Get Started CTA -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetStarted"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:text="@string/welcome_cta"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:backgroundTint="@color/sg_primary"
+            app:cornerRadius="@dimen/sg_radius_md" />
+
+    </LinearLayout>
+</FrameLayout>
