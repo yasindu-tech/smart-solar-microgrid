@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Trash2, Zap } from 'lucide-react'
 import { useCreateNode, useNodes } from '../../api/NodesApi'
 import type { ApiRequestError } from '../../api/types'
-import LocationPicker, { type PickedLocation } from '../../components/LocationPicker/LocationPicker'
+import LocationPicker from '../../components/LocationPicker/LocationPicker'
 import SolarLoader from '../../components/SolarLoader/SolarLoader'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card'
@@ -22,6 +22,7 @@ import {
 } from '../../components/ui/sheet'
 import { DAYS_OF_WEEK } from '../../lib/constants'
 import { useToast } from '../../lib/useToast'
+import type { PickedLocation } from '../../types/LocationTypes'
 import type { Node, NodeType, ScheduleWindow } from '../../types/NodeTypes'
 
 const EMPTY_SCHEDULE_WINDOW: ScheduleWindow = { dayOfWeek: 'Mon', openTime: '', closeTime: '' }

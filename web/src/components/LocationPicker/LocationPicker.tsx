@@ -2,33 +2,26 @@
  * LocationPicker - pick a node's position by searching for a place or dropping a
  * pin on a map, instead of typing raw coordinates.
  *
- * This is a UI convenience only. Latitude/longitude ranges, and every other node
- * rule, are still validated by the Web API (REQ-NODE 4.1 step 3, AC-2). The map is
- * the only way to set a position, so the caller should keep submit disabled until
- * `value.latitude`/`value.longitude` are filled - a hint, not a rule.
+ * A UI convenience only. Coordinate ranges, and every other node rule, are still
+ * validated by the Web API (REQ-NODE 4.1 step 3, AC-2). The map is the only way to
+ * set a position, so the caller should keep submit disabled until `value.latitude`
+ * and `value.longitude` are filled - a hint, not a rule.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Crosshair, Loader2, MapPin, Search, X } from 'lucide-react'
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
+  GEOCODE_DEBOUNCE_MS,
+  MAX_PLACE_SUGGESTIONS,
   PINNED_MAP_ZOOM,
   SUNGRID_MAP_ID,
-  formatCoordinates,
-  isGoogleMapsConfigured,
-  loadGoogleMaps,
-  roundCoordinate,
-} from '../../lib/googleMaps'
-import { GEOCODE_DEBOUNCE_MS, MAX_PLACE_SUGGESTIONS } from '../../lib/constants'
+} from '../../lib/constants'
+import { isGoogleMapsConfigured, loadGoogleMaps } from '../../lib/googleMaps'
+import { formatCoordinates, roundCoordinate } from '../../lib/utils'
+import type { MapStatus, PickedLocation, PlaceSuggestion } from '../../types/LocationTypes'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-
-/** The three fields the picker owns on the node form. */
-export interface PickedLocation {
-  latitude: string
-  longitude: string
-  addressLine: string
-}
 
 export interface LocationPickerProps {
   value: PickedLocation
@@ -36,19 +29,6 @@ export interface LocationPickerProps {
   /** Rendered under the map; use it for the API's field-level error. */
   error?: string
 }
-
-/** One row in the search dropdown, normalised across Places and Geocoder results. */
-interface PlaceSuggestion {
-  id: string
-  primary: string
-  secondary: string
-  /** Present for Geocoder hits, which already carry coordinates. */
-  position?: google.maps.LatLngLiteral
-  /** Present for Places hits, which need a follow-up fetch. */
-  placePrediction?: google.maps.places.PlacePrediction
-}
-
-type MapStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 export default function LocationPicker({ value, onChange, error }: LocationPickerProps) {
   const mapNodeRef = useRef<HTMLDivElement | null>(null)
@@ -73,14 +53,13 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
   const hasPin =
     value.latitude !== '' && value.longitude !== '' && !Number.isNaN(latitude) && !Number.isNaN(longitude)
 
-  // `onChange` is read through a ref inside map callbacks so the map is built
-  // once and never torn down just because the parent re-rendered.
+  // Read through refs inside map callbacks, so the map is built once and never
+  // torn down just because the parent re-rendered.
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
   const valueRef = useRef(value)
   valueRef.current = value
 
-  /** Writes a picked position back to the form, optionally with a fresh address. */
   const commitPosition = useCallback((position: google.maps.LatLngLiteral, addressLine?: string) => {
     onChangeRef.current({
       latitude: String(roundCoordinate(position.lat)),
@@ -89,7 +68,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     })
   }, [])
 
-  /** Looks up a human address for a dropped pin so the operator rarely types one. */
   const reverseGeocode = useCallback(
     async (position: google.maps.LatLngLiteral) => {
       const geocoder = geocoderRef.current
@@ -103,14 +81,13 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
         const formatted = results[0]?.formatted_address
         if (formatted) commitPosition(position, formatted)
       } catch {
-        // A failed lookup is not an error the operator needs to act on - the
-        // coordinates are already correct and the address stays editable.
+        // The coordinates are already right and the address stays editable, so a
+        // failed lookup is nothing the operator needs to act on.
       }
     },
     [commitPosition],
   )
 
-  /** Moves the pin, recentres the map and refreshes the address line. */
   const placePin = useCallback(
     (position: google.maps.LatLngLiteral, addressLine?: string) => {
       commitPosition(position, addressLine)
@@ -128,7 +105,7 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     [commitPosition, reverseGeocode],
   )
 
-  // Build the map once, on mount. Everything after this point mutates it.
+  // Build the map once, on mount; everything after this point mutates it.
   useEffect(() => {
     if (!isGoogleMapsConfigured()) {
       setStatus('error')
@@ -173,7 +150,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
           title: 'Node location',
         })
 
-        // Click anywhere to drop the pin; drag it for fine adjustment.
         map.addListener('click', (event: google.maps.MapMouseEvent) => {
           if (event.latLng) placePin(event.latLng.toJSON())
         })
@@ -198,7 +174,7 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     }
   }, [placePin])
 
-  // Keep the marker in step with coordinates typed into the manual fields.
+  // Keep the marker in step if the parent changes the coordinates.
   useEffect(() => {
     const marker = markerRef.current
     if (!marker || status !== 'ready') return
@@ -278,7 +254,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     }
   }, [query, status])
 
-  /** Applies a chosen suggestion: pin it, label it, and close the dropdown. */
   const handleSelectSuggestion = async (suggestion: PlaceSuggestion) => {
     setSuggestions([])
 
@@ -295,7 +270,7 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     try {
       const place = prediction.toPlace()
       await place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] })
-      // The token is single-use per resolved place; drop it so the next search bills fresh.
+      // Single-use per resolved place; drop it so the next search bills fresh.
       sessionTokenRef.current = null
 
       const location = place.location
@@ -309,7 +284,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     }
   }
 
-  /** Centres on the operator's own device position - handy when they are on site. */
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
       setStatusMessage('This browser cannot share a location.')
@@ -339,7 +313,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
     <div className="flex flex-col gap-3">
       <Label htmlFor="node-location-search">Location</Label>
 
-      {/* Search box + suggestion list */}
       <div className="sg-map-search">
         <Search size={15} className="sg-map-search-icon" aria-hidden="true" />
         <Input
@@ -397,7 +370,6 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
         ) : null}
       </div>
 
-      {/* The map itself, with its loading and error states */}
       <div className="sg-map-frame">
         <div ref={mapNodeRef} className="sg-map-canvas" role="application" aria-label="Node location map" />
 
@@ -433,7 +405,7 @@ export default function LocationPicker({ value, onChange, error }: LocationPicke
         ) : null}
       </div>
 
-      {/* What was picked, in plain text - never colour alone (design system 23) */}
+      {/* Plain text, never colour alone - ui-design-system.md 23 */}
       <div className="sg-map-readout">
         <MapPin size={14} className={hasPin ? 'text-sg-primary' : 'text-sg-text-muted'} aria-hidden="true" />
         <span className={hasPin ? 'font-mono' : 'text-sg-text-muted'}>{coordinateLabel}</span>
