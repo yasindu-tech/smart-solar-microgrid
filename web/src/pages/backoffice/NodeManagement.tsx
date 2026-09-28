@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { BatteryCharging, CalendarClock, MapPin, Plus, Radio, Trash2, Zap } from 'lucide-react'
 import { useCreateNode, useNodes } from '../../api/NodesApi'
 import type { ApiRequestError } from '../../api/types'
+import LocationPicker, { type PickedLocation } from '../../components/LocationPicker/LocationPicker'
 import SolarLoader from '../../components/SolarLoader/SolarLoader'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '../../components/ui/card'
@@ -94,6 +95,22 @@ export default function NodeManagement() {
     }))
   }
 
+  // The three location fields the picker owns, lifted out of the flat form state.
+  const location: PickedLocation = {
+    latitude: form.latitude,
+    longitude: form.longitude,
+    addressLine: form.addressLine,
+  }
+
+  const handleLocationChange = (next: PickedLocation) => {
+    setForm((p) => ({ ...p, ...next }))
+  }
+
+  // A UI hint only (ui-design-system.md 8): the map is the sole way to set a
+  // position, and an empty one would post 0,0 - a coordinate the API considers
+  // perfectly valid. Every node rule itself is still enforced server-side.
+  const hasLocation = form.latitude !== '' && form.longitude !== ''
+
   const nodes = data?.items ?? []
 
   return (
@@ -112,7 +129,7 @@ export default function NodeManagement() {
         </Button>
 
         <Sheet open={isDialogOpen} onOpenChange={setDialogOpen}>
-          <SheetContent className="p-0">
+          <SheetContent size="lg" className="p-0">
             <form onSubmit={handleSubmit} className="flex h-full flex-col">
               <SheetHeader>
                 <div className="flex items-center gap-3">
@@ -136,43 +153,7 @@ export default function NodeManagement() {
                     required
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="addressLine">Address</Label>
-                  <Input
-                    id="addressLine"
-                    value={form.addressLine}
-                    onChange={(e) => setForm((p) => ({ ...p, addressLine: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      min={-90}
-                      max={90}
-                      value={form.latitude}
-                      onChange={(e) => setForm((p) => ({ ...p, latitude: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      min={-180}
-                      max={180}
-                      value={form.longitude}
-                      onChange={(e) => setForm((p) => ({ ...p, longitude: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
+                <LocationPicker value={location} onChange={handleLocationChange} />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="capacityKwh">Capacity (kWh)</Label>
@@ -283,7 +264,7 @@ export default function NodeManagement() {
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isCreating}>
+                <Button type="submit" disabled={isCreating || !hasLocation}>
                   {isCreating ? 'Creating...' : 'Create node'}
                 </Button>
               </SheetFooter>

@@ -34,3 +34,9 @@ export const RESERVATION_STATUSES = ['Pending', 'Approved', 'Cancelled', 'Comple
 export type ReservationStatus = (typeof RESERVATION_STATUSES)[number]
 
 export const DEFAULT_PAGE_SIZE = 10
+
+// Location picker: how long to wait after the last keystroke before asking
+// Google for suggestions, and how many of them to show.
+export const GEOCODE_DEBOUNCE_MS = 350
+export const MAX_PLACE_SUGGESTIONS = 5
+
