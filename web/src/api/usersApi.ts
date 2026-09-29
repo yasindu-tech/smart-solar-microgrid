@@ -1,6 +1,6 @@
 import apiClient from './client'
 import type { WebUser, CreateUserRequest, UpdateUserRequest } from '../types/UserTypes'
-import type { PagedResponse } from '../types/PagedResponse'
+import type { PagedResponse } from '../types/CommonTypes'
 
 /** GET /users — paginated list, optional role filter. */
 export async function fetchUsers(
