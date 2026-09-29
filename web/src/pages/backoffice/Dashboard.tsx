@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
-import { Users, Clock, Battery, CalendarCheck, ArrowRight } from 'lucide-react'
+import { Users, Clock, Battery, CalendarCheck, ArrowRight, RotateCw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { useBackofficeDashboard } from '../../api/DashboardApi'
 import SolarLoader from '../../components/SolarLoader/SolarLoader'
 
 export default function Dashboard() {
-  const { data, isLoading, isError } = useBackofficeDashboard()
+  const { data, isLoading, isError, refetch, isFetching } = useBackofficeDashboard()
 
   const stats = [
     {
@@ -44,32 +44,44 @@ export default function Dashboard() {
     {
       status: 'Pending',
       count: byStatus.Pending ?? byStatus.pending ?? 0,
-      color: 'text-amber-700 dark:text-amber-500',
     },
     {
       status: 'Approved',
       count: byStatus.Approved ?? byStatus.approved ?? 0,
-      color: 'text-emerald-700 dark:text-emerald-500',
     },
     {
       status: 'Completed',
       count: byStatus.Completed ?? byStatus.completed ?? 0,
-      color: 'text-sky-700 dark:text-sky-500',
     },
     {
       status: 'Cancelled',
       count: byStatus.Cancelled ?? byStatus.cancelled ?? 0,
-      color: 'text-red-700 dark:text-red-500',
+    },
+    {
+      status: 'Expired',
+      count: byStatus.Expired ?? byStatus.expired ?? 0,
     },
   ]
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="sg-h3">Overview</h2>
-        <p className="sg-body-sm text-sg-text-secondary">
-          Snapshot of prosumers, nodes and reservations across the grid.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="sg-h3">Overview</h2>
+          <p className="sg-body-sm text-sg-text-secondary">
+            Snapshot of prosumers, nodes and reservations across the grid.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isLoading || isFetching}
+          className="flex items-center gap-1.5 rounded-lg border border-sg-border bg-sg-surface px-3 py-1.5 text-xs font-medium text-sg-text-secondary transition-colors hover:bg-sg-surface-muted hover:text-sg-text focus:outline-none disabled:opacity-50"
+          title="Refresh metrics"
+        >
+          <RotateCw size={13} className={isFetching ? 'animate-spin' : ''} />
+          <span>Refresh</span>
+        </button>
       </div>
 
       {isLoading ? (
@@ -77,8 +89,15 @@ export default function Dashboard() {
           <SolarLoader showLabel label="Loading dashboard metrics..." />
         </div>
       ) : isError ? (
-        <div className="sg-alert sg-alert-danger" role="alert">
-          Could not load dashboard metrics. Please verify the backend connection and try again.
+        <div className="sg-alert sg-alert-danger flex items-center justify-between" role="alert">
+          <span>Could not load dashboard metrics. Please verify the backend connection and try again.</span>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="ml-4 rounded-md border border-sg-danger/40 bg-white/80 px-2.5 py-1 text-xs font-semibold text-sg-danger hover:bg-white"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <>
@@ -91,7 +110,7 @@ export default function Dashboard() {
                 className="group block transition-transform focus:outline-none"
               >
                 <Card
-                  className={`h-full border border-sg-border bg-sg-surface transition-all group-hover:border-sg-primary/60 group-hover:shadow-sm`}
+                  className="h-full border border-sg-border bg-sg-surface transition-all group-hover:border-sg-primary/60 group-hover:shadow-sm"
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-sg-text-secondary">
@@ -133,7 +152,7 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent className="pt-5">
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {reservationsByStatus.map(({ status, count }) => (
                   <Link
                     key={status}
