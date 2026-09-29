@@ -13,6 +13,19 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- External map intents query visibility for Android 11+ -->
+    <queries>
+        <package android:name="com.google.android.apps.maps" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
+
     <application
         android:name=".SmartSolarApp"
         android:allowBackup="false"
@@ -77,7 +90,8 @@
         <activity
             android:name=".ui.map.MapActivity"
             android:exported="false"
-            android:label="@string/title_activity_map" />
+            android:label="@string/title_activity_map"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
 
         <!-- Create Booking screen (D3) -->
         <activity

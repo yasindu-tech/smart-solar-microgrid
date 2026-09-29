@@ -12,6 +12,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/sg_surface"
         android:orientation="vertical"
         android:padding="20dp">
 
@@ -127,6 +128,20 @@
             android:text="@string/map_book_here"
             android:textAllCaps="false"
             app:cornerRadius="8dp" />
+
+        <!-- Action Button: Get Directions -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGetDirections"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/map_get_directions"
+            android:textAllCaps="false"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_directions"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

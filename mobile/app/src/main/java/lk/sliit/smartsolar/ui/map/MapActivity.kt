@@ -14,9 +14,11 @@ package lk.sliit.smartsolar.ui.map
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -396,6 +398,31 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 putExtra(CreateBookingActivity.EXTRA_NODE_ID, node.nodeId)
             }
             startActivity(intent)
+        }
+
+        // Get Directions button: opens Google Maps for navigation/directions to the selected node's location
+        val lat = node.location?.latitude
+        val lng = node.location?.longitude
+        sheetBinding.btnGetDirections.isEnabled = (lat != null && lng != null)
+        sheetBinding.btnGetDirections.setOnClickListener {
+            if (lat != null && lng != null) {
+                val mapsUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lng")
+                val mapIntent = Intent(Intent.ACTION_VIEW, mapsUri).apply {
+                    setPackage("com.google.android.apps.maps")
+                }
+                try {
+                    startActivity(mapIntent)
+                } catch (_: ActivityNotFoundException) {
+                    val fallbackIntent = Intent(Intent.ACTION_VIEW, mapsUri)
+                    try {
+                        startActivity(fallbackIntent)
+                    } catch (_: Exception) {
+                        Toast.makeText(this, getString(R.string.map_no_maps_app_found), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.map_location_not_available), Toast.LENGTH_SHORT).show()
+            }
         }
 
         dialog.show()

@@ -108,6 +108,9 @@
     <!-- Map screen (REQ-VIEW §2.5) -->
     <string name="title_activity_map">Nearby Microgrid Nodes</string>
     <string name="map_book_here">Book Here</string>
+    <string name="map_get_directions">Get Directions</string>
+    <string name="map_no_maps_app_found">No maps application found</string>
+    <string name="map_location_not_available">Node location unavailable</string>
     <string name="map_capacity">Capacity: %1$.1f kWh</string>
     <string name="map_battery_slots">Battery Slots: %1$d</string>
     <string name="map_type">Type: %1$s</string>
