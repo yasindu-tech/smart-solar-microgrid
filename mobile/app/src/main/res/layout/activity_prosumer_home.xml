@@ -1,149 +1,429 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Layout      : activity_prosumer_home.xml
+  Description : Prosumer dashboard (REQ-VIEW §2.1). Renders the active/pending counts,
+                the next upcoming reservation and quick actions. Every number shown is
+                bound straight from the GET /dashboard/prosumer response — nothing here
+                is derived from a cached list (AC-13).
+
+                Layout is a full-bleed brand hero (greeting) followed by a padded content
+                column: stat tiles, the next-reservation card, then icon quick actions.
+                SwipeRefreshLayout > ScrollView, so pull-to-refresh re-fetches from the
+                API (EC-4 — the cache is never authoritative, BR-14). The offline banner
+                (cardOfflineBanner) reuses the MaterialCardView treatment from
+                activity_profile.xml and shows when a fetch fails or cached rows are
+                older than 24h (EC-6).
+
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens per
+                ui-design-system.md §22.
+-->
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sg_bg"
-    android:fillViewport="true">
+    android:background="@color/sg_bg">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="@dimen/sg_space_6">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-        <!-- Offline banner (hidden when online) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardOfflineBanner"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_4"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/sg_warning_soft"
-            app:cardCornerRadius="@dimen/sg_radius_md"
-            app:cardElevation="0dp">
+            android:orientation="vertical">
 
-            <TextView
+            <!-- ===== Brand hero: greeting instead of a centred splash header ===== -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="@dimen/sg_space_3"
-                android:text="@string/offline_banner_text"
-                android:textAlignment="center"
-                android:textColor="@color/sg_warning"
-                android:textSize="13sp" />
-        </com.google.android.material.card.MaterialCardView>
+                android:background="@drawable/dashboard_header_bg"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/sg_space_6"
+                android:paddingTop="@dimen/sg_space_6"
+                android:paddingEnd="@dimen/sg_space_6"
+                android:paddingBottom="@dimen/sg_space_8">
 
-        <!-- SunGrid logo -->
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginBottom="@dimen/sg_space_6"
-            android:contentDescription="@string/app_name"
-            android:src="@drawable/logo" />
+                <!-- Top navbar row: brand lockup left, profile avatar right -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_5"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-        <!-- Home title -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_2"
-            android:text="@string/prosumer_home_title"
-            android:textColor="@color/sg_primary"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@string/app_name"
+                        android:src="@drawable/logo" />
 
-        <!-- Welcome message -->
-        <TextView
-            android:id="@+id/tvWelcome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_2"
-            android:textColor="@color/sg_text"
-            android:textSize="18sp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        android:text="@string/app_name"
+                        android:textColor="@color/sg_text_on_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
-        <!-- Role badge -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_8"
-            android:text="@string/role_prosumer"
-            android:textColor="@color/sg_text_secondary"
-            android:textSize="14sp" />
+                    <!-- Opens the profile dropdown (details + My Profile + Log out) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnProfileMenu"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="@string/profile_menu_cd"
+                        android:insetBottom="0dp"
+                        android:insetLeft="0dp"
+                        android:insetRight="0dp"
+                        android:insetTop="0dp"
+                        android:minWidth="0dp"
+                        android:minHeight="0dp"
+                        android:padding="0dp"
+                        app:backgroundTint="@color/sg_primary_soft"
+                        app:cornerRadius="@dimen/sg_radius_full"
+                        app:icon="@drawable/ic_profile"
+                        app:iconGravity="textStart"
+                        app:iconPadding="0dp"
+                        app:iconTint="@color/sg_primary" />
+                </LinearLayout>
 
-        <!-- Placeholder message for D3's dashboard widgets -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/sg_space_4"
-            app:cardBackgroundColor="@color/sg_primary_soft"
-            app:cardCornerRadius="@dimen/sg_radius_md"
-            app:cardElevation="0dp">
+                <!-- Greeting -->
+                <TextView
+                    android:id="@+id/tvWelcome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/sg_text_on_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
 
-            <TextView
+                <!-- Role line -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sg_space_1"
+                    android:alpha="0.85"
+                    android:text="@string/role_prosumer"
+                    android:textColor="@color/sg_text_on_primary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- ===== Content column ===== -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="@dimen/sg_space_4"
-                android:text="@string/home_placeholder"
-                android:textAlignment="center"
-                android:textColor="@color/sg_primary"
-                android:textSize="14sp" />
-        </com.google.android.material.card.MaterialCardView>
+                android:orientation="vertical"
+                android:paddingStart="@dimen/sg_space_6"
+                android:paddingTop="@dimen/sg_space_6"
+                android:paddingEnd="@dimen/sg_space_6"
+                android:paddingBottom="@dimen/sg_space_6">
 
-        <!-- Navigation buttons (My Profile, My Bookings, Map) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnProfile"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="@dimen/sg_space_4"
-            android:text="@string/nav_profile"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            app:backgroundTint="@color/sg_surface"
-            app:cornerRadius="@dimen/sg_radius_md"
-            app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
-            android:textColor="@color/sg_text" />
+                <!-- Offline banner (hidden when online) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardOfflineBanner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/sg_warning_soft"
+                    app:cardCornerRadius="@dimen/sg_radius_md"
+                    app:cardElevation="0dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBookings"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="@dimen/sg_space_4"
-            android:text="@string/nav_bookings"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            app:backgroundTint="@color/sg_surface"
-            app:cornerRadius="@dimen/sg_radius_md"
-            app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
-            android:textColor="@color/sg_text" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/sg_space_3"
+                        android:text="@string/offline_banner_text"
+                        android:textAlignment="center"
+                        android:textColor="@color/sg_warning_text"
+                        android:textSize="13sp" />
+                </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnMap"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="@dimen/sg_space_8"
-            android:text="@string/nav_map"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            app:backgroundTint="@color/sg_surface"
-            app:cornerRadius="@dimen/sg_radius_md"
-            app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp"
-            android:textColor="@color/sg_text" />
+                <!-- ===== Stat tiles: Active / Pending (AC-1, AC-2, AC-13) ===== -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
 
-        <!-- Logout button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogout"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginBottom="@dimen/sg_space_4"
-            android:text="@string/logout_btn"
-            android:textAllCaps="false"
-            android:textColor="@color/sg_danger"
-            app:cornerRadius="@dimen/sg_radius_md"
-            app:strokeColor="@color/sg_danger" />
+                    <!-- Active count -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardActive"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@color/sg_primary_soft"
+                        app:cardCornerRadius="@dimen/sg_radius_lg"
+                        app:cardElevation="0dp">
 
-    </LinearLayout>
-</ScrollView>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="@dimen/sg_space_4">
+
+                            <TextView
+                                android:id="@+id/tvActiveCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_count_unavailable"
+                                android:textColor="@color/sg_primary"
+                                android:textSize="34sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_active_label"
+                                android:textColor="@color/sg_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Pending count -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardPending"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@color/sg_warning_soft"
+                        app:cardCornerRadius="@dimen/sg_radius_lg"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="@dimen/sg_space_4">
+
+                            <TextView
+                                android:id="@+id/tvPendingCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_count_unavailable"
+                                android:textColor="@color/sg_warning_text"
+                                android:textSize="34sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_pending_label"
+                                android:textColor="@color/sg_warning_text"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- ===== Next reservation (EC-1 empty state when null) ===== -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardNextReservation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_6"
+                    app:cardBackgroundColor="@color/sg_surface"
+                    app:cardCornerRadius="@dimen/sg_radius_lg"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/sg_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/sg_space_4">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/sg_space_3"
+                            android:text="@string/dashboard_next_title"
+                            android:textColor="@color/sg_text_muted"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <!-- Populated state: accent stripe, details, status chip. The chip
+                             lives inside this container so the empty state can never leave
+                             a stale status behind. -->
+                        <LinearLayout
+                            android:id="@+id/layoutNextContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+
+                            <View
+                                android:layout_width="4dp"
+                                android:layout_height="match_parent"
+                                android:layout_marginEnd="@dimen/sg_space_3"
+                                android:background="@drawable/accent_stripe_primary" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvNextNode"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/sg_text"
+                                    android:textSize="17sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvNextDate"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/sg_space_1"
+                                    android:textColor="@color/sg_text_secondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvNextTime"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/sg_text"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tvNextStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/sg_space_2"
+                                android:background="@drawable/badge_bg"
+                                android:paddingStart="@dimen/sg_space_3"
+                                android:paddingTop="@dimen/sg_space_1"
+                                android:paddingEnd="@dimen/sg_space_3"
+                                android:paddingBottom="@dimen/sg_space_1"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- EC-1 empty state: clear call to action, never a blank card -->
+                        <LinearLayout
+                            android:id="@+id/layoutNextEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/sg_space_2"
+                                android:layout_marginBottom="@dimen/sg_space_4"
+                                android:text="@string/dashboard_next_empty"
+                                android:textColor="@color/sg_text_muted"
+                                android:textSize="14sp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnBookNow"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:text="@string/dashboard_book_now"
+                                android:textAllCaps="false"
+                                android:textSize="15sp"
+                                app:backgroundTint="@color/sg_primary"
+                                app:cornerRadius="@dimen/sg_radius_md" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ===== Quick actions ===== -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_3"
+                    android:text="@string/dashboard_quick_actions"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_8"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBookings"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        android:insetBottom="0dp"
+                        android:insetTop="0dp"
+                        android:maxLines="2"
+                        android:minHeight="84dp"
+                        android:paddingStart="@dimen/sg_space_1"
+                        android:paddingEnd="@dimen/sg_space_1"
+                        android:text="@string/nav_bookings"
+                        android:textAllCaps="false"
+                        android:textColor="@color/sg_text"
+                        android:textSize="12sp"
+                        app:backgroundTint="@color/sg_surface"
+                        app:cornerRadius="@dimen/sg_radius_lg"
+                        app:icon="@drawable/ic_bookings"
+                        app:iconGravity="top"
+                        app:iconPadding="@dimen/sg_space_2"
+                        app:iconTint="@color/sg_primary"
+                        app:strokeColor="@color/sg_border"
+                        app:strokeWidth="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnMap"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/sg_space_2"
+                        android:layout_weight="1"
+                        android:insetBottom="0dp"
+                        android:insetTop="0dp"
+                        android:maxLines="2"
+                        android:minHeight="84dp"
+                        android:paddingStart="@dimen/sg_space_1"
+                        android:paddingEnd="@dimen/sg_space_1"
+                        android:text="@string/nav_map"
+                        android:textAllCaps="false"
+                        android:textColor="@color/sg_text"
+                        android:textSize="12sp"
+                        app:backgroundTint="@color/sg_surface"
+                        app:cornerRadius="@dimen/sg_radius_lg"
+                        app:icon="@drawable/ic_map"
+                        app:iconGravity="top"
+                        app:iconPadding="@dimen/sg_space_2"
+                        app:iconTint="@color/sg_primary"
+                        app:strokeColor="@color/sg_border"
+                        app:strokeWidth="1dp" />
+
+                </LinearLayout>
+
+                <!-- Loading indicator for the initial fetch (pull-to-refresh has its own spinner) -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:indeterminateTint="@color/sg_primary"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

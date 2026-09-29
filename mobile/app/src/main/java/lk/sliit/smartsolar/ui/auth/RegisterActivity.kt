@@ -107,7 +107,7 @@ class RegisterActivity : AppCompatActivity() {
                 }
 
                 if (response.isSuccessful) {
-                    Toast.makeText(this@RegisterActivity, "Account created — awaiting Backoffice approval", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@RegisterActivity, R.string.register_success_awaiting_approval, Toast.LENGTH_LONG).show()
                     finish() // Return to login screen
                 } else {
                     handleApiError(response.errorBody()?.string())
@@ -128,10 +128,16 @@ class RegisterActivity : AppCompatActivity() {
 
         try {
             val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
-            if (error.code == "E4001" && error.message?.contains("NIC") == true) {
-                binding.tilNic.error = error.message
-            } else {
-                showError(error.message ?: getString(R.string.login_error_generic))
+            val field = error?.field?.lowercase()
+            when (field) {
+                "nic" -> binding.tilNic.error = error.message
+                "fullname", "name" -> binding.tilFullName.error = error.message
+                "email" -> binding.tilEmail.error = error.message
+                "phone" -> binding.tilPhone.error = error.message
+                "address" -> binding.tilAddress.error = error.message
+                "solarcapacitykw", "solarcapacity" -> binding.tilSolarCapacity.error = error.message
+                "password" -> binding.tilPassword.error = error.message
+                else -> showError(error?.message ?: getString(R.string.login_error_generic))
             }
         } catch (_: Exception) {
             showError(getString(R.string.login_error_generic))

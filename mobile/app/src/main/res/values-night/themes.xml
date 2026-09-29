@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Night-mode theme overrides.
+
+  The SunGrid design system (base.css / colors.xml) defines a LIGHT palette only — there is no
+  dark counterpart for any sg_* token. The app theme is Theme.Material3.DayNight, so under night
+  mode Material was resolving the attributes we do NOT set explicitly (hint text, unfocused box
+  stroke, the password-toggle icon tint) from its own dark defaults, while our layouts kept the
+  card pinned to sg_surface (#FFFFFF). The result was light-on-white: hints and the eye icon were
+  nearly invisible on the login card.
+
+  Until a dark palette is agreed and added to base.css + colors.xml in the same PR (see §22 — the
+  two files are kept in sync by hand), the fix is to pin Material's surface/on-surface attributes
+  to the existing light tokens so night mode renders the designed light palette rather than a
+  half-dark hybrid. No new hex values are introduced here.
+
+  NOTE: a values-night style REPLACES rather than merges with its values/ namesake, so every item
+  from Theme.SmartSolar is restated below.
+-->
+<resources>
+    <style name="Theme.SmartSolar" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- SunGrid Primary & Brand Colors (identical to values/themes.xml) -->
+        <item name="colorPrimary">@color/sg_primary</item>
+        <item name="colorPrimaryVariant">@color/sg_primary_hover</item>
+        <item name="colorOnPrimary">@color/sg_text_on_primary</item>
+        <item name="colorSecondary">@color/sg_secondary</item>
+        <item name="colorOnSecondary">@color/sg_white</item>
+        <item name="android:colorBackground">@color/sg_bg</item>
+
+        <!-- Status Bar Styling (identical to values/themes.xml) -->
+        <item name="android:statusBarColor">@color/sg_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Night-mode pins: keep Material's surface family on the light tokens so text, strokes
+             and icons stay legible against sg_surface / sg_bg. -->
+        <item name="isLightTheme">true</item>
+        <!-- Material3 composites a colorSurfaceTint overlay onto elevated surfaces under night
+             mode, which tinted the login card blue instead of the sg_surface white the layout
+             declares. Turn the overlay off so the declared card color is honoured; the card's
+             own radius/elevation/stroke are untouched. -->
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorSurface">@color/sg_surface</item>
+        <item name="colorOnSurface">@color/sg_text</item>
+        <item name="colorSurfaceVariant">@color/sg_surface_muted</item>
+        <item name="colorOnSurfaceVariant">@color/sg_text_muted</item>
+        <item name="colorOnBackground">@color/sg_text</item>
+        <item name="colorOutline">@color/sg_border_strong</item>
+        <item name="colorOutlineVariant">@color/sg_border</item>
+        <item name="colorError">@color/sg_danger</item>
+        <item name="android:textColorHint">@color/sg_text_muted</item>
+        <item name="android:textColorPrimary">@color/sg_text</item>
+        <item name="android:textColorSecondary">@color/sg_text_secondary</item>
+    </style>
+</resources>

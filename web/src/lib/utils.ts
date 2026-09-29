@@ -91,3 +91,11 @@ export function isWithinNoticeWindow(slotStartTimeIso?: string, minHours = 12): 
   return diffHours >= minHours
 }
 
+// Rounds a coordinate to ~1 m precision so the form never carries float noise.
+export function roundCoordinate(value: number): number {
+  return Number(value.toFixed(6))
+}
+
+export function formatCoordinates(latitude: number, longitude: number): string {
+  return `${roundCoordinate(latitude)}, ${roundCoordinate(longitude)}`
+}

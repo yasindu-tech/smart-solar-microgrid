@@ -60,9 +60,21 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Native splash screen (Android 12+ API, backported to minSdk via this library) — brand flash
+    // shown by WelcomeActivity before any screen draws.
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // Pull-to-refresh on the prosumer dashboard (REQ-VIEW §2.1) — re-fetches from the API so the
+    // cache is never the authoritative source (BR-14, EC-4).
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // Today's-reservations list on the operator dashboard (REQ-VIEW §2.3).
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // Networking to the Web API - the only source of business decisions.
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

@@ -28,7 +28,7 @@
             android:visibility="gone"
             app:cardBackgroundColor="@color/sg_warning_soft"
             app:cardCornerRadius="@dimen/sg_radius_md"
-            app:cardElevation="0dp">
+            app:cardElevation="@dimen/sg_card_elevation_none">
 
             <TextView
                 android:layout_width="match_parent"
@@ -67,9 +67,9 @@
             android:layout_marginBottom="@dimen/sg_space_5"
             app:cardBackgroundColor="@color/sg_surface"
             app:cardCornerRadius="@dimen/sg_radius_lg"
-            app:cardElevation="2dp"
+            app:cardElevation="@dimen/sg_card_elevation"
             app:strokeColor="@color/sg_border"
-            app:strokeWidth="1dp">
+            app:strokeWidth="@dimen/sg_card_stroke">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -181,8 +181,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/sg_space_2"
                     android:background="@drawable/badge_bg"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="@dimen/sg_badge_padding_horizontal"
+                    android:paddingVertical="@dimen/sg_space_1"
                     android:textColor="@color/sg_success"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -194,7 +194,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnEditProfile"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="@dimen/sg_btn_height"
             android:layout_marginBottom="@dimen/sg_space_3"
             android:text="@string/profile_btn_edit"
             android:textAllCaps="false"
@@ -207,7 +207,7 @@
             android:id="@+id/btnDeactivate"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="@dimen/sg_btn_height_sm"
             android:layout_marginBottom="@dimen/sg_space_6"
             android:text="@string/profile_btn_deactivate"
             android:textAllCaps="false"
