@@ -15,9 +15,11 @@
 package lk.sliit.smartsolar.ui.auth
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -36,10 +38,16 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var sessionManager: SessionManager
+    private var isCheckingAuth = true
 
     // Inflate the login screen and check for an existing valid session.
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // Keep the splash screen visible on screen while performing auto-login check
+        splashScreen.setKeepOnScreenCondition { isCheckingAuth }
+
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -58,12 +66,13 @@ class LoginActivity : AppCompatActivity() {
             val existingSession = sessionManager.getValidSession()
             if (existingSession != null) {
                 verifySessionAndNavigate(existingSession)
+            } else {
+                isCheckingAuth = false
             }
         }
     }
 
     private fun verifySessionAndNavigate(session: lk.sliit.smartsolar.data.local.SessionRow) {
-        setLoading(true)
         lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
@@ -72,18 +81,25 @@ class LoginActivity : AppCompatActivity() {
 
                 if (response.isSuccessful && response.body() != null) {
                     // Token is valid and account is active
+                    isCheckingAuth = false
                     navigateToHome(session.role, session.fullName)
-                } else if (response.code() == 401 || response.code() == 403) {
+                } else if (response.code() == 401) {
+                    sessionManager.clearSession()
+                    isCheckingAuth = false
+                    showError(getString(R.string.login_error_session_expired))
+                } else if (response.code() == 403) {
                     // EC-6: Account deactivated while token is still valid locally
                     sessionManager.clearSession()
+                    isCheckingAuth = false
                     showError(getString(R.string.login_error_inactive))
-                    setLoading(false)
                 } else {
                     // API error (500 etc), let them in anyway based on cache
+                    isCheckingAuth = false
                     navigateToHome(session.role, session.fullName)
                 }
             } catch (e: Exception) {
                 // Network error, let them in anyway based on cache (offline mode)
+                isCheckingAuth = false
                 navigateToHome(session.role, session.fullName)
             }
         }
@@ -207,6 +223,12 @@ class LoginActivity : AppCompatActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         startActivity(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, 0, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
         finish()
     }
 }

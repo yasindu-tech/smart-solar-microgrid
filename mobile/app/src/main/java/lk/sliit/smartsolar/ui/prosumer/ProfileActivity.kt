@@ -113,7 +113,7 @@ class ProfileActivity : AppCompatActivity() {
                     forceLogout()
                 } else {
                     // API error but we might have cache, so just show a toast
-                    Toast.makeText(this@ProfileActivity, "Failed to refresh profile", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ProfileActivity, R.string.profile_refresh_failed, Toast.LENGTH_SHORT).show()
                     binding.cardOfflineBanner.visibility = View.VISIBLE
                 }
             } catch (e: Exception) {
@@ -171,7 +171,7 @@ class ProfileActivity : AppCompatActivity() {
                 }
 
                 if (response.isSuccessful) {
-                    Toast.makeText(this@ProfileActivity, "Account deactivated successfully", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@ProfileActivity, R.string.profile_deactivate_success, Toast.LENGTH_LONG).show()
                     forceLogout()
                 } else {
                     val errorBody = response.errorBody()?.string()
@@ -179,7 +179,7 @@ class ProfileActivity : AppCompatActivity() {
                         val error = Gson().fromJson(errorBody, ErrorResponse::class.java)
                         Toast.makeText(this@ProfileActivity, error.message, Toast.LENGTH_LONG).show()
                     } catch (_: Exception) {
-                        Toast.makeText(this@ProfileActivity, "Failed to deactivate account", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@ProfileActivity, R.string.profile_deactivate_failed, Toast.LENGTH_LONG).show()
                     }
                     binding.btnDeactivate.isEnabled = true
                 }

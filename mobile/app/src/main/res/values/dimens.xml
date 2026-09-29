@@ -29,4 +29,15 @@
          or CircleCropTransformation / a fully-rounded shape appdrawable where that's more natural -->
     <dimen name="sg_radius_full">9999dp</dimen>
 
+    <!-- Component Tokens -->
+    <dimen name="sg_btn_height">52dp</dimen>
+    <dimen name="sg_btn_height_sm">48dp</dimen>
+    <dimen name="sg_card_elevation">2dp</dimen>
+    <dimen name="sg_card_elevation_none">0dp</dimen>
+    <dimen name="sg_card_stroke">1dp</dimen>
+    <dimen name="sg_logo_size_lg">120dp</dimen>
+    <dimen name="sg_logo_size_md">80dp</dimen>
+    <dimen name="sg_logo_size_sm">72dp</dimen>
+    <dimen name="sg_badge_padding_horizontal">10dp</dimen>
+
 </resources>
