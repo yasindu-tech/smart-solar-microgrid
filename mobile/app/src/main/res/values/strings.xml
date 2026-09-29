@@ -104,4 +104,19 @@
     <string name="operator_scan_qr">Scan QR</string>
     <string name="operator_scope_nodes">Your nodes: %1$s</string>
     <string name="operator_scope_none">No nodes assigned to your account</string>
+
+    <!-- Map screen (REQ-VIEW §2.5) -->
+    <string name="title_activity_map">Nearby Microgrid Nodes</string>
+    <string name="map_book_here">Book Here</string>
+    <string name="map_capacity">Capacity: %1$.1f kWh</string>
+    <string name="map_battery_slots">Battery Slots: %1$d</string>
+    <string name="map_type">Type: %1$s</string>
+    <string name="map_distance">%1$.2f km away</string>
+    <string name="map_nearby_nodes_header">%1$d active node(s) within %2$d km</string>
+    <string name="map_nearby_distance_format">%1$.1f km</string>
+    <string name="map_nearby_slots_format">%1$d slots</string>
+    <string name="map_nearby_capacity_format">%1$.0f kWh</string>
+    <string name="map_tap_to_reserve">Tap to reserve</string>
+    <string name="location_prompt_text">Location disabled. Showing Colombo default nodes.</string>
+    <string name="location_prompt_action">Enable</string>
 </resources>

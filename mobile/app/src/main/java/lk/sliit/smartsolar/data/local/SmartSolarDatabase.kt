@@ -51,12 +51,16 @@ class SmartSolarDatabase private constructor(context: Context) :
         db.execSQL(
             """
             CREATE TABLE node_cache (
-                node_id   TEXT PRIMARY KEY,
-                name      TEXT,
-                latitude  REAL,
-                longitude REAL,
-                is_active INTEGER,
-                synced_at INTEGER
+                node_id            TEXT PRIMARY KEY,
+                name               TEXT,
+                address_line       TEXT,
+                latitude           REAL,
+                longitude          REAL,
+                capacity_kwh       REAL,
+                battery_slot_count INTEGER,
+                type               TEXT,
+                is_active          INTEGER,
+                synced_at          INTEGER
             )
             """.trimIndent()
         )
@@ -96,7 +100,7 @@ class SmartSolarDatabase private constructor(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "smartsolar.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         @Volatile
         private var INSTANCE: SmartSolarDatabase? = null

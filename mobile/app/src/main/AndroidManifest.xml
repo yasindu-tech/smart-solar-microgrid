@@ -23,6 +23,11 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.SmartSolar">
 
+        <!-- Google Maps API Key injected from local.properties via manifestPlaceholders -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <!-- Welcome is the launcher activity — branded landing screen, entry point. -->
         <activity
             android:name=".ui.auth.WelcomeActivity"
@@ -66,6 +71,17 @@
             android:exported="false" />
         <activity
             android:name=".ui.prosumer.ProfileEditActivity"
+            android:exported="false" />
+
+        <!-- Nearby Microgrid Nodes Map screen -->
+        <activity
+            android:name=".ui.map.MapActivity"
+            android:exported="false"
+            android:label="@string/title_activity_map" />
+
+        <!-- Create Booking screen (D3) -->
+        <activity
+            android:name=".ui.prosumer.CreateBookingActivity"
             android:exported="false" />
 
     </application>
