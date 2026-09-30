@@ -60,7 +60,7 @@ export default function OperatorLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto">
         <header className="h-header border-b border-sg-border bg-sg-surface flex items-center justify-between px-8">
           <h1 className="sg-h3">Grid Operations</h1>
           <UserBadge displayName={user?.displayName} role={user?.role} />

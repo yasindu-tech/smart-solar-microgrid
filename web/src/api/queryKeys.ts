@@ -1,6 +1,7 @@
 import type { NodeListParams } from '../types/NodeTypes'
 import type { SlotListParams } from '../types/SlotTypes'
 import type { ReservationListParams } from '../types/ReservationTypes'
+import type { OperatorDashboardParams } from '../types/DashboardTypes'
 
 const AUTH = 'auth'
 const NODES = 'nodes'
@@ -33,6 +34,7 @@ const PROSUMERS = 'prosumers'
 export const dashboardQueryKeys = {
   BACKOFFICE: [DASHBOARD, 'backoffice'],
   PROSUMER: [DASHBOARD, 'prosumer'],
+  OPERATOR: (params?: OperatorDashboardParams) => [DASHBOARD, 'operator', params ?? {}],
 }
 
 export const prosumerQueryKeys = {
