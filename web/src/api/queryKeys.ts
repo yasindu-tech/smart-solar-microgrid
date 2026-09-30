@@ -38,6 +38,8 @@ export const dashboardQueryKeys = {
 }
 
 export const prosumerQueryKeys = {
+  ALL: [PROSUMERS],
+  LIST: (params?: Record<string, unknown>) => [PROSUMERS, 'list', params ?? {}],
   DETAIL: (nic: string) => [PROSUMERS, 'detail', nic],
 }
 

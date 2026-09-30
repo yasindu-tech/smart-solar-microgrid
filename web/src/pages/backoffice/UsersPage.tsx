@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { fetchUsers, setUserStatus } from '../../api/usersApi'
 import type { WebUser } from '../../types/UserTypes'
-import type { PagedResponse } from '../../types/PagedResponse'
+import type { PagedResponse } from '../../types/CommonTypes'
 import { getErrorMessage } from '../../api/errors'
 import UserFormModal from '../backoffice/UserFormModal'
 
