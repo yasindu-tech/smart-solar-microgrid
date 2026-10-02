@@ -69,4 +69,9 @@ object ApiClient {
     val dashboardApi: DashboardApi by lazy {
         retrofit.create(DashboardApi::class.java)
     }
+
+    // Lazily create the nodes API service (nearby microgrid nodes for map).
+    val nodesApi: NodesApi by lazy {
+        retrofit.create(NodesApi::class.java)
+    }
 }

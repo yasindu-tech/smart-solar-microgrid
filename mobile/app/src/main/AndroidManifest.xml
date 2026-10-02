@@ -13,6 +13,19 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- External map intents query visibility for Android 11+ -->
+    <queries>
+        <package android:name="com.google.android.apps.maps" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
+
     <application
         android:name=".SmartSolarApp"
         android:allowBackup="false"
@@ -22,6 +35,11 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.SmartSolar">
+
+        <!-- Google Maps API Key injected from local.properties via manifestPlaceholders -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
 
         <!-- Welcome is the launcher activity — branded landing screen, entry point. -->
         <activity
@@ -66,6 +84,18 @@
             android:exported="false" />
         <activity
             android:name=".ui.prosumer.ProfileEditActivity"
+            android:exported="false" />
+
+        <!-- Nearby Microgrid Nodes Map screen -->
+        <activity
+            android:name=".ui.map.MapActivity"
+            android:exported="false"
+            android:label="@string/title_activity_map"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- Create Booking screen (D3) -->
+        <activity
+            android:name=".ui.prosumer.CreateBookingActivity"
             android:exported="false" />
 
     </application>

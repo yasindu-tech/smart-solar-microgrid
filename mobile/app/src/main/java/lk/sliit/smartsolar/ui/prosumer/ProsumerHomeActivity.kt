@@ -47,6 +47,7 @@ import lk.sliit.smartsolar.data.remote.dto.ProsumerDashboardResponse
 import lk.sliit.smartsolar.databinding.ActivityProsumerHomeBinding
 import lk.sliit.smartsolar.databinding.PopupProfileMenuBinding
 import lk.sliit.smartsolar.ui.auth.LoginActivity
+import lk.sliit.smartsolar.ui.map.MapActivity
 import lk.sliit.smartsolar.util.ReservationStatusStyle
 import lk.sliit.smartsolar.util.SessionManager
 import java.time.LocalDateTime
@@ -85,11 +86,11 @@ class ProsumerHomeActivity : AppCompatActivity() {
         }
 
         binding.btnMap.setOnClickListener {
-            // TODO: Navigate to MapActivity (D3)
+            startActivity(Intent(this, MapActivity::class.java))
         }
 
         binding.btnBookNow.setOnClickListener {
-            // TODO: Navigate to BookingsActivity (D3)
+            startActivity(Intent(this, CreateBookingActivity::class.java))
         }
 
         // Pull-to-refresh re-fetches from the API (EC-4 — the cache never decides).

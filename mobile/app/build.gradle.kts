@@ -32,6 +32,10 @@ android {
         val apiUrl = localProperties.getProperty("API_BASE_URL")
             ?: (project.findProperty("API_BASE_URL") as String?)
             ?: "http://10.0.2.2:5001/api/"
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY")
+            ?: (project.findProperty("MAPS_API_KEY") as String?)
+            ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "API_BASE_URL", "\"$apiUrl\"")
     }
 
@@ -86,6 +90,10 @@ dependencies {
 
     // Lifecycle — provides lifecycleScope for structured coroutine launching.
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+
+    // Google Maps and Location SDKs for microgrid node map (REQ-VIEW §2.5)
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // Core library desugaring — java.time.Instant support on API < 26.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
