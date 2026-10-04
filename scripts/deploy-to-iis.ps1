@@ -28,6 +28,26 @@ $ErrorActionPreference = "Stop"
 function Say($msg)  { Write-Host "==> $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "    $msg" -ForegroundColor Yellow }
 
+# IIS's WAS service occasionally can't accept a control message right after the
+# previous one - "The service cannot accept control messages at this time"
+# (HRESULT 0x80070425 / Win32 1061). It's transient, most often seen seconds
+# after the OTHER app pool's own Stop/Start just ran, or right after the VM has
+# just been started and WAS is still coming up - not a real failure, so retry
+# with a short backoff instead of failing the whole deploy over it.
+function Invoke-WithRetry([scriptblock]$Action, [string]$Description, [int]$MaxAttempts = 5) {
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            & $Action
+            return
+        } catch {
+            if ($attempt -eq $MaxAttempts) { throw }
+            $delaySeconds = 3 * $attempt
+            Warn "$Description failed on attempt $attempt of $MaxAttempts ($($_.Exception.Message)) - retrying in ${delaySeconds}s"
+            Start-Sleep -Seconds $delaySeconds
+        }
+    }
+}
+
 Import-Module WebAdministration
 
 if (-not (Test-Path $StagingPath)) {
@@ -39,7 +59,7 @@ if (-not (Get-Item "IIS:\AppPools\$AppPool" -ErrorAction SilentlyContinue)) {
 }
 
 Say "Stopping app pool '$AppPool' so files aren't locked"
-Stop-WebAppPool -Name $AppPool
+Invoke-WithRetry -Description "Stop-WebAppPool" -Action { Stop-WebAppPool -Name $AppPool }
 Start-Sleep -Seconds 2
 
 Say "Preserving appsettings.Production.json if it exists and isn't in the new build"
@@ -68,7 +88,7 @@ if ($secretsBackup) {
 }
 
 Say "Starting app pool '$AppPool'"
-Start-WebAppPool -Name $AppPool
+Invoke-WithRetry -Description "Start-WebAppPool" -Action { Start-WebAppPool -Name $AppPool }
 Start-Sleep -Seconds 2
 
 $state = (Get-WebAppPoolState -Name $AppPool).Value
