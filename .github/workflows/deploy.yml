@@ -106,7 +106,9 @@ jobs:
   deploy:
     name: Deploy to IIS
     needs: build
-    runs-on: [self-hosted, windows, smartsolar]
+    # Targets the runner installed on the Azure VM. There is only one
+    # self-hosted runner in this repo, so the default labels are enough.
+    runs-on: [self-hosted, windows]
     steps:
       - uses: actions/checkout@v4
 
