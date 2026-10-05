@@ -10,7 +10,7 @@
     android:shape="rectangle">
     <gradient
         android:angle="315"
-        android:endColor="@color/sg_primary_hover"
+        android:endColor="@color/sg_primary"
         android:startColor="@color/sg_primary"
         android:type="linear" />
     <corners

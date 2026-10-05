@@ -120,6 +120,41 @@
     <string name="map_nearby_slots_format">%1$d slots</string>
     <string name="map_nearby_capacity_format">%1$.0f kWh</string>
     <string name="map_tap_to_reserve">Tap to reserve</string>
+    <string name="map_node_specs_format">Open 06:00 - 20:00 \u2022 %1$s \u2022 %2$s (%3$s)</string>
     <string name="location_prompt_text">Location disabled. Showing Colombo default nodes.</string>
     <string name="location_prompt_action">Enable</string>
+
+    <!-- New Reservation screen -->
+    <string name="new_reservation_title">New reservation</string>
+    <string name="reservation_info_bullet_1">\u2022 Slots must be within the next 7 days</string>
+    <string name="reservation_info_bullet_2">\u2022 Changes or cancellation need 12 hours notice</string>
+    <string name="reservation_info_bullet_3">\u2022 Bookings are Pending until a grid operator approves them</string>
+    <string name="reservation_label_microgrid_node">MICROGRID NODE</string>
+    <string name="reservation_label_transaction_type">TRANSACTION TYPE</string>
+    <string name="reservation_capacity">%1$.1f kWh</string>
+    <string name="reservation_label_date_time">DATE AND START TIME</string>
+    <string name="reservation_label_duration">DURATION (HOURS, 1-12)</string>
+    <string name="reservation_label_energy">ENERGY (KWH)</string>
+    <string name="reservation_btn_pick_date">PICK DATE</string>
+    <string name="reservation_btn_pick_time">PICK TIME</string>
+    <string name="reservation_btn_submit">SUBMIT RESERVATION</string>
+    <string name="transaction_type_charge">Battery charging (draw energy)</string>
+    <string name="transaction_type_dropoff">Energy drop-off (sell surplus)</string>
+
+    <!-- Reservation Summary -->
+    <string name="reservation_summary_title">Reservation Summary</string>
+    <string name="reservation_summary_id">Reservation ID: %1$s</string>
+    <string name="reservation_summary_status">Status: %1$s</string>
+    <string name="reservation_summary_node">Node: %1$s</string>
+    <string name="reservation_summary_start_time">Start Time: %1$s</string>
+    <string name="reservation_summary_energy">Requested Energy: %1$.1f kWh</string>
+    <string name="reservation_summary_transaction">Transaction: %1$s</string>
+    <string name="reservation_summary_hint">Your booking request has been submitted and is pending grid operator approval.</string>
+    <string name="reservation_summary_btn_done">Done</string>
+
+    <string name="error_select_node">Please select a microgrid node</string>
+    <string name="error_select_date_time">Please pick a date and start time</string>
+    <string name="error_invalid_duration">Duration must be between 1 and 12 hours</string>
+    <string name="error_invalid_energy">Please enter a valid energy amount (> 0 kWh)</string>
+    <string name="error_no_slots">No available slots found for this node on the selected date. Please pick another date/time or node.</string>
 </resources>
