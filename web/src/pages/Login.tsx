@@ -38,6 +38,8 @@ export default function Login() {
         navigate('/backoffice')
       } else if (response.role === 'Operator') {
         navigate('/operator')
+      } else if (response.role === 'Prosumer') {
+        navigate('/prosumer')
       } else {
         navigate('/')
       }

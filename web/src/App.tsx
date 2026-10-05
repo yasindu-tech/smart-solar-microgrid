@@ -1,8 +1,9 @@
 /**
  * File        : App.tsx
  * Project     : Smart Solar Microgrid Trading System - Web client
- * Description : Root component and route shell. Role routing lands Backoffice
- *               and Grid Operator users on different dashboards (REQ-AUTH).
+ * Description : Root component and route shell. Role routing lands Backoffice,
+ *               Grid Operator and Prosumer users on different dashboards
+ *               (REQ-AUTH).
  * Author      : <member name - M1>
  */
 
@@ -20,6 +21,8 @@ import ProsumersPage from './pages/backoffice/ProsumersPage'
 import NodeManagement from './pages/backoffice/NodeManagement'
 import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
+import ProsumerLayout from './pages/prosumer/ProsumerLayout'
+import ProsumerDashboard from './pages/prosumer/Dashboard'
 import ReservationsPage from './pages/shared/ReservationsPage'
 
 export default function App() {
@@ -47,6 +50,12 @@ export default function App() {
               <Route path="/operator" element={<OperatorLayout />}>
                 <Route index element={<div>Operator Dashboard Coming Soon</div>} />
                 <Route path="reservations" element={<ReservationsPage />} />
+              </Route>
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={['Prosumer']} />}>
+              <Route path="/prosumer" element={<ProsumerLayout />}>
+                <Route index element={<ProsumerDashboard />} />
               </Route>
             </Route>
           </Routes>

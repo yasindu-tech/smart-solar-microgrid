@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios'
 import type { ApiError } from '../types/CommonTypes'
+import { ApiRequestError } from './types'
 
 // User-facing copy for the error codes a caller can actually hit here.
 // Codes not listed fall back to the server's own message.
@@ -16,6 +17,15 @@ function envelopeOf(error: AxiosError): ApiError | undefined {
 
 // Resolve any thrown value to a single display-ready string. Never throws.
 export function getErrorMessage(error: unknown): string {
+  // client.ts's response interceptor converts every axios failure into an
+  // ApiRequestError, so this is the branch almost every caller actually hits.
+  // Without it an E4301 would reach the user as the server's own wording
+  // instead of the copy below, and an E5000 would surface a raw 500 message -
+  // ui-design-system.md section 17 forbids both.
+  if (error instanceof ApiRequestError) {
+    return MESSAGES_BY_CODE[error.envelope.code] ?? error.envelope.message
+  }
+
   if (error instanceof AxiosError) {
     const envelope = envelopeOf(error)
     if (envelope) {
@@ -34,5 +44,6 @@ export function getErrorMessage(error: unknown): string {
 // True when the error means "the session is gone" - callers use this to
 // redirect to login instead of showing an inline message.
 export function isUnauthorized(error: unknown): boolean {
+  if (error instanceof ApiRequestError) return error.envelope.code === 'E4301'
   return error instanceof AxiosError && envelopeOf(error)?.code === 'E4301'
 }
