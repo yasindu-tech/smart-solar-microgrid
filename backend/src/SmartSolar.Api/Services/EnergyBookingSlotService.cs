@@ -187,18 +187,27 @@ public class EnergyBookingSlotService
         if (startTime <= DateTime.UtcNow)
             throw new DomainException("E4104", "Slot start time must be in the future.", 400, "startTime");
 
+        // A node's Schedule is wall-clock Sri Lanka time (UTC+05:30), while startTime
+        // and endTime are UTC. Comparing the two directly shifted every window by 5.5
+        // hours - a 09:00 local slot read as 03:30 and was refused, a 19:00 one read as
+        // 13:30 and was accepted after close. Convert once, here, so the day-of-week and
+        // opening-hour checks below both run in the same frame as the schedule they test.
+        // The BR-08 future check above stays in UTC: it compares two instants, not clocks.
+        var localStart = SriLankaTime.FromUtc(startTime);
+        var localEnd = SriLankaTime.FromUtc(endTime);
+
         // AC-7: the window must fall inside one of the node's opening-hour windows for that day.
         // ScheduleWindow.OpenTime/CloseTime never cross midnight (SolarStationService enforces
         // open < close on the same day), so neither can a slot that fits inside one.
-        var dayAbbreviation = DayAbbreviations[(int)startTime.DayOfWeek];
-        var startOfDay = startTime.Date;
+        var dayAbbreviation = DayAbbreviations[(int)localStart.DayOfWeek];
+        var startOfDay = localStart.Date;
         var fitsSchedule = node.Schedule
             .Where(w => w.DayOfWeek == dayAbbreviation)
             .Any(w =>
             {
                 var open = startOfDay + TimeOnly.Parse(w.OpenTime).ToTimeSpan();
                 var close = startOfDay + TimeOnly.Parse(w.CloseTime).ToTimeSpan();
-                return startTime >= open && endTime <= close;
+                return localStart >= open && localEnd <= close;
             });
 
         if (!fitsSchedule)
