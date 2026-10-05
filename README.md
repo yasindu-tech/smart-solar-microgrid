@@ -4,9 +4,7 @@
 
 SE4040 Enterprise Application Development · Year 4 Semester 2, 2026 · Group of 4
 
-UI work in this repo follows a strict shared design system — see
-[`docs/architecture/ui-design-system.md`](docs/architecture/ui-design-system.md) and `CLAUDE.md` §4a
-before writing any web or Android UI code.
+
 
 An end-to-end client–server system for reserving and verifying solar energy
 transfers at microgrid hubs. A C# Web API holds all business logic; a React web
