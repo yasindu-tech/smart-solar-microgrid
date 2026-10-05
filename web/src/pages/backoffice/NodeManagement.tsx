@@ -298,7 +298,9 @@ export default function NodeManagement() {
                     <Radio size={18} />
                   </div>
                   <div className="min-w-0">
-                    <p className="sg-h4 truncate">{node.name}</p>
+                    <p className="sg-h4 truncate" title={node.name}>
+                      {node.name}
+                    </p>
                     <p className="sg-caption font-mono">{node.nodeId}</p>
                   </div>
                 </div>

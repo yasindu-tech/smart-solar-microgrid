@@ -20,6 +20,7 @@ import ProsumersPage from './pages/backoffice/ProsumersPage'
 import NodeManagement from './pages/backoffice/NodeManagement'
 import SlotManagement from './pages/backoffice/SlotManagement'
 import OperatorLayout from './pages/operator/OperatorLayout'
+import OperatorDashboard from './pages/operator/OperatorDashboard'
 import ReservationsPage from './pages/shared/ReservationsPage'
 
 export default function App() {
@@ -45,7 +46,7 @@ export default function App() {
 
             <Route element={<ProtectedRoute allowedRoles={['Operator']} />}>
               <Route path="/operator" element={<OperatorLayout />}>
-                <Route index element={<div>Operator Dashboard Coming Soon</div>} />
+                <Route index element={<OperatorDashboard />} />
                 <Route path="reservations" element={<ReservationsPage />} />
               </Route>
             </Route>

@@ -116,8 +116,10 @@ export default function SlotManagement() {
       </Link>
 
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="sg-h3">Slots for {nodeId}</h2>
+        <div className="min-w-0">
+          <h2 className="sg-h3 truncate" title={`Slots for ${nodeId}`}>
+            Slots for {nodeId}
+          </h2>
           <p className="sg-body-sm text-sg-text-secondary">Bookable windows for this node.</p>
         </div>
 

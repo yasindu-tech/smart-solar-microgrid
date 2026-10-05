@@ -1,3 +1,5 @@
+import type { ApiRequestError } from '../api/types'
+
 /** AC or DC microgrid hub (data-model.md 1.3). */
 export type NodeType = 'AC' | 'DC'
 
@@ -55,4 +57,9 @@ export interface NodeListParams {
   active?: boolean
   page?: number
   pageSize?: number
+}
+
+export interface UseCreateNodeOptions {
+  onSuccess?: (data: Node) => void
+  onError?: (error: ApiRequestError) => void
 }
