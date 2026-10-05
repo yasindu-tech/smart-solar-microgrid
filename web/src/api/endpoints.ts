@@ -34,6 +34,7 @@ export const prosumerEndpoints = {
 export const dashboardEndpoints = {
   BACKOFFICE: '/dashboard/backoffice',
   PROSUMER: '/dashboard/prosumer',
+  OPERATOR: '/dashboard/operator',
 }
 
 
