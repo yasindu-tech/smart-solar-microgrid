@@ -96,7 +96,22 @@
         <!-- Create Booking screen (D3) -->
         <activity
             android:name=".ui.prosumer.CreateBookingActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- My Bookings screen -->
+        <activity
+            android:name=".ui.prosumer.BookingsActivity"
+            android:exported="false"
+            android:label="@string/bookings_title"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- Reservation Detail screen -->
+        <activity
+            android:name=".ui.prosumer.ReservationDetailActivity"
+            android:exported="false"
+            android:label="@string/title_reservation_detail"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
 
     </application>
 

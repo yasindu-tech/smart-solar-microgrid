@@ -77,7 +77,7 @@
     <string name="cancel_btn">Cancel</string>
 
     <string name="nav_profile">My Profile</string>
-    <string name="nav_bookings">My Bookings</string>
+    <string name="nav_bookings">My Reservations</string>
     <string name="nav_map">Nearby Nodes Map</string>
 
     <string name="offline_banner_text">Offline — showing last synced data.</string>
@@ -157,4 +157,46 @@
     <string name="error_invalid_duration">Duration must be between 1 and 12 hours</string>
     <string name="error_invalid_energy">Please enter a valid energy amount (> 0 kWh)</string>
     <string name="error_no_slots">No available slots found for this node on the selected date. Please pick another date/time or node.</string>
+
+    <!-- My Bookings screen -->
+    <string name="bookings_title">My Reservations</string>
+    <string name="bookings_search_hint">Search reservation ID or node name…</string>
+    <string name="bookings_filter_all">All</string>
+    <string name="bookings_filter_pending">Pending</string>
+    <string name="bookings_filter_approved">Approved</string>
+    <string name="bookings_filter_completed">Completed</string>
+    <string name="bookings_filter_cancelled">Cancelled</string>
+    <string name="bookings_empty_title">No bookings found</string>
+    <string name="bookings_empty_subtitle">No reservations match your current filter or search criteria.</string>
+    <string name="bookings_energy_format">Energy: %1$.1f kWh</string>
+    <string name="bookings_load_failed">Unable to load bookings.</string>
+
+    <!-- Reservation Detail screen -->
+    <string name="title_reservation_detail">Reservation Details</string>
+    <string name="qr_code_title">Transaction QR code</string>
+    <string name="qr_code_subtext">Show this code to the grid operator at the node</string>
+    <string name="qr_code_copy_action">Copy code (no camera)</string>
+    <string name="qr_code_copied_toast">Code copied to clipboard</string>
+
+    <string name="reservation_detail_node">Node: %1$s</string>
+    <string name="reservation_detail_type">Type: %1$s</string>
+    <string name="reservation_detail_type_default">Battery charging</string>
+    <string name="reservation_detail_starts">Starts: %1$s</string>
+    <string name="reservation_detail_ends">Ends: %1$s</string>
+    <string name="reservation_detail_energy">Energy: %1$.1f kWh</string>
+    <string name="reservation_detail_transferred">Transferred: %1$.1f kWh</string>
+    <string name="reservation_detail_approved_by">Approved by: %1$s</string>
+    <string name="reservation_detail_completed">Completed: %1$s</string>
+    <string name="reservation_detail_cancel_reason">Cancel reason: %1$s</string>
+    <string name="reservation_detail_default_approved_by">admin</string>
+    <string name="reservation_detail_default_cancel_reason">System maintenance</string>
+
+    <string name="btn_modify_reservation">MODIFY RESERVATION</string>
+    <string name="btn_cancel_reservation">CANCEL RESERVATION</string>
+
+    <string name="cancel_dialog_title">Cancel Reservation?</string>
+    <string name="cancel_dialog_message">Are you sure you want to cancel this reservation?</string>
+    <string name="cancel_dialog_confirm">Yes, Cancel</string>
+    <string name="cancel_success_toast">Reservation cancelled successfully</string>
+    <string name="cancel_failed_toast">Failed to cancel reservation</string>
 </resources>

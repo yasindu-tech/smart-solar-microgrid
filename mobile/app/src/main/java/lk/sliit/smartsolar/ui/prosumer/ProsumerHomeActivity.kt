@@ -82,7 +82,7 @@ class ProsumerHomeActivity : AppCompatActivity() {
         binding.btnProfileMenu.setOnClickListener { showProfileMenu() }
 
         binding.btnBookings.setOnClickListener {
-            // TODO: Navigate to BookingsActivity (D3)
+            startActivity(Intent(this, BookingsActivity::class.java))
         }
 
         binding.btnMap.setOnClickListener {
@@ -207,6 +207,14 @@ class ProsumerHomeActivity : AppCompatActivity() {
     private fun renderNextReservation(next: DashboardReservation) {
         binding.layoutNextEmpty.visibility = View.GONE
         binding.layoutNextContent.visibility = View.VISIBLE
+
+        binding.cardNextReservation.setOnClickListener {
+            val resId = next.reservationId ?: return@setOnClickListener
+            val intent = Intent(this, ReservationDetailActivity::class.java).apply {
+                putExtra(ReservationDetailActivity.EXTRA_RESERVATION_ID, resId)
+            }
+            startActivity(intent)
+        }
 
         // The contract returns nodeId only — there is no node name on ReservationResponse.
         binding.tvNextNode.text = getString(R.string.dashboard_node_label, next.nodeId.orEmpty())
