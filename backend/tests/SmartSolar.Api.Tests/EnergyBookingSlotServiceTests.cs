@@ -139,20 +139,25 @@ public class EnergyBookingSlotServiceTests
         _users.Users.Add(new User { UserId = OperatorCaller, Role = "Operator", AssignedNodeIds = new List<string> { NodeId } });
     }
 
-    // Next Monday, so every test has a stable in-schedule, in-the-future day regardless of when it runs.
-    private static DateTime NextMonday(TimeSpan timeOfDay)
+    // Next Monday, so every test has a stable in-schedule, in-the-future day regardless of
+    // when it runs. The argument is a Sri Lanka wall-clock time - the same frame the node's
+    // Schedule is written in - and the return value is the UTC instant it names, which is
+    // what the API actually receives. Writing the fixtures the other way round is what hid
+    // the UTC/local mix-up in ValidateWindowAsync: 09:00 UTC lands inside 06:00-18:00 local
+    // by luck, so the old fixtures passed while real 09:00 local bookings were refused.
+    private static DateTime NextMondayLocal(TimeSpan localTimeOfDay)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = SriLankaTime.FromUtc(DateTime.UtcNow).Date;
         var daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
         var monday = today.AddDays(daysUntilMonday == 0 ? 7 : daysUntilMonday);
-        return monday + timeOfDay;
+        return SriLankaTime.ToUtc(monday + localTimeOfDay);
     }
 
     private static CreateSlotRequest ValidCreate(int totalCapacity = 4, double energyOfferedKwh = 20.0)
-        => new(NextMonday(TimeSpan.FromHours(9)), NextMonday(TimeSpan.FromHours(11)), totalCapacity, energyOfferedKwh);
+        => new(NextMondayLocal(TimeSpan.FromHours(9)), NextMondayLocal(TimeSpan.FromHours(11)), totalCapacity, energyOfferedKwh);
 
     private static UpdateSlotRequest ValidUpdate(int totalCapacity = 4, double energyOfferedKwh = 20.0)
-        => new(NextMonday(TimeSpan.FromHours(9)), NextMonday(TimeSpan.FromHours(11)), totalCapacity, energyOfferedKwh);
+        => new(NextMondayLocal(TimeSpan.FromHours(9)), NextMondayLocal(TimeSpan.FromHours(11)), totalCapacity, energyOfferedKwh);
 
     // -- Create: happy path ---------------------------------------------------
 
@@ -171,7 +176,7 @@ public class EnergyBookingSlotServiceTests
     {
         var first = await _service.CreateAsync(NodeId, ValidCreate(), BackofficeCaller, "Backoffice");
         var second = await _service.CreateAsync(
-            NodeId, ValidCreate() with { StartTime = NextMonday(TimeSpan.FromHours(13)), EndTime = NextMonday(TimeSpan.FromHours(15)) },
+            NodeId, ValidCreate() with { StartTime = NextMondayLocal(TimeSpan.FromHours(13)), EndTime = NextMondayLocal(TimeSpan.FromHours(15)) },
             BackofficeCaller, "Backoffice");
 
         Assert.Equal("SL-0001", first.SlotId);
@@ -216,7 +221,7 @@ public class EnergyBookingSlotServiceTests
     [Fact] // start must be strictly before end
     public async Task CreateAsync_StartNotBeforeEnd_IsRejected()
     {
-        var start = NextMonday(TimeSpan.FromHours(10));
+        var start = NextMondayLocal(TimeSpan.FromHours(10));
         var request = new CreateSlotRequest(start, start, 4, 20.0);
 
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -243,7 +248,7 @@ public class EnergyBookingSlotServiceTests
     {
         // The fixture node only opens Monday 06:00-18:00 - 19:00 is after close.
         var request = new CreateSlotRequest(
-            NextMonday(TimeSpan.FromHours(19)), NextMonday(TimeSpan.FromHours(20)), 4, 20.0);
+            NextMondayLocal(TimeSpan.FromHours(19)), NextMondayLocal(TimeSpan.FromHours(20)), 4, 20.0);
 
         var ex = await Assert.ThrowsAsync<DomainException>(
             () => _service.CreateAsync(NodeId, request, BackofficeCaller, "Backoffice"));
@@ -255,7 +260,7 @@ public class EnergyBookingSlotServiceTests
     [Fact] // a day the node has no window for at all
     public async Task CreateAsync_OnADayWithNoScheduleWindow_IsRejected()
     {
-        var tuesday = NextMonday(TimeSpan.FromHours(9)).AddDays(1);
+        var tuesday = NextMondayLocal(TimeSpan.FromHours(9)).AddDays(1);
         var request = new CreateSlotRequest(tuesday, tuesday.AddHours(2), 4, 20.0);
 
         var ex = await Assert.ThrowsAsync<DomainException>(
@@ -268,11 +273,87 @@ public class EnergyBookingSlotServiceTests
     public async Task CreateAsync_ExactlyAtScheduleBoundary_IsAccepted()
     {
         var request = new CreateSlotRequest(
-            NextMonday(TimeSpan.FromHours(6)), NextMonday(TimeSpan.FromHours(18)), 4, 20.0);
+            NextMondayLocal(TimeSpan.FromHours(6)), NextMondayLocal(TimeSpan.FromHours(18)), 4, 20.0);
 
         var result = await _service.CreateAsync(NodeId, request, BackofficeCaller, "Backoffice");
 
         Assert.Equal(NodeId, result.NodeId);
+    }
+
+    // The two cases below pin the UTC/local frame down explicitly rather than through the
+    // NextMondayLocal helper, so they still fail if that helper is ever reverted to building
+    // UTC wall-clock times. Both assert against the node's Monday 06:00-18:00 local window.
+
+    [Fact] // AC-7 - 09:00 Sri Lanka time is inside 06:00-18:00, even though 03:30 UTC is not
+    public async Task CreateAsync_NineAmLocalSlot_IsAccepted()
+    {
+        // 09:00-10:00 local is 03:30-04:30 UTC. Compared in UTC it reads as before the
+        // 06:00 open and was wrongly refused with E4002.
+        var request = new CreateSlotRequest(
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(9)),
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(10)),
+            4, 20.0);
+
+        var result = await _service.CreateAsync(NodeId, request, BackofficeCaller, "Backoffice");
+
+        Assert.Equal(NodeId, result.NodeId);
+    }
+
+    [Fact] // AC-7 - 19:00 Sri Lanka time is after close, even though 13:30 UTC is not
+    public async Task CreateAsync_SevenPmLocalSlot_IsRejected()
+    {
+        // 19:00-20:00 local is 13:30-14:30 UTC. Compared in UTC it reads as mid-afternoon
+        // and was wrongly accepted an hour after the node closed.
+        var request = new CreateSlotRequest(
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(19)),
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(20)),
+            4, 20.0);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(
+            () => _service.CreateAsync(NodeId, request, BackofficeCaller, "Backoffice"));
+
+        Assert.Equal("E4002", ex.Code);
+        Assert.Equal("startTime", ex.Field);
+        Assert.Contains("Mon", ex.Message);
+    }
+
+    [Fact] // AC-7 - the day-of-week is the local one, not the UTC one
+    public async Task CreateAsync_EarlyMorningLocalSlot_UsesTheLocalDayOfWeek()
+    {
+        // Any local time before 05:30 falls on the PREVIOUS day in UTC, which is the only
+        // way to tell the two frames apart on the day index. A node open Monday 00:00-06:00
+        // should accept 01:00-02:00 Monday local (= 19:30-20:30 Sunday UTC); read in UTC
+        // that is a Sunday, a day this node has no window for at all.
+        const string earlyNodeId = "ND-0009";
+        _nodes.Nodes.Add(new SolarStationInfo
+        {
+            NodeId = earlyNodeId,
+            Name = "Moratuwa Microgrid Hub B",
+            IsActive = true,
+            Schedule = new List<ScheduleWindow>
+            {
+                new() { DayOfWeek = "Mon", OpenTime = "00:00", CloseTime = "06:00" },
+            },
+        });
+
+        var request = new CreateSlotRequest(
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(1)),
+            SriLankaTime.ToUtc(NextLocalMondayDate() + TimeSpan.FromHours(2)),
+            4, 20.0);
+
+        Assert.Equal(DayOfWeek.Sunday, request.StartTime.DayOfWeek);
+
+        var result = await _service.CreateAsync(earlyNodeId, request, BackofficeCaller, "Backoffice");
+
+        Assert.Equal(earlyNodeId, result.NodeId);
+    }
+
+    // Midnight on the next Sri Lanka Monday, as an unconverted local date.
+    private static DateTime NextLocalMondayDate()
+    {
+        var today = SriLankaTime.FromUtc(DateTime.UtcNow).Date;
+        var daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
+        return today.AddDays(daysUntilMonday == 0 ? 7 : daysUntilMonday);
     }
 
     // -- Create: overlap ----------------------------------------------------------
@@ -283,7 +364,7 @@ public class EnergyBookingSlotServiceTests
         var existing = await _service.CreateAsync(NodeId, ValidCreate(), BackofficeCaller, "Backoffice");
 
         var overlapping = new CreateSlotRequest(
-            NextMonday(TimeSpan.FromHours(10)), NextMonday(TimeSpan.FromHours(12)), 2, 10.0);
+            NextMondayLocal(TimeSpan.FromHours(10)), NextMondayLocal(TimeSpan.FromHours(12)), 2, 10.0);
 
         var ex = await Assert.ThrowsAsync<DomainException>(
             () => _service.CreateAsync(NodeId, overlapping, BackofficeCaller, "Backoffice"));
@@ -298,7 +379,7 @@ public class EnergyBookingSlotServiceTests
         await _service.CreateAsync(NodeId, ValidCreate(), BackofficeCaller, "Backoffice");
 
         var adjacent = new CreateSlotRequest(
-            NextMonday(TimeSpan.FromHours(11)), NextMonday(TimeSpan.FromHours(13)), 2, 10.0);
+            NextMondayLocal(TimeSpan.FromHours(11)), NextMondayLocal(TimeSpan.FromHours(13)), 2, 10.0);
 
         var result = await _service.CreateAsync(NodeId, adjacent, BackofficeCaller, "Backoffice");
 
@@ -378,11 +459,11 @@ public class EnergyBookingSlotServiceTests
     {
         var created = await _service.CreateAsync(NodeId, ValidCreate(), BackofficeCaller, "Backoffice");
         var request = new UpdateSlotRequest(
-            NextMonday(TimeSpan.FromHours(14)), NextMonday(TimeSpan.FromHours(16)), 4, 20.0);
+            NextMondayLocal(TimeSpan.FromHours(14)), NextMondayLocal(TimeSpan.FromHours(16)), 4, 20.0);
 
         var updated = await _service.UpdateAsync(created.SlotId, request, BackofficeCaller, "Backoffice");
 
-        Assert.Equal(NextMonday(TimeSpan.FromHours(14)), updated.StartTime);
+        Assert.Equal(NextMondayLocal(TimeSpan.FromHours(14)), updated.StartTime);
     }
 
     [Fact] // an update can put a slot into the same invalid state a create can
@@ -390,7 +471,7 @@ public class EnergyBookingSlotServiceTests
     {
         var created = await _service.CreateAsync(NodeId, ValidCreate(), BackofficeCaller, "Backoffice");
         var request = new UpdateSlotRequest(
-            NextMonday(TimeSpan.FromHours(19)), NextMonday(TimeSpan.FromHours(20)), 4, 20.0);
+            NextMondayLocal(TimeSpan.FromHours(19)), NextMondayLocal(TimeSpan.FromHours(20)), 4, 20.0);
 
         var ex = await Assert.ThrowsAsync<DomainException>(
             () => _service.UpdateAsync(created.SlotId, request, BackofficeCaller, "Backoffice"));

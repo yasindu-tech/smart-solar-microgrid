@@ -68,7 +68,7 @@ Indexes: unique on `nic`, index on `status`.
   "capacityKwh": 250.0,          // total node capacity
   "batterySlotCount": 8,         // available battery storage slots
   "type": "AC",                  // AC | DC  (kept for reporting)
-  "schedule": [                  // operating windows
+  "schedule": [                  // operating windows, Asia/Colombo wall-clock (NOT UTC)
     { "dayOfWeek": "Mon", "openTime": "06:00", "closeTime": "18:00" }
   ],
   "isActive": true,
