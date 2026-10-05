@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : popup_profile_menu.xml
+  Description : Dropdown shown under the avatar button in the dashboard hero. Carries the
+                signed-in user's details followed by the profile and logout actions, so
+                neither needs a permanent slot on the dashboard itself.
+
+                Inflated into a PopupWindow by ProsumerHomeActivity. Per REQ-VIEW AC-11 the
+                profile action is disabled while offline; logout stays available because it
+                is a local action, not a data one.
+
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens per
+                ui-design-system.md §22.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/sg_space_2"
+    app:cardBackgroundColor="@color/sg_surface"
+    app:cardCornerRadius="@dimen/sg_radius_lg"
+    app:cardElevation="6dp"
+    app:strokeColor="@color/sg_border"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Signed-in user details -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/sg_space_4">
+
+            <TextView
+                android:id="@+id/tvMenuName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:textColor="@color/sg_text"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvMenuRole"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/sg_space_1"
+                android:text="@string/role_prosumer"
+                android:textColor="@color/sg_text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvMenuNic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/sg_text_muted"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/sg_border" />
+
+        <!-- My Profile -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMenuProfile"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:gravity="center_vertical|start"
+            android:paddingStart="@dimen/sg_space_4"
+            android:paddingEnd="@dimen/sg_space_4"
+            android:text="@string/nav_profile"
+            android:textAllCaps="false"
+            android:textColor="@color/sg_text"
+            android:textSize="14sp"
+            app:icon="@drawable/ic_profile"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/sg_space_3"
+            app:iconTint="@color/sg_primary" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/sg_border" />
+
+        <!-- Log out -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMenuLogout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:gravity="center_vertical|start"
+            android:paddingStart="@dimen/sg_space_4"
+            android:paddingEnd="@dimen/sg_space_4"
+            android:text="@string/logout_btn"
+            android:textAllCaps="false"
+            android:textColor="@color/sg_danger"
+            android:textSize="14sp"
+            app:icon="@drawable/ic_logout"
+            app:iconGravity="textStart"
+            app:iconPadding="@dimen/sg_space_3"
+            app:iconTint="@color/sg_danger" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

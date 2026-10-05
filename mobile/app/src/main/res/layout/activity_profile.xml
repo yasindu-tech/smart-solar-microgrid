@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : activity_profile.xml
+  Description : Prosumer profile view screen. Displays the signed-in prosumer's
+                own data read from the API (with profile_cache as instant-render
+                source). NIC is always read-only per BR-12. Provides buttons to
+                navigate to Edit Profile and to request Deactivation.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sg_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/sg_space_6">
+
+        <!-- Offline banner (hidden when online) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardOfflineBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_4"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/sg_warning_soft"
+            app:cardCornerRadius="@dimen/sg_radius_md"
+            app:cardElevation="@dimen/sg_card_elevation_none">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/sg_space_3"
+                android:text="@string/offline_banner_text"
+                android:textAlignment="center"
+                android:textColor="@color/sg_warning"
+                android:textSize="13sp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Page header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_5"
+            android:text="@string/profile_title"
+            android:textColor="@color/sg_text"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Loading indicator -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="@dimen/sg_space_4"
+            android:indeterminateTint="@color/sg_primary"
+            android:visibility="gone" />
+
+        <!-- Profile data card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_5"
+            app:cardBackgroundColor="@color/sg_surface"
+            app:cardCornerRadius="@dimen/sg_radius_lg"
+            app:cardElevation="@dimen/sg_card_elevation"
+            app:strokeColor="@color/sg_border"
+            app:strokeWidth="@dimen/sg_card_stroke">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/sg_space_5">
+
+                <!-- NIC (read-only) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_nic"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvNic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- Full Name -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_name"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvFullName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp" />
+
+                <!-- Email -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_email"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp" />
+
+                <!-- Phone -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_phone"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp" />
+
+                <!-- Address -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_address"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp" />
+
+                <!-- Solar Capacity -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_label_solar"
+                    android:textColor="@color/sg_text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvSolarCapacity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_2"
+                    android:textColor="@color/sg_text"
+                    android:textSize="16sp" />
+
+                <!-- Status badge -->
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/sg_space_2"
+                    android:background="@drawable/badge_bg"
+                    android:paddingHorizontal="@dimen/sg_badge_padding_horizontal"
+                    android:paddingVertical="@dimen/sg_space_1"
+                    android:textColor="@color/sg_success"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Edit Profile button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEditProfile"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/sg_btn_height"
+            android:layout_marginBottom="@dimen/sg_space_3"
+            android:text="@string/profile_btn_edit"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:backgroundTint="@color/sg_primary"
+            app:cornerRadius="@dimen/sg_radius_md" />
+
+        <!-- Deactivate Account button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeactivate"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/sg_btn_height_sm"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:text="@string/profile_btn_deactivate"
+            android:textAllCaps="false"
+            android:textColor="@color/sg_danger"
+            app:cornerRadius="@dimen/sg_radius_md"
+            app:strokeColor="@color/sg_danger" />
+
+    </LinearLayout>
+</ScrollView>

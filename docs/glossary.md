@@ -25,3 +25,13 @@ All server-side timestamps are stored **UTC**. All UI displays **Asia/Colombo (U
 A rule expressed in hours is evaluated server-side in UTC against `DateTime.UtcNow`.
 
 Never compare a client-supplied "now" against a rule. The client's clock is not trusted — see BR-13.
+
+**The one exception: a node's `schedule[].openTime` / `closeTime` are wall-clock
+Asia/Colombo times, not UTC.** They describe when a physical station is open to
+people, so "06:00" means 06:00 in Sri Lanka. Any rule that compares a stored UTC
+instant against one of them must convert the instant first — `SriLankaTime.FromUtc`
+in `backend/src/SmartSolar.Api/Services/`. Comparing the two frames directly shifts
+every window by 5½ hours; that was a live defect in `ValidateWindowAsync` (AC-7),
+where a 09:00 local slot was refused as "outside opening hours" and a 19:00 one was
+accepted an hour after close. A rule measured purely in elapsed hours between two
+instants — BR-05, BR-06, BR-07 — stays in UTC and needs no conversion.

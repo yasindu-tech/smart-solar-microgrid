@@ -1,0 +1,154 @@
+# ---------------------------------------------------------------------------
+#  deploy.yml
+#
+#  Builds the API and the web app, then deploys both to the Azure VM running
+#  IIS. See docs/architecture/deployment-guide.md section 15 for the one-time
+#  self-hosted runner setup this depends on.
+#
+#  Why a self-hosted runner: the VM has no inbound deployment port open (no
+#  Web Deploy, no SSH). A runner installed ON the VM pulls the job instead, so
+#  nothing has to be exposed to the internet and no VM credentials are stored
+#  in GitHub.
+#
+#  Secrets are NOT handled here. appsettings.Production.json lives only on the
+#  VM and deploy-to-iis.ps1 preserves it across redeploys (CLAUDE.md section 6).
+#
+#  Deliberately MANUAL ONLY (workflow_dispatch). The VM is deallocated between
+#  work sessions to save student credit, and a deploy queued against a stopped
+#  VM just hangs until it times out. Start the VM, then run this from
+#  Actions -> Deploy to Azure IIS -> Run workflow, picking the branch there.
+# ---------------------------------------------------------------------------
+
+name: Deploy to Azure IIS
+
+on:
+  workflow_dispatch:
+
+# Never let two deploys interleave - robocopy /MIR on a half-copied folder
+# leaves the site broken. Queue them instead of cancelling.
+concurrency:
+  group: deploy-iis
+  cancel-in-progress: false
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Build on GitHub's runners, not the VM. The B2s VM has 2 vCPU and is busy
+  # serving the demo; a full restore + npm ci on it takes minutes.
+  # A failing build or test here means nothing is deployed.
+  # -------------------------------------------------------------------------
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Test the API
+        run: dotnet test backend/SmartSolar.sln -c Release
+
+      - name: Publish the API
+        run: dotnet publish backend/src/SmartSolar.Api/SmartSolar.Api.csproj -c Release -o ./publish-api
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      # Vite substitutes VITE_* at BUILD time, so the API URL has to be known
+      # here, not on the VM. It is a public IP, not a secret - keep it in
+      # Settings > Secrets and variables > Actions > Variables.
+      - name: Build the web app
+        working-directory: web
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "::error::Repository variable VITE_API_BASE_URL is not set. See deployment-guide.md section 11.3."
+            exit 1
+          fi
+          npm run build
+
+      - name: Confirm the API URL was baked into the bundle
+        working-directory: web
+        run: |
+          grep -rq "${{ vars.VITE_API_BASE_URL }}" dist/assets/*.js \
+            || { echo "::error::VITE_API_BASE_URL is missing from the built bundle."; exit 1; }
+
+      - name: Confirm the SPA fallback config shipped
+        run: test -f web/dist/web.config || { echo "::error::web/public/web.config is missing - deep links will 404 on IIS."; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api
+          path: publish-api/
+          retention-days: 5
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: web/dist/
+          retention-days: 5
+
+  # -------------------------------------------------------------------------
+  # Runs ON the VM. Copies artifacts into staging, then hands off to the same
+  # PowerShell script you would run by hand.
+  # -------------------------------------------------------------------------
+  deploy:
+    name: Deploy to IIS
+    needs: build
+    # Targets the runner installed on the Azure VM. There is only one
+    # self-hosted runner in this repo, so the default labels are enough.
+    runs-on: [self-hosted, windows]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clear staging folders
+        shell: powershell
+        run: |
+          Remove-Item -Recurse -Force C:\deploy-staging, C:\deploy-staging-web -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path C:\deploy-staging, C:\deploy-staging-web | Out-Null
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: api
+          path: C:\deploy-staging
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: C:\deploy-staging-web
+
+      - name: Deploy the API
+        shell: powershell
+        run: ./scripts/deploy-to-iis.ps1 -StagingPath "C:\deploy-staging" -SitePath "C:\inetpub\smartsolar-api" -AppPool "SmartSolarApi"
+
+      - name: Deploy the web app
+        shell: powershell
+        run: ./scripts/deploy-to-iis.ps1 -StagingPath "C:\deploy-staging-web" -SitePath "C:\inetpub\smartsolar-web" -AppPool "SmartSolarWeb"
+
+      # A green deploy that left the API dead is worse than a red one.
+      - name: Smoke-test the API
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Start-Sleep -Seconds 5
+          $r = Invoke-RestMethod -Uri "http://localhost/api/health" -TimeoutSec 20
+          Write-Host "health: $($r | ConvertTo-Json -Compress)"
+          if ($r.status -ne "ok") { throw "Health check returned status '$($r.status)' - deploy left the API unhealthy." }
+
+      - name: Smoke-test the web app
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $r = Invoke-WebRequest -Uri "http://localhost:8080/" -UseBasicParsing -TimeoutSec 20
+          if ($r.StatusCode -ne 200) { throw "Web app returned HTTP $($r.StatusCode)." }

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : activity_register.xml
+  Description : Prosumer self-registration screen. Collects NIC, full name, email,
+                phone, address, declared solar capacity and password.
+                All spacing uses sg_space_* tokens, colors use sg_* tokens.
+                Registration endpoint is public (REQ-PROS §4.1, AC-1).
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sg_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="@dimen/sg_space_6">
+
+        <!-- Header -->
+        <ImageView
+            android:layout_width="@dimen/sg_logo_size_sm"
+            android:layout_height="@dimen/sg_logo_size_sm"
+            android:layout_marginTop="@dimen/sg_space_6"
+            android:layout_marginBottom="@dimen/sg_space_4"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_1"
+            android:text="@string/register_title"
+            android:textColor="@color/sg_text"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:text="@string/register_subtitle"
+            android:textColor="@color/sg_text_secondary"
+            android:textSize="14sp" />
+
+        <!-- Registration form card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_4"
+            app:cardBackgroundColor="@color/sg_surface"
+            app:cardCornerRadius="@dimen/sg_radius_lg"
+            app:cardElevation="@dimen/sg_card_elevation"
+            app:strokeColor="@color/sg_border"
+            app:strokeWidth="@dimen/sg_card_stroke">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/sg_space_6">
+
+                <!-- NIC -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilNic"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_nic_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNic"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLength="12"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Full name -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilFullName"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_name_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etFullName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName|textCapWords"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Email -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEmail"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_email_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Phone -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPhone"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_phone_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Address -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilAddress"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_address_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAddress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine|textCapSentences"
+                        android:maxLines="2"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Solar Capacity -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSolarCapacity"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_solar_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:hintTextColor="@color/sg_text_muted"
+                    app:suffixText="kW">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSolarCapacity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Password -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPassword"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/login_password_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Confirm Password -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilConfirmPassword"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:hint="@string/register_confirm_password_hint"
+                    app:boxStrokeColor="@color/sg_primary"
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="@color/sg_text_muted">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etConfirmPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/sg_text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Error message -->
+                <TextView
+                    android:id="@+id/tvError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/sg_space_4"
+                    android:textColor="@color/sg_danger"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <!-- Register button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/sg_btn_height"
+                    android:text="@string/register_btn"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/sg_primary"
+                    app:cornerRadius="@dimen/sg_radius_md" />
+
+                <!-- Loading indicator -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="@dimen/sg_space_4"
+                    android:indeterminateTint="@color/sg_primary"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Back to login link -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBackToLogin"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/sg_space_6"
+            android:text="@string/register_back_to_login"
+            android:textAllCaps="false"
+            android:textColor="@color/sg_primary" />
+
+    </LinearLayout>
+</ScrollView>

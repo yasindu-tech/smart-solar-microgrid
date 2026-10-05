@@ -63,7 +63,7 @@ BR-15 · BR-19 · BR-08 · BR-20
 | AC-4 | That same slot | one reservation is cancelled | `availableCapacity` becomes 1 and the next booking succeeds |
 | AC-5 | A slot with 3 approved reservations | Operator sets `totalCapacity` to 2 | `E4003` (BR-19) |
 | AC-6 | A slot whose start time is moved 2 hours later | saved | Every referencing reservation's `slotStartTime` is updated and the response lists their IDs |
-| AC-7 | A slot outside the node's opening hours for that day | created | Refused with `E4002` |
+| AC-7 | A slot outside the node's opening hours for that day | created | Refused with `E4002`. Opening hours are Asia/Colombo wall-clock, so the slot's UTC instants are converted to local time before the day-of-week and hour comparison — see `glossary.md` § Time vocabulary |
 | AC-8 | A slot with reservations | Backoffice deletes it | `E4004` — refused |
 | AC-9 | A prosumer | requests slots for a node | Only future, active slots with `availableCapacity > 0` are returned |
 | AC-10 | A slot start time in the past | created | `E4104` |

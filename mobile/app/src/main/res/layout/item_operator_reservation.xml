@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : item_operator_reservation.xml
+  Description : One row in the operator dashboard's "Today's reservations" list
+                (REQ-VIEW §2.3). Shows who the slot belongs to, which node it is on,
+                the slot time and a status chip.
+
+                The API returns ids rather than display names on ReservationResponse
+                (nic / nodeId, no prosumer or node name), so the row labels those ids
+                rather than inventing a lookup.
+
+                All spacing uses sg_space_* tokens and all colors use sg_* tokens per
+                ui-design-system.md §22.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/sg_space_3"
+    android:paddingBottom="@dimen/sg_space_3">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvRowTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sg_text"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvRowProsumer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/sg_space_1"
+            android:textColor="@color/sg_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvRowNode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sg_text_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvRowStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/sg_space_2"
+        android:background="@drawable/badge_bg"
+        android:paddingStart="@dimen/sg_space_3"
+        android:paddingTop="@dimen/sg_space_1"
+        android:paddingEnd="@dimen/sg_space_3"
+        android:paddingBottom="@dimen/sg_space_1"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+</LinearLayout>

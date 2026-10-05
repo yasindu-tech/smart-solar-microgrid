@@ -1,59 +1,179 @@
-import { Users, Clock, Battery, CalendarCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Users, Clock, Battery, CalendarCheck, ArrowRight, RotateCw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
-
-const STATS = [
-  { label: 'Total Prosumers', value: 0, icon: Users },
-  { label: 'Pending Activations', value: 0, icon: Clock },
-  { label: 'Active Nodes', value: 0, icon: Battery },
-  { label: 'Total Reservations', value: 0, icon: CalendarCheck },
-] as const
-
-const RESERVATIONS_BY_STATUS = [
-  { status: 'Pending', count: 0 },
-  { status: 'Approved', count: 0 },
-  { status: 'Completed', count: 0 },
-  { status: 'Cancelled', count: 0 },
-] as const
+import { useBackofficeDashboard } from '../../api/DashboardApi'
+import SolarLoader from '../../components/SolarLoader/SolarLoader'
 
 export default function Dashboard() {
+  const { data, isLoading, isError, refetch, isFetching } = useBackofficeDashboard()
+
+  const stats = [
+    {
+      label: 'Total Prosumers',
+      value: data?.totalProsumers ?? 0,
+      icon: Users,
+      href: '/backoffice/users',
+      hint: 'Registered prosumers',
+    },
+    {
+      label: 'Pending Activations',
+      value: data?.pendingActivations ?? 0,
+      icon: Clock,
+      href: '/backoffice/approvals',
+      hint: 'Pending prosumer registrations',
+    },
+    {
+      label: 'Active Nodes',
+      value: data?.activeNodes ?? 0,
+      icon: Battery,
+      href: '/backoffice/nodes',
+      hint: 'Available solar hubs',
+    },
+    {
+      label: 'Total Reservations',
+      value: data?.totalReservations ?? 0,
+      icon: CalendarCheck,
+      href: '/backoffice/reservations',
+      hint: 'Grid energy bookings',
+    },
+  ]
+
+  const byStatus = data?.reservationsByStatus ?? {}
+
+  const reservationsByStatus = [
+    {
+      status: 'Pending',
+      count: byStatus.Pending ?? byStatus.pending ?? 0,
+    },
+    {
+      status: 'Approved',
+      count: byStatus.Approved ?? byStatus.approved ?? 0,
+    },
+    {
+      status: 'Completed',
+      count: byStatus.Completed ?? byStatus.completed ?? 0,
+    },
+    {
+      status: 'Cancelled',
+      count: byStatus.Cancelled ?? byStatus.cancelled ?? 0,
+    },
+    {
+      status: 'Expired',
+      count: byStatus.Expired ?? byStatus.expired ?? 0,
+    },
+  ]
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="sg-h3">Overview</h2>
-        <p className="sg-body-sm text-sg-text-secondary">
-          Snapshot of prosumers, nodes and reservations across the grid.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="sg-h3">Overview</h2>
+          <p className="sg-body-sm text-sg-text-secondary">
+            Snapshot of prosumers, nodes and reservations across the grid.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isLoading || isFetching}
+          className="flex items-center gap-1.5 rounded-lg border border-sg-border bg-sg-surface px-3 py-1.5 text-xs font-medium text-sg-text-secondary transition-colors hover:bg-sg-surface-muted hover:text-sg-text focus:outline-none disabled:opacity-50"
+          title="Refresh metrics"
+        >
+          <RotateCw size={13} className={isFetching ? 'animate-spin' : ''} />
+          <span>Refresh</span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-sg-text-secondary">{label}</CardTitle>
-              <Icon size={18} className="text-sg-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-semibold text-sg-text">{value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="sg-h4">Reservations by status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {RESERVATIONS_BY_STATUS.map(({ status, count }) => (
-              <div key={status} className="rounded-md border border-sg-border p-4">
-                <p className="text-xs uppercase tracking-wide text-sg-text-muted">{status}</p>
-                <p className="mt-1 text-xl font-semibold text-sg-text">{count}</p>
-              </div>
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <SolarLoader showLabel label="Loading dashboard metrics..." />
+        </div>
+      ) : isError ? (
+        <div className="sg-alert sg-alert-danger flex items-center justify-between" role="alert">
+          <span>Could not load dashboard metrics. Please verify the backend connection and try again.</span>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="ml-4 rounded-md border border-sg-danger/40 bg-white/80 px-2.5 py-1 text-xs font-semibold text-sg-danger hover:bg-white"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* 4 Main Metric Cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map(({ label, value, icon: Icon, href, hint }) => (
+              <Link
+                key={label}
+                to={href}
+                className="group block transition-transform focus:outline-none"
+              >
+                <Card
+                  className="h-full border border-sg-border bg-sg-surface transition-all group-hover:border-sg-primary/60 group-hover:shadow-sm"
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-sg-text-secondary">
+                      {label}
+                    </CardTitle>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sg-primary-soft text-sg-primary transition-colors group-hover:bg-sg-primary group-hover:text-white">
+                      <Icon size={16} />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-3xl font-bold tracking-tight text-sg-text">{value}</p>
+                      <ArrowRight
+                        size={15}
+                        className="text-sg-text-muted opacity-0 transition-all group-hover:translate-x-0.5 group-hover:text-sg-primary group-hover:opacity-100"
+                      />
+                    </div>
+                    {hint && (
+                      <p className="mt-1 text-xs text-sg-text-muted">{hint}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Reservations by status Card */}
+          <Card className="border border-sg-border bg-sg-surface shadow-xs">
+            <CardHeader className="border-b border-sg-border bg-sg-surface-muted/30 pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="sg-h4">Reservations by status</CardTitle>
+                <Link
+                  to="/backoffice/reservations"
+                  className="flex items-center gap-1 text-xs font-medium text-sg-primary hover:underline"
+                >
+                  View all bookings
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-5">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {reservationsByStatus.map(({ status, count }) => (
+                  <Link
+                    key={status}
+                    to={`/backoffice/reservations?status=${encodeURIComponent(status)}`}
+                    className="group block rounded-xl border border-sg-border bg-sg-surface-muted/20 p-4 transition-all hover:bg-sg-surface hover:shadow-xs hover:border-blue-600/40"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-sg-text-muted">
+                        {status}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-2xl font-bold tracking-tight text-sg-text">
+                      {count}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

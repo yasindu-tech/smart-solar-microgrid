@@ -31,6 +31,10 @@ public interface IReservationRepository
     Task<(int ActiveCount, int PendingCount, EnergyReservation? NextReservation, List<EnergyReservation> RecentHistory)>
         GetDashboardMetricsAsync(string nic, DateTime nowUtc);
 
+    // Aggregates operator dashboard metrics scoped to the operator's assigned nodes (REQ-VIEW §2.3, BR-11).
+    Task<(int PendingCount, int ApprovedFutureCount, List<EnergyReservation> TodaysReservations)>
+        GetOperatorDashboardMetricsAsync(IEnumerable<string> nodeIds, DateTime nowUtc, DateTime dayStartUtc, DateTime dayEndUtc);
+
     // Atomically moves a Pending reservation to Approved and sets QR token. Returns false if not Pending.
     Task<bool> TryApproveAsync(string reservationId, string qrToken, DateTime qrIssuedAt);
 
@@ -40,6 +44,15 @@ public interface IReservationRepository
     // Atomically moves a Pending or Approved reservation to Cancelled. Returns (true, previousStatus) on success.
     Task<(bool Success, string? PreviousStatus)> TryCancelAsync(string reservationId, string cancelledBy, DateTime cancelledAt);
 
+    // Atomically moves an Approved reservation whose stored token still matches to Completed (BR-10, BR-18).
+    // Returns false when another operator won the race or the token is stale - the caller then re-reads to pick the error code.
+    Task<bool> TryCompleteAsync(
+        string reservationId, string presentedToken, string operatorUserId, double deliveredKwh, DateTime completedAt);
+
     // Atomically moves a past Pending or Approved reservation to Expired (ADR-001). Returns (true, previousStatus) on success.
     Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc);
+
+    // Aggregates total reservations count and grouped status counts for the backoffice dashboard.
+    Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync();
 }
+

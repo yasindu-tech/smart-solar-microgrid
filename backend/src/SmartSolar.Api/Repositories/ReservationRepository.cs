@@ -199,6 +199,44 @@ public class ReservationRepository : IReservationRepository
         );
     }
 
+    // Aggregates operator dashboard metrics scoped to the operator's assigned nodes (REQ-VIEW §2.3, BR-11).
+    public async Task<(int PendingCount, int ApprovedFutureCount, List<EnergyReservation> TodaysReservations)>
+        GetOperatorDashboardMetricsAsync(IEnumerable<string> nodeIds, DateTime nowUtc, DateTime dayStartUtc, DateTime dayEndUtc)
+    {
+        // Every count below is bounded by the operator's own nodes - never system-wide (DOM-04 Definition of Done).
+        var scopedNodeIds = nodeIds.ToArray();
+        if (scopedNodeIds.Length == 0)
+        {
+            return (0, 0, new List<EnergyReservation>());
+        }
+
+        var nodeScope = Builders<EnergyReservation>.Filter.In(r => r.NodeId, scopedNodeIds);
+
+        var pendingFilter = Builders<EnergyReservation>.Filter.And(
+            nodeScope,
+            Builders<EnergyReservation>.Filter.Eq(r => r.Status, ReservationStateMachine.Pending));
+
+        var approvedFutureFilter = Builders<EnergyReservation>.Filter.And(
+            nodeScope,
+            Builders<EnergyReservation>.Filter.Eq(r => r.Status, ReservationStateMachine.Approved),
+            Builders<EnergyReservation>.Filter.Gte(r => r.SlotStartTime, nowUtc));
+
+        var todaysFilter = Builders<EnergyReservation>.Filter.And(
+            nodeScope,
+            Builders<EnergyReservation>.Filter.Gte(r => r.SlotStartTime, dayStartUtc),
+            Builders<EnergyReservation>.Filter.Lt(r => r.SlotStartTime, dayEndUtc));
+
+        var pendingCountTask = _collection.CountDocumentsAsync(pendingFilter);
+        var approvedFutureCountTask = _collection.CountDocumentsAsync(approvedFutureFilter);
+        var todaysTask = _collection.Find(todaysFilter)
+            .SortBy(r => r.SlotStartTime)
+            .ToListAsync();
+
+        await Task.WhenAll(pendingCountTask, approvedFutureCountTask, todaysTask);
+
+        return ((int)await pendingCountTask, (int)await approvedFutureCountTask, await todaysTask);
+    }
+
     // Atomically moves a Pending reservation to Approved and sets QR token. Returns false if not Pending.
     public async Task<bool> TryApproveAsync(string reservationId, string qrToken, DateTime qrIssuedAt)
     {
@@ -262,6 +300,28 @@ public class ReservationRepository : IReservationRepository
         return (true, prev.Status);
     }
 
+    // Atomically moves an Approved reservation whose stored token still matches to Completed (BR-10, BR-18).
+    public async Task<bool> TryCompleteAsync(
+        string reservationId, string presentedToken, string operatorUserId, double deliveredKwh, DateTime completedAt)
+    {
+        // Match on status AND stored token so a concurrent finalise or a stale QR cannot win twice (REQ-QRV EC-6).
+        var filter = Builders<EnergyReservation>.Filter.And(
+            Builders<EnergyReservation>.Filter.Eq(r => r.ReservationId, reservationId),
+            Builders<EnergyReservation>.Filter.Eq(r => r.Status, ReservationStateMachine.Approved),
+            Builders<EnergyReservation>.Filter.Eq(r => r.QrToken, presentedToken));
+
+        var update = Builders<EnergyReservation>.Update
+            .Set(r => r.Status, ReservationStateMachine.Completed)
+            .Set(r => r.CompletedAt, completedAt)
+            .Set(r => r.CompletedByOperatorId, operatorUserId)
+            .Set(r => r.DeliveredKwh, deliveredKwh)
+            .Set(r => r.QrToken, null)
+            .Set(r => r.UpdatedAt, completedAt);
+
+        var result = await _collection.UpdateOneAsync(filter, update);
+        return result.ModifiedCount > 0;
+    }
+
     // Atomically moves a past Pending or Approved reservation to Expired (ADR-001). Returns (true, previousStatus) on success.
     public async Task<(bool Success, string? PreviousStatus)> TryExpireAsync(string reservationId, DateTime nowUtc)
     {
@@ -288,4 +348,33 @@ public class ReservationRepository : IReservationRepository
 
         return (true, prev.Status);
     }
+
+    // Aggregates total reservations count and grouped status counts for the backoffice dashboard.
+    public async Task<(int Total, Dictionary<string, int> ByStatus)> GetStatusCountsAsync()
+    {
+        var all = await _collection.Find(Builders<EnergyReservation>.Filter.Empty)
+            .Project(r => new { r.Status })
+            .ToListAsync();
+
+        var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Pending"] = 0,
+            ["Approved"] = 0,
+            ["Completed"] = 0,
+            ["Cancelled"] = 0,
+            ["Expired"] = 0
+        };
+
+        foreach (var item in all)
+        {
+            var status = string.IsNullOrWhiteSpace(item.Status) ? "Pending" : item.Status;
+            if (dict.ContainsKey(status))
+                dict[status]++;
+            else
+                dict[status] = 1;
+        }
+
+        return (all.Count, dict);
+    }
 }
+

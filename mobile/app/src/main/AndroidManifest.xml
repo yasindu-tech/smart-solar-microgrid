@@ -6,26 +6,97 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Map of nearby microgrid nodes (REQ-VIEW section 2.5). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Operator QR scanning (REQ-QRV). -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- External map intents query visibility for Android 11+ -->
+    <queries>
+        <package android:name="com.google.android.apps.maps" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
+
     <application
+        android:name=".SmartSolarApp"
         android:allowBackup="false"
-        android:label="Smart Solar"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="SunGrid"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.SmartSolar">
 
+        <!-- Google Maps API Key injected from local.properties via manifestPlaceholders -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <!-- Welcome is the launcher activity — branded landing screen, entry point. -->
         <activity
-            android:name=".ui.auth.LoginActivity"
-            android:exported="true">
+            android:name=".ui.auth.WelcomeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SmartSolar.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Login screen — reached via the Welcome screen's "Get Started" button.
+             adjustResize so the soft keyboard shrinks the ScrollView instead of covering
+             the identifier/password fields and the inline error message. -->
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Prosumer home screen — navigated to after a Prosumer login. Uses the dashboard
+             theme so the status bar matches the brand hero at the top of the screen. -->
+        <activity
+            android:name=".ui.prosumer.ProsumerHomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- Operator home screen — navigated to after an Operator login. -->
+        <activity
+            android:name=".ui.operator.OperatorHomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- Prosumer Registration screen -->
+        <activity
+            android:name=".ui.auth.RegisterActivity"
+            android:exported="false" />
+
+        <!-- Prosumer Profile screens -->
+        <activity
+            android:name=".ui.prosumer.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.prosumer.ProfileEditActivity"
+            android:exported="false" />
+
+        <!-- Nearby Microgrid Nodes Map screen -->
+        <activity
+            android:name=".ui.map.MapActivity"
+            android:exported="false"
+            android:label="@string/title_activity_map"
+            android:theme="@style/Theme.SmartSolar.Dashboard" />
+
+        <!-- Create Booking screen (D3) -->
+        <activity
+            android:name=".ui.prosumer.CreateBookingActivity"
+            android:exported="false" />
 
     </application>
 
