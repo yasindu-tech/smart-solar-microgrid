@@ -10,7 +10,7 @@ import { ApiRequestError } from './types'
 import { nodeEndpoints } from './endpoints'
 import { nodeQueryKeys } from './queryKeys'
 import type { PagedResponse } from '../types/CommonTypes'
-import type { CreateNodeRequest, Node, NodeListParams } from '../types/NodeTypes'
+import type { CreateNodeRequest, Node, NodeListParams, UseCreateNodeOptions } from '../types/NodeTypes'
 
 const fetchNodes = async (params?: NodeListParams): Promise<PagedResponse<Node>> => {
   const response = await apiClient.get(nodeEndpoints.BASE, { params })
@@ -28,11 +28,6 @@ export const useNodes = (
 const createNode = async (request: CreateNodeRequest): Promise<Node> => {
   const response = await apiClient.post(nodeEndpoints.BASE, request)
   return response?.data
-}
-
-interface UseCreateNodeOptions {
-  onSuccess?: (data: Node) => void
-  onError?: (error: ApiRequestError) => void
 }
 
 export const useCreateNode = (

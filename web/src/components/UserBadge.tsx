@@ -19,7 +19,9 @@ export default function UserBadge({ displayName, role }: UserBadgeProps) {
   return (
     <div className="flex items-center gap-3">
       <div className="hidden text-right leading-tight sm:block">
-        <p className="max-w-[160px] truncate text-sm font-medium text-sg-text">{displayName}</p>
+        <p className="max-w-[160px] truncate text-sm font-medium text-sg-text" title={displayName}>
+          {displayName}
+        </p>
         <p className="text-xs text-sg-text-muted">{role}</p>
       </div>
       <div className="sg-avatar sg-avatar-sm shrink-0">{initials}</div>
