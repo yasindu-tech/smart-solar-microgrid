@@ -74,4 +74,14 @@ object ApiClient {
     val nodesApi: NodesApi by lazy {
         retrofit.create(NodesApi::class.java)
     }
+
+    // Lazily create the reservations API service.
+    val reservationsApi: ReservationsApi by lazy {
+        retrofit.create(ReservationsApi::class.java)
+    }
+
+    // Lazily create the slots API service.
+    val slotsApi: SlotsApi by lazy {
+        retrofit.create(SlotsApi::class.java)
+    }
 }
