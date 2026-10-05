@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout      : activity_reservation_detail.xml
+  Description : Reservation details screen displaying reservation status, QR code (Approved),
+                details list, and status-dependent action buttons (Modify / Cancel).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sg_primary_soft"
+    android:orientation="vertical">
+
+    <!-- Top App Bar / Header -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/sg_primary"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="@color/sg_white"
+        app:title="@string/title_reservation_detail"
+        app:titleTextColor="@color/sg_white" />
+
+    <!-- Progress Indicator Overlay -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/sg_primary"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/sg_space_4">
+
+            <!-- Reservation ID and Status Header Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/sg_space_4"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/sg_space_1"
+                android:paddingEnd="@dimen/sg_space_1">
+
+                <TextView
+                    android:id="@+id/tvReservationId"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/sg_text"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/sg_space_2"
+                    android:background="@drawable/badge_bg"
+                    android:paddingStart="16dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="6dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Card 1: Transaction QR Code Card (ONLY Approved) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQrCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/sg_space_4"
+                android:backgroundTint="@color/sg_white"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/sg_white"
+                app:cardCornerRadius="@dimen/sg_radius_lg"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/sg_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="@dimen/sg_space_5">
+
+                    <TextView
+                        android:id="@+id/tvQrTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/qr_code_title"
+                        android:textColor="@color/sg_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/ivQrCode"
+                        android:layout_width="220dp"
+                        android:layout_height="220dp"
+                        android:layout_marginTop="@dimen/sg_space_4"
+                        android:layout_marginBottom="@dimen/sg_space_3"
+                        android:contentDescription="@string/qr_code_title"
+                        android:scaleType="fitCenter" />
+
+                    <TextView
+                        android:id="@+id/tvQrSubtext"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/sg_space_3"
+                        android:text="@string/qr_code_subtext"
+                        android:textAlignment="center"
+                        android:textColor="@color/sg_text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/btnCopyCode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="@dimen/sg_space_2"
+                        android:text="@string/qr_code_copy_action"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 2: Reservation Details Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/sg_space_4"
+                android:backgroundTint="@color/sg_white"
+                app:cardBackgroundColor="@color/sg_white"
+                app:cardCornerRadius="@dimen/sg_radius_lg"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/sg_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/sg_space_5">
+
+                    <TextView
+                        android:id="@+id/tvDetailNode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvDetailType"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvDetailStarts"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvDetailEnds"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvDetailEnergy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/tvDetailTransferred"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvDetailApprovedBy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvDetailCompleted"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvDetailCancelReason"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/sg_space_2"
+                        android:textColor="@color/sg_text"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="16dp" />
+
+            <!-- Action Button: MODIFY RESERVATION -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnModify"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="@dimen/sg_space_3"
+                android:text="@string/btn_modify_reservation"
+                android:textColor="@color/sg_white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@color/sg_primary"
+                app:cornerRadius="@dimen/sg_radius_md" />
+
+            <!-- Action Button: CANCEL RESERVATION -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="@dimen/sg_space_3"
+                android:text="@string/btn_cancel_reservation"
+                android:textColor="@color/sg_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                app:backgroundTint="@color/sg_surface"
+                app:cornerRadius="@dimen/sg_radius_md"
+                app:strokeColor="@color/sg_primary"
+                app:strokeWidth="1.5dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

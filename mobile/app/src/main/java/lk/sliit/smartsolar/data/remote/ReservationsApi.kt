@@ -13,6 +13,7 @@ import lk.sliit.smartsolar.data.remote.dto.ReservationResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -36,6 +37,12 @@ interface ReservationsApi {
     // Get single reservation by ID
     @GET("reservations/{reservationId}")
     suspend fun getReservationById(
+        @Path("reservationId") reservationId: String
+    ): Response<ReservationResponse>
+
+    // Cancel reservation (REQ-RESV, BR-07)
+    @PATCH("reservations/{reservationId}/cancel")
+    suspend fun cancelReservation(
         @Path("reservationId") reservationId: String
     ): Response<ReservationResponse>
 }

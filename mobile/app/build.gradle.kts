@@ -95,6 +95,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
+    // ZXing for QR code generation (REQ-QRV)
+    implementation("com.google.zxing:core:3.5.3")
+
     // Core library desugaring — java.time.Instant support on API < 26.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
