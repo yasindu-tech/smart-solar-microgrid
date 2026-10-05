@@ -8,12 +8,21 @@ import {
 import type { Prosumer } from '../../types/ProsumerTypes'
 import type { PagedResponse } from '../../types/CommonTypes'
 import { getErrorMessage } from '../../api/errors'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog'
 
 export default function ProsumersPage() {
   const [data, setData] = useState<PagedResponse<Prosumer> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'activate' | 'deactivate'; nic: string; name: string } | null>(null)
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('')
@@ -49,31 +58,29 @@ export default function ProsumersPage() {
     loadProsumers()
   }
 
-  const handleActivate = async (nic: string, name: string) => {
-    if (!confirm(`Activate / reactivate prosumer ${name} (${nic})?`)) return
+  const executeConfirmAction = async () => {
+    if (!confirmAction) return
+    const { type, nic } = confirmAction
     try {
       setActionError(null)
-      await activateProsumer(nic)
+      setConfirmAction(null)
+      if (type === 'activate') {
+        await activateProsumer(nic)
+      } else {
+        await deactivateProsumer(nic)
+      }
       await loadProsumers()
     } catch (err) {
       setActionError(getErrorMessage(err))
     }
   }
 
-  const handleDeactivate = async (nic: string, name: string) => {
-    if (
-      !confirm(
-        `Deactivate prosumer ${name} (${nic})?\n\nThis will cancel all their future reservations (BR-04).`
-      )
-    )
-      return
-    try {
-      setActionError(null)
-      await deactivateProsumer(nic)
-      await loadProsumers()
-    } catch (err) {
-      setActionError(getErrorMessage(err))
-    }
+  const handleActivate = (nic: string, name: string) => {
+    setConfirmAction({ type: 'activate', nic, name })
+  }
+
+  const handleDeactivate = (nic: string, name: string) => {
+    setConfirmAction({ type: 'deactivate', nic, name })
   }
 
   const statusBadge = (status: string) => {
@@ -238,6 +245,38 @@ export default function ProsumersPage() {
           </div>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.type === 'activate' ? 'Activate Prosumer' : 'Deactivate Prosumer'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction?.type === 'activate' ? (
+                <>Activate / reactivate prosumer {confirmAction.name} ({confirmAction.nic})?</>
+              ) : (
+                <>
+                  Deactivate prosumer {confirmAction?.name} ({confirmAction?.nic})?<br/><br/>
+                  This will cancel all their future reservations (BR-04).
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button className="sg-btn sg-btn-secondary" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </button>
+            <button 
+              className={confirmAction?.type === 'activate' ? "sg-btn sg-btn-success" : "sg-btn sg-btn-danger"} 
+              onClick={executeConfirmAction}
+            >
+              {confirmAction?.type === 'activate' ? 'Activate' : 'Deactivate'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
