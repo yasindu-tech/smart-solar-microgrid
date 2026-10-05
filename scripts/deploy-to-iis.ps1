@@ -28,21 +28,31 @@ $ErrorActionPreference = "Stop"
 function Say($msg)  { Write-Host "==> $msg" -ForegroundColor Cyan }
 function Warn($msg) { Write-Host "    $msg" -ForegroundColor Yellow }
 
-# IIS's WAS service occasionally can't accept a control message right after the
-# previous one - "The service cannot accept control messages at this time"
-# (HRESULT 0x80070425 / Win32 1061). It's transient, most often seen seconds
-# after the OTHER app pool's own Stop/Start just ran, or right after the VM has
-# just been started and WAS is still coming up - not a real failure, so retry
-# with a short backoff instead of failing the whole deploy over it.
-function Invoke-WithRetry([scriptblock]$Action, [string]$Description, [int]$MaxAttempts = 5) {
+# Drive an app pool to the given state. Two distinct failure modes land here,
+# and they need opposite handling:
+#  - "Object on target path is already stopped/started" is NOT a failure. It
+#    shows up whenever the pool was already in the target state - most often
+#    because a PRIOR deploy run failed after Stop-WebAppPool succeeded but
+#    before Start-WebAppPool did, leaving the pool stopped for next time. Treat
+#    it as success so the script is idempotent regardless of where a previous
+#    run died.
+#  - A genuine COMException ("The service cannot accept control messages at
+#    this time", HRESULT 0x80070425 / Win32 1061) means WAS is transiently
+#    busy - often seconds after the OTHER app pool's own Stop/Start just ran,
+#    or right after the VM has just booted. Retry that with a short backoff.
+function Set-AppPoolState([string]$Name, [ValidateSet("Started", "Stopped")][string]$TargetState, [int]$MaxAttempts = 5) {
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         try {
-            & $Action
+            if ($TargetState -eq "Stopped") { Stop-WebAppPool -Name $Name } else { Start-WebAppPool -Name $Name }
             return
         } catch {
+            if ($_.Exception.Message -match "already (stopped|started)") {
+                Warn "App pool '$Name' was already $TargetState - nothing to do"
+                return
+            }
             if ($attempt -eq $MaxAttempts) { throw }
             $delaySeconds = 3 * $attempt
-            Warn "$Description failed on attempt $attempt of $MaxAttempts ($($_.Exception.Message)) - retrying in ${delaySeconds}s"
+            Warn "Setting '$Name' to $TargetState failed on attempt $attempt of $MaxAttempts ($($_.Exception.Message)) - retrying in ${delaySeconds}s"
             Start-Sleep -Seconds $delaySeconds
         }
     }
@@ -59,7 +69,7 @@ if (-not (Get-Item "IIS:\AppPools\$AppPool" -ErrorAction SilentlyContinue)) {
 }
 
 Say "Stopping app pool '$AppPool' so files aren't locked"
-Invoke-WithRetry -Description "Stop-WebAppPool" -Action { Stop-WebAppPool -Name $AppPool }
+Set-AppPoolState -Name $AppPool -TargetState "Stopped"
 Start-Sleep -Seconds 2
 
 Say "Preserving appsettings.Production.json if it exists and isn't in the new build"
@@ -88,7 +98,7 @@ if ($secretsBackup) {
 }
 
 Say "Starting app pool '$AppPool'"
-Invoke-WithRetry -Description "Start-WebAppPool" -Action { Start-WebAppPool -Name $AppPool }
+Set-AppPoolState -Name $AppPool -TargetState "Started"
 Start-Sleep -Seconds 2
 
 $state = (Get-WebAppPoolState -Name $AppPool).Value
