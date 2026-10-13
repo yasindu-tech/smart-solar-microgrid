@@ -85,45 +85,6 @@ gradle assembleDebug
 The emulator reaches a locally hosted API at `http://10.0.2.2:<port>`, not
 `localhost`.
 
-## How we work
-
-| Thing | Where it is written |
-|---|---|
-| Why we are building this, and what is out of scope | `docs/BRD.md` |
-| What a feature should do, in every case | `docs/requirements/` |
-| Whether something is allowed, and the limits | `docs/business-rules/BR-register.md` |
-| What happens end to end when a user does X | `docs/user-flows/` |
-| Endpoints, fields, error codes, statuses | `docs/architecture/` |
-| Why a decision went the way it did | `docs/decisions/` |
-| Who owns what, and the 17-day plan | `docs/plan/` |
-| Branching, commits, PRs | `.claude/skills/open-pr/SKILL.md` |
-
-**Branch from `develop`. Never commit to `main` or `develop` directly** — both
-are protected for everyone, including the repo owner.
-
-```bash
-git switch develop && git pull
-git switch -c feature/<component>/<description>
-git commit -m "feat(resv): enforce 12-hour cancellation window (BR-07)"
-git push -u origin feature/<component>/<description>
-gh pr create --base develop
-```
-
-## Business domains — component ownership
-
-Four domains, one per member, each a full vertical slice (API + web + mobile).
-See `docs/domains/README.md` for goals, cross-domain handoffs and the full
-mark reconciliation.
-
-| Domain | Member | Owns | Individual marks |
-|---|---|---|---|
-| D1 — Identity & Access Management | M1 | Auth, RBAC, web user mgmt, prosumer mgmt | 17 |
-| D2 — Microgrid Inventory Management | M2 | Node CRUD, slot admin, **map + Google Maps** | 20 |
-| D3 — Reservation & Scheduling Engine | M3 | Reservation lifecycle, 7-day/12-hour rules, **prosumer booking views** | 15 |
-| D4 — Fulfillment & Operational Verification | M4 | QR verification, operator mode, operator dashboard, SQLite | 13 |
-
-Full day-by-day split in `docs/plan/work-breakdown.md`. Enforced by `.github/CODEOWNERS`.
-
 ## CI
 
 | Check | Runs when | Required to merge |
